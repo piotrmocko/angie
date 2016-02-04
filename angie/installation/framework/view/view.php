@@ -84,69 +84,70 @@ class AView
 
 	/**
 	 * A cached copy of the configuration
-	 * 
+	 *
 	 * @var array
 	 */
 	protected $config = array();
 
 	/**
 	 * The input object
-	 * 
+	 *
 	 * @var AInput
 	 */
 	protected $input = null;
-	
-	/**
-	 * Constructor
-	 *
-	 * @param   array  $config  A named configuration array for object construction.<br/>
-	 *                          name: the name (optional) of the view (defaults to the view class name suffix).<br/>
-	 *                          escape: the name (optional) of the function to use for escaping strings<br/>
-	 *                          base_path: the parent path (optional) of the views directory (defaults to the component folder)<br/>
-	 *                          template_plath: the path (optional) of the layout directory (defaults to base_path + /views/ + view name<br/>
-	 *                          helper_path: the path (optional) of the helper files (defaults to base_path + /helpers/)<br/>
-	 *                          layout: the layout (optional) to use to display the view<br/>
-	 */
-	public function __construct($config = array())
+
+    /** @var  AContainer Application container */
+    protected $container;
+
+    /**
+     * Constructor
+     *
+     * @param   array $config A named configuration array for object construction.<br/>
+     *                          name: the name (optional) of the view (defaults to the view class name suffix).<br/>
+     *                          escape: the name (optional) of the function to use for escaping strings<br/>
+     *                          base_path: the parent path (optional) of the views directory (defaults to the component folder)<br/>
+     *                          template_plath: the path (optional) of the layout directory (defaults to base_path + /views/ + view name<br/>
+     *                          helper_path: the path (optional) of the helper files (defaults to base_path + /helpers/)<br/>
+     *                          layout: the layout (optional) to use to display the view<br/>
+     *
+     * @param   \AContainer $container
+     *
+     * @throws \AExceptionApp
+     * @throws \Exception
+     */
+	public function __construct($config = array(), AContainer $container = null)
 	{
-		// Get the input
-		if (array_key_exists('input', $config))
-		{
-			if ($config['input'] instanceof AInput)
-			{
-				$this->input = $config['input'];
-			}
-			else
-			{
-				$this->input = new AInput($config['input']);
-			}
-		}
-		else
-		{
-			$this->input = new AInput();
-		}
-		
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
+        $this->container = $container;
+        $this->input     = $this->container->input;
+
 		// Get the component name
-		if (array_key_exists('option', $config)) 
+		if (array_key_exists('option', $config))
 		{
-			if ($config['option']) 
+			if ($config['option'])
 			{
 				$component = $config['option'];
 			}
 		}
+
 		$config['option'] = $component;
 
 		// Get the view name
 		$view = $this->input->getCmd('view', '');
+
 		if (array_key_exists('view', $config))
 		{
-			if ($config['view']) 
+			if ($config['view'])
 			{
 				$view = $config['view'];
 			}
 		}
 		$config['view'] = $view;
-		
+
 		// Set the component and the view to the input array
 		$this->input->set('option', $config['option']);
 		$this->input->set('view', $config['view']);
@@ -164,9 +165,9 @@ class AView
 		$config['input'] = $this->input;
 		$config['name'] = $this->_name;
 		$config['view'] = $this->_name;
-		
+
 		// Set a base path for use by the view
-		if (array_key_exists('base_path', $config)) 
+		if (array_key_exists('base_path', $config))
 		{
 			$this->_basePath	= $config['base_path'];
 		}
@@ -206,10 +207,10 @@ class AView
 		{
 			$this->setLayout('default');
 		}
-		
+
 		$this->config = $config;
-		
-		$app = AApplication::getInstance();
+
+		$app = $this->container->application;
 		$component = preg_replace('/[^A-Z0-9_\.-]/i', '', $component);
 		$fallback = APATH_THEMES . '/' . $app->getTemplate() . '/html/' . $component . '/' . $this->getName();
 		$this->_addPath('template', $fallback);
@@ -260,15 +261,13 @@ class AView
 			{
 				// The method exists, let's call it and return what we get
 				$result = $this->_models[$model]->$method();
+
 				return $result;
 			}
 
 		}
 
-		// Degrade to JObject::get
-		$result = parent::get($property, $default);
-
-		return $result;
+		return $default;
 	}
 
 	/**
@@ -432,17 +431,19 @@ class AView
 	{
 		$this->_addPath('helper', $path);
 	}
-	
-	/**
-	 * Loads a template given any path. The path is in the format:
-	 * viewname/templatename
-	 *
-	 * @param string $path
-	 * @param array $forceParams A hash array of variables to be extracted in the local scope of the template file
-	 */
+
+    /**
+     * Loads a template given any path. The path is in the format:
+     * viewname/templatename
+     *
+     * @param   string  $path
+     * @param   array   $forceParams A hash array of variables to be extracted in the local scope of the template file
+     *
+     * @return \Exception|string
+     */
 	public function loadAnyTemplate($path = '', $forceParams = array())
 	{
-		$template = AApplication::getInstance()->getTemplate();
+		$template = $this->container->application->getTemplate();
 		$layoutTemplate = $this->getLayoutTemplate();
 
 		// Parse the path
@@ -473,7 +474,9 @@ class AView
 
 		$filetofind = $templateParts['template'].'.php';
 		$this->_tempFilePath = AUtilsPath::find($paths, $filetofind);
-		if($this->_tempFilePath) {
+
+		if($this->_tempFilePath)
+        {
 			// Unset from local scope
 			unset($template); unset($layoutTemplate); unset($paths); unset($path);
 			unset($filetofind);
@@ -509,29 +512,33 @@ class AView
 		}
 	}
 
-	/**
-	 * Overrides the default method to execute and display a template script.
-	 * Instead of loadTemplate is uses loadAnyTemplate.
-	 *
-	 * @param   string  $tpl  The name of the template file to parse
-	 *
-	 * @return  mixed  A string if successful, otherwise an exception.
-	 */
+    /**
+     * Overrides the default method to execute and display a template script.
+     * Instead of loadTemplate is uses loadAnyTemplate.
+     *
+     * @param   string $tpl The name of the template file to parse
+     *
+     * @return  mixed A string if successful, otherwise an exception.
+     *
+     * @throws
+     */
 	public function display($tpl = null)
 	{
 		$method = 'onBefore' . ucfirst($this->doTask);
+
 		if(method_exists($this, $method))
 		{
 			$result = $this->$method();
+
 			if (!$result)
 			{
 				return false;
 			}
 		}
-		
+
 		$result = $this->loadTemplate($tpl);
-		
 		$method = 'onAfter' . ucfirst($this->doTask);
+
 		if(method_exists($this, $method))
 		{
 			$result = $this->$method();
@@ -540,7 +547,7 @@ class AView
 				return false;
 			}
 		}
-		
+
 		if(is_object($result) && ($result instanceof Exception))
 		{
 			throw $result;
@@ -550,18 +557,19 @@ class AView
 			echo $result;
 		}
 	}
-	
+
 	/**
 	 * Our function uses loadAnyTemplate to provide smarter view template loading.
-	 * 
+	 *
 	 * @param   string   $tpl     The name of the template file to parse
 	 * @param   boolean  $strict  Should we use strict naming, i.e. force a non-empty $tpl?
-	 * 
+	 *
 	 * @return  mixed  A string if successful, otherwise an Exception
 	 */
-	public function loadTemplate($tpl = null, $strict = false) {
+	public function loadTemplate($tpl = null, $strict = false)
+    {
 		$basePath = $this->config['view'].'/';
-		
+
 		if ($strict)
 		{
 			$paths = array(
@@ -579,13 +587,16 @@ class AView
 			);
 		}
 
-		foreach($paths as $path) {
+		foreach($paths as $path)
+        {
 			$result = $this->loadAnyTemplate($path);
-			if (!($result instanceof Exception)) {
+
+			if (!($result instanceof Exception))
+            {
 				break;
 			}
 		}
-		
+
 		return $result;
 	}
 
@@ -599,6 +610,7 @@ class AView
 		if(empty($path)) return;
 
 		$pathparts = explode('/', $path, 2);
+
 		switch(count($pathparts))
 		{
 			case 2:
@@ -612,7 +624,7 @@ class AView
 
 		return $parts;
 	}
-	
+
 	/**
 	 * Load a helper file
 	 *
@@ -634,13 +646,13 @@ class AView
 			include_once $helper;
 		}
 	}
-	
+
 	/**
 	 * Returns the view's option (component name) and view name in an
 	 * associative array.
-	 * 
+	 *
 	 * @return  array
-	 * 
+	 *
 	 * @since   2.0
 	 */
 	public function getViewOptionAndName()
@@ -650,7 +662,7 @@ class AView
 			'view'		=> $this->config['view'],
 		);
 	}
-	
+
 	/**
 	 * Sets an entire array of search paths for templates or resources.
 	 *
@@ -674,8 +686,8 @@ class AView
 		{
 			case 'template':
 				// Set the alternative template search dir
-				$app = AApplication::getInstance();
-				$component = preg_replace('/[^A-Z0-9_\.-]/i', '', $this->input->getCmd('option'));
+				$app = $this->container->application;
+				$component = preg_replace('/[^A-Z0-9_\.-]/i', '', $this->input->getCmd('option', ''));
 				$fallback = APATH_THEMES . '/' . $app->getTemplate() . '/html/' . $component . '/' . $this->getName();
 				$this->_addPath('template', $fallback);
 				break;
@@ -727,8 +739,6 @@ class AView
 	 */
 	protected function _createFileName($type, $parts = array())
 	{
-		$filename = '';
-
 		switch ($type)
 		{
 			case 'template':

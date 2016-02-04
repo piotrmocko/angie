@@ -10,11 +10,17 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('angie/js/json.js');
-ADocument::getInstance()->addScript('angie/js/ajax.js');
-ADocument::getInstance()->addScript('platform/js/setup.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('angie/js/json.js');
+$document->addScript('angie/js/ajax.js');
+$document->addScript('platform/js/setup.js');
+
 $url = 'index.php';
-ADocument::getInstance()->addScriptDeclaration(<<<ENDSRIPT
+
+$document->addScriptDeclaration(<<<ENDSRIPT
 var akeebaAjax = null;
 $(document).ready(function(){
 	akeebaAjax = new akeebaAjaxConnector('$url');
@@ -102,7 +108,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 							  title="<?php echo AText::_('SETUP_LBL_COOKIEPATH_HELP') ?>"></span>
 					</div>
 				</div>
-            <?php if (version_compare(ASession::getInstance()->get('jversion'), '3.2', 'ge')):?>
+            <?php if (version_compare($this->container->session->get('jversion'), '3.2', 'ge')):?>
                 <div class="control-group">
                     <label class="control-label" for="mailonline">
                         <?php echo AText::_('SETUP_LBL_MAILONLINE'); ?>

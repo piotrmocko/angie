@@ -17,11 +17,10 @@ class AngieControllerMagentoMain extends AngieControllerBaseMain
 	{
 		// Load the default configuration and save it to the session
 		$data   = $this->input->getData();
-		$model  = AModel::getAnInstance('Configuration', 'AngieModel');
 
-		$this->input->setData($data);
-
-		ASession::getInstance()->saveData();
+        $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+        $this->input->setData($data);
+        $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
 		$filename = APATH_SITE . '/wp-config.php';
@@ -34,7 +33,7 @@ class AngieControllerMagentoMain extends AngieControllerBaseMain
 				$model->set($k, $v);
 			}
 
-			ASession::getInstance()->saveData();
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}

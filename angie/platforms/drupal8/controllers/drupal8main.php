@@ -19,20 +19,22 @@ class AngieControllerDrupal8Main extends AngieControllerBaseMain
 		$data = $this->input->getData();
 
         /** @var AngieModelBaseConfiguration $model */
-		$model = AModel::getAnInstance('Configuration', 'AngieModel');
+		$model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 		$this->input->setData($data);
-		ASession::getInstance()->saveData();
+		$this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
 		$filename = APATH_SITE . '/sites/default/settings.php';
 		if (file_exists($filename))
 		{
 			$vars = $model->loadFromFile($filename);
-			foreach ($vars as $k => $v)
+
+            foreach ($vars as $k => $v)
 			{
 				$model->set($k, $v);
 			}
-			ASession::getInstance()->saveData();
+
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}

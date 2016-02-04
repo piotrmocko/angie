@@ -10,10 +10,10 @@ defined('_AKEEBA') or die();
 
 class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Get the Joomla! version from the configuration or the session
 		if (array_key_exists('jversion', $config))
@@ -22,11 +22,11 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 		}
 		else
 		{
-			$jVersion = ASession::getInstance()->get('jversion', '2.5.0');
+			$jVersion = $this->container->session->get('jversion', '2.5.0');
 		}
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-		$this->configvars = ASession::getInstance()->get('configuration.variables');
+		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars))
 		{

@@ -26,8 +26,8 @@ class AngieModelDrupal8Main extends AngieModelBaseMain
             $ret = Drupal::VERSION;
 		}
 
-		ASession::getInstance()->set('version', $ret);
-		ASession::getInstance()->saveData();
+		$this->container->session->set('version', $ret);
+		$this->container->session->saveData();
 	}
 
 	/**

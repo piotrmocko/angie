@@ -36,8 +36,8 @@ class AngieModelSteps extends AModel
 	public function resetSteps()
 	{
 		$this->steps = $this->defaultSteps;
-		ASession::getInstance()->remove('steps.allsteps');
-		ASession::getInstance()->remove('databases.dbini');
+        $this->container->session->remove('steps.allsteps');
+        $this->container->session->remove('databases.dbini');
 	}
 
 	/**
@@ -50,12 +50,12 @@ class AngieModelSteps extends AModel
 		if(empty($this->steps))
 		{
 			// First try fetching the steps from the session
-			$this->steps = ASession::getInstance()->get('steps.allsteps', null);
+			$this->steps = $this->container->session->get('steps.allsteps', null);
 			if (empty($this->steps))
 			{
 				// No steps are saved in the session. Initialise the steps.
 				$this->initialiseSteps();
-				ASession::getInstance()->set('steps.allsteps', $this->steps);
+                $this->container->session->set('steps.allsteps', $this->steps);
 			}
 		}
 
@@ -70,10 +70,10 @@ class AngieModelSteps extends AModel
 		$this->steps = $this->defaultSteps;
 
 		$data = $this->input->getData();
-		$this->steps['database'] = AModel::getAnInstance('Database', 'AngieModel')->getDatabaseNames();
+		$this->steps['database'] = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container)->getDatabaseNames();
 
 		// Do I have off-site directories?
-        $offsitedirs = AModel::getAnInstance('Offsitedirs', 'AngieModel')->getDirs();
+        $offsitedirs = AModel::getAnInstance('Offsitedirs', 'AngieModel', array(), $this->container)->getDirs();
 
         if($offsitedirs)
         {
@@ -160,7 +160,7 @@ class AngieModelSteps extends AModel
 	{
 		$steps = $this->getSteps();
 
-		$view = AApplication::getInstance()->getInput()->getCmd('step', '');
+		$view = $this->container->input->getCmd('step', '');
 		$keys = array_keys($steps);
 
 		if(!in_array($view, $keys))
@@ -189,7 +189,7 @@ class AngieModelSteps extends AModel
 			return null;
 		}
 
-		$cursubstep = AApplication::getInstance()->getInput()->getCmd('substep', null);
+		$cursubstep = $this->container->input->getCmd('substep', null);
 
 		if(!in_array($cursubstep, $keys))
 		{

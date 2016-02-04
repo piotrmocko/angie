@@ -12,57 +12,63 @@ class AngieDispatcher extends ADispatcher
 {
 	public function onBeforeDispatch()
 	{
-		if(!$this->checkSession()) {
+		if(!$this->checkSession())
+        {
 			return false;
 		}
-		if(!$this->passwordProtection()) {
+
+		if(!$this->passwordProtection())
+        {
 			return false;
 		}
-		
-		$view = $this->input->getCmd('view');
+
+		$view = $this->input->getCmd('view', '');
 		$this->input->set('step', $view);
-		
+
 		return true;
 	}
-	
+
 	private function checkSession()
 	{
-		if(!ASession::getInstance()->isStorageWorking())
+		if(!$this->container->session->isStorageWorking())
 		{
 			$view = $this->input->getCmd('view', $this->defaultView);
+
 			if (!in_array($view, array('session', 'ftpbrowser')))
 			{
-				AApplication::getInstance()->redirect('index.php?view=session');
+				$this->container->application->redirect('index.php?view=session');
 			}
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Check if the installer is password protected. If it is and the user has
 	 * not yet entered a password forward him to the password entry page.
-	 * 
+	 *
 	 * @return  boolean
 	 */
 	private function passwordProtection()
 	{
 		$filePath = APATH_INSTALLATION . '/password.php';
+
 		if (file_exists($filePath))
 		{
 			include_once $filePath;
 		}
-		
+
 		$view = $this->input->get('view', $this->defaultView);
-		
+
 		if (defined('AKEEBA_PASSHASH'))
 		{
-			$savedHash = ASession::getInstance()->get('angie.passhash', null);
+			$savedHash = $this->container->session->get('angie.passhash', null);
 			$parts = explode(':', AKEEBA_PASSHASH);
 			$correctHash = $parts[0];
 			$allowedViews = array('password', 'session', 'ftpbrowser');
+
 			if (defined('AKEEBA_PASSHASH') && !in_array($view, $allowedViews) && ($savedHash != $correctHash))
 			{
-				AApplication::getInstance()->redirect('index.php?view=password');
+				$this->container->application->redirect('index.php?view=password');
 				return true;
 			}
 		}
@@ -70,7 +76,7 @@ class AngieDispatcher extends ADispatcher
 		{
 			return false;
 		}
-		
+
 		return true;
 	}
 }

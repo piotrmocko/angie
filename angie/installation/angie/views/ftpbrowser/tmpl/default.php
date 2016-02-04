@@ -8,7 +8,11 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('angie/js/ftpbrowser.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('angie/js/ftpbrowser.js');
 ?>
 
 <?php if ($this->badFTP): ?>

@@ -52,6 +52,8 @@ class AModel
 	 */
 	protected $_state_set = false;
 
+    /** @var \AContainer Application container */
+    protected $container;
 
 	/**
 	 * Returns a new model object. Unless overriden by the $config array, it will
@@ -60,10 +62,17 @@ class AModel
 	 * @param string $type
 	 * @param string $prefix
 	 * @param array $config
+     * @param   AContainer $container
+     *
 	 * @return AModel
 	 */
-	public static function &getAnInstance( $type, $prefix = '', $config = array() )
+	public static function &getAnInstance( $type, $prefix = '', $config = array(), AContainer $container = null )
 	{
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
 		$type		    = preg_replace('/[^A-Z0-9_\.-]/i', '', $type);
         $types          = array(ANGIE_INSTALLER_NAME.$type, $type);
         $modelClass     = '';
@@ -80,29 +89,12 @@ class AModel
 			$component = '';
 		}
 
-		if (array_key_exists('input', $config))
-		{
-			if (!($config['input'] instanceof AInput))
-			{
-				if (!is_array($config['input']))
-				{
-					$config['input'] = (array)$config['input'];
-				}
-
-				$config['input'] = array_merge($_REQUEST, $config['input']);
-				$config['input'] = new AInput($config['input']);
-			}
-		}
-		else
-		{
-			$config['input'] = new AInput();
-		}
-
 		if (empty($component))
 		{
-			$defaultApp = AApplication::getInstance()->getName();
-			$component = $config['input']->get('option', $defaultApp);
+			$defaultApp = $container->application->getName();
+			$component  = $container->input->get('option', $defaultApp);
 		}
+
 		$config['option'] = $component;
 
 		$needsAView = true;
@@ -120,8 +112,8 @@ class AModel
 			$config['view'] = strtolower($type);
 		}
 
-		$config['input']->set('option', $config['option']);
-		$config['input']->set('view', $config['view']);
+        $container->input->set('option', $config['option']);
+        $container->input->set('view', $config['view']);
 
         foreach($types as $currentType)
         {
@@ -163,7 +155,7 @@ class AModel
 			$modelClass = 'AModel';
 		}
 
-		$result = new $modelClass($config);
+		$result = new $modelClass($config, $container);
 
 		return $result;
 	}
@@ -174,12 +166,13 @@ class AModel
 	 * @param   string  $type
 	 * @param   string  $prefix
 	 * @param   array   $config
+     * @param   AContainer $container
 	 *
 	 * @return  AModel
 	 */
-	public static function &getTmpInstance($type, $prefix = '', $config = array())
+	public static function &getTmpInstance($type, $prefix = '', $config = array(), AContainer $container = null)
 	{
-		$ret = self::getAnInstance($type, $prefix, $config)
+		$ret = self::getAnInstance($type, $prefix, $config, $container)
 			->getClone()
 			->clearState()
 			->clearInput()
@@ -190,34 +183,31 @@ class AModel
 	/**
 	 * Public class constructor
 	 *
-	 * @param type $config
+	 * @param array $config
+     * @param AContainer $container Application container
 	 */
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
+        $this->container = $container;
+
 		// Get the input
-		if (array_key_exists('input', $config))
-		{
-			if($config['input'] instanceof AInput)
-			{
-				$this->input = $config['input'];
-			}
-			else
-			{
-				$this->input = new AInput($config['input']);
-			}
-		}
-		else
-		{
-			$this->input = new AInput();
-		}
+		$this->input = $this->container->input;
 
 		// Set the $name variable
 		$component = $this->input->getCmd('option','com_foobar');
+
 		if (array_key_exists('option', $config))
 		{
 			$component = $config['option'];
 		}
+
 		$name = strtolower($component);
+
 		if(array_key_exists('name', $config))
 		{
 			$name = $config['name'];
@@ -228,12 +218,14 @@ class AModel
 
 		// Get the view name
 		$className = get_class($this);
+
 		if ($className == 'AModel')
 		{
 			if (array_key_exists('view', $config))
 			{
 				$view = $config['view'];
 			}
+
 			if (empty($view))
 			{
 				$view = $this->input->getCmd('view', 'cpanel');
@@ -316,16 +308,20 @@ class AModel
 	 */
 	public function getState($key = null, $default = null, $filter_type = 'raw')
 	{
-		if(empty($key)) {
+		if(empty($key))
+        {
 			return $this->internal_getState();
 		}
 
 		// Get the savestate status
 		$value = $this->internal_getState($key);
+
 		if(is_null($value))
 		{
 			$value = $this->getUserStateFromRequest($key, $key, $value, 'none', $this->_savestate);
-			if(is_null($value))	{
+
+			if(is_null($value))
+            {
 				return $default;
 			}
 		}
@@ -347,7 +343,7 @@ class AModel
 
 		if(is_null($hash))
 		{
-			$defaultApp = AApplication::getInstance()->getName();
+			$defaultApp = $this->container->application->getName();
 			$option = $this->input->getCmd('option', $defaultApp);
 			$view = $this->input->getCmd('view', 'cpanel');
 			$hash = "$option.$view.";
@@ -359,16 +355,17 @@ class AModel
 	 * Gets the value of a user state variable.
 	 *
 	 * @access	public
-	 * @param	string	The key of the user state variable.
-	 * @param	string	The name of the variable passed in a request.
-	 * @param	string	The default value for the variable if not found. Optional.
-	 * @param	string	Filter for the variable, for valid values see {@link JFilterInput::clean()}. Optional.
-	 * @param	bool	Should I save the variable in the user state? Default: true. Optional.
-	 * @return	The request user state.
+	 * @param	string	$key            The key of the user state variable.
+	 * @param	string	$request        The name of the variable passed in a request.
+	 * @param	string	$default        The default value for the variable if not found. Optional.
+	 * @param	string	$type           Filter for the variable, for valid values see {@link JFilterInput::clean()}. Optional.
+	 * @param	bool	$setUserState   Should I save the variable in the user state? Default: true. Optional.
+     *
+	 * @return	mixed   The request user state.
 	 */
 	protected function getUserStateFromRequest( $key, $request, $default = null, $type = 'none', $setUserState = true )
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 		$hash = $this->getHash();
 
 		$old_state = $session->get($hash.$key, null);
@@ -376,7 +373,8 @@ class AModel
 		$new_state = $this->input->get($request, null, $type);
 
 		// Save the new value only if it was set in this request
-		if($setUserState) {
+		if($setUserState)
+        {
 			if ($new_state !== null)
 			{
 				$session->set($hash.$key, $new_state);
@@ -485,7 +483,8 @@ class AModel
 	 * @param string $name
 	 * @return mixed
 	 */
-	public function __get($name) {
+	public function __get($name)
+    {
 		return $this->getState($name);
 	}
 
@@ -494,7 +493,8 @@ class AModel
 	 * @param string $name
 	 * @return mixed
 	 */
-	public function __set($name, $value) {
+	public function __set($name, $value)
+    {
 		return $this->setState($name, $value);
 	}
 
@@ -504,9 +504,11 @@ class AModel
 	 *
 	 * @param string $name
 	 * @param mixed $arguments
-	 * @return AModel
+     *
+	 * @return $this
 	 */
-	public function __call($name, $arguments) {
+	public function __call($name, $arguments)
+    {
 		$arg1 = array_shift($arguments);
 		$this->setState($name, $arg1);
 		return $this;
@@ -517,6 +519,8 @@ class AModel
 	 * save its state to the session.
 	 *
 	 * @param bool $newState True to save the state, false to not save it.
+     *
+     * @return $this
 	 */
 	public function &savestate($newState)
 	{
@@ -527,11 +531,15 @@ class AModel
 
 	public function populateSavesate()
 	{
-		if(is_null($this->_savestate)) {
+		if(is_null($this->_savestate))
+        {
 			$savestate = $this->input->getInt('savestate', -999);
-			if($savestate == -999) {
+
+			if($savestate == -999)
+            {
 				$savestate = true;
 			}
+
 			$this->savestate($savestate);
 		}
 	}

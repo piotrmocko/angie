@@ -18,11 +18,9 @@ class AngieControllerPhpbbMain extends AngieControllerBaseMain
 		// Load the default configuration and save it to the session
 		$data   = $this->input->getData();
         /** @var AngieModelPhpbbConfiguration $model */
-		$model  = AModel::getAnInstance('Configuration', 'AngieModel');
-
-		$this->input->setData($data);
-
-		ASession::getInstance()->saveData();
+        $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+        $this->input->setData($data);
+        $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration file
 		$filename = APATH_SITE . '/config.php';
@@ -35,7 +33,7 @@ class AngieControllerPhpbbMain extends AngieControllerBaseMain
 				$model->set($k, $v);
 			}
 
-			ASession::getInstance()->saveData();
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}

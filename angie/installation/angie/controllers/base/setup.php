@@ -14,10 +14,12 @@ class AngieControllerBaseSetup extends AController
     {
         /** @var AngieModelBaseSetup $model */
         $model = $this->getThisModel();
+        $msg   = null;
+        $type  = null;
+
         try
         {
             $writtenConfiguration = $model->applySettings();
-            $msg = null;
             $url = 'index.php?view=finalise';
 
             if (!$writtenConfiguration)
@@ -27,10 +29,19 @@ class AngieControllerBaseSetup extends AController
         }
         catch (Exception $exc)
         {
-            $msg = $exc->getMessage();
-            $url = 'index.php?view=setup';
+            $type = 'error';
+            $msg  = $exc->getMessage();
+            $url  = 'index.php?view=setup';
         }
 
-        $this->setRedirect($url, $msg, 'error');
+        $this->setRedirect($url, $msg, $type);
+
+        // Encode the result if we're in JSON format
+        if($this->input->getCmd('format', '') == 'json')
+        {
+            $result['error'] = $msg;
+
+            echo json_encode($result);
+        }
     }
 }

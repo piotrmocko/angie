@@ -8,9 +8,13 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('angie/js/json.js');
-ADocument::getInstance()->addScript('angie/js/ajax.js');
-ADocument::getInstance()->addScript('angie/js/finalise.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('angie/js/json.js');
+$document->addScript('angie/js/ajax.js');
+$document->addScript('angie/js/finalise.js');
 
 echo $this->loadAnyTemplate('steps/buttons');
 echo $this->loadAnyTemplate('steps/steps');

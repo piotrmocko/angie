@@ -187,7 +187,7 @@ abstract class AngieModelBaseMain extends AModel
     public function resetDatabaseConnectionInformation()
     {
         /** @var AngieModelDatabase $model */
-        $model = AModel::getAnInstance('Database', 'AngieModel');
+        $model = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
         $databasesIni = $model->getDatabasesIni();
 
         foreach ($databasesIni as $key => $data)
@@ -202,6 +202,6 @@ abstract class AngieModelBaseMain extends AModel
 
         $model->saveDatabasesIni();
 
-        ASession::getInstance()->set('main.resetdbinfo', true);
+        $this->container->session->set('main.resetdbinfo', true);
     }
 }

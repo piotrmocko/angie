@@ -26,8 +26,8 @@ class AngieModelJoomlaMain extends AngieModelBaseMain
 			$ret =$jv->getShortVersion();
 		}
 
-		ASession::getInstance()->set('jversion', $ret);
-		ASession::getInstance()->saveData();
+		$this->container->session->set('jversion', $ret);
+		$this->container->session->saveData();
 	}
 
 	/**
@@ -41,7 +41,7 @@ class AngieModelJoomlaMain extends AngieModelBaseMain
 
 		if (empty($phpOptions))
 		{
-			$jVersion = ASession::getInstance()->get('jversion');
+			$jVersion = $this->container->session->get('jversion');
 
 			if (version_compare($jVersion, '3.0.0', 'lt'))
 			{
@@ -140,7 +140,7 @@ class AngieModelJoomlaMain extends AngieModelBaseMain
 
 		if (empty($phpOptions))
 		{
-			$jVersion = ASession::getInstance()->get('jversion');
+			$jVersion = $this->container->session->get('jversion');
 
 			$phpOptions[] = array(
 				'label'			=> AText::_('MAIN_REC_SAFEMODE'),

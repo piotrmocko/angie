@@ -15,54 +15,71 @@ class ADispatcher
 	/** @var array Configuration variables */
 	protected $config = array();
 
+    /** @var  AContainer Application container */
+    protected $container;
+
 	/** @var AInput Input variables */
 	protected $input = array();
 
 	/** @var string The name of the default view, in case none is specified */
 	public $defaultView = 'main';
-	
+
 	/**
 	 * Get a static (Singleton) instance of a particular Dispatcher
-	 * 
+	 *
 	 * @staticvar array $instances Holds the array of Dispatchers ANGI knows about
-	 * 
+	 *
 	 * @param   string  $option  The component name
 	 * @param   string  $view    The View name
 	 * @param   array   $config  Configuration data
-	 * 
+	 * @param   AContainer  $container  Application container
+     *
 	 * @return  ADispatcher
 	 */
-	public static function &getAnInstance($option = null, $view = null, $config = array())
+	public static function &getAnInstance($option = null, $view = null, $config = array(), AContainer $container = null)
 	{
 		static $instances = array();
 
 		$hash = $option.$view;
+
 		if (!array_key_exists($hash, $instances))
 		{
-			$instances[$hash] = self::getTmpInstance($option, $view, $config);
+            if(is_null($container))
+            {
+                $container = AApplication::getInstance()->getContainer();
+            }
+
+			$instances[$hash] = self::getTmpInstance($option, $view, $config, $container);
 		}
 
 		return $instances[$hash];
 	}
-	
+
 	/**
 	 * Gets a temporary instance of a Dispatcher
-	 * 
-	 * @param   string  $option  The component name
-	 * @param   string  $view    The View name
-	 * @param   array   $config  Configuration data
-	 * 
+	 *
+	 * @param   string      $option     The component name
+	 * @param   string      $view       The View name
+	 * @param   array       $config     Configuration data
+     * @param   AContainer  $container  Application container
+	 *
 	 * @return ADispatcher
 	 */
-	public static function &getTmpInstance($option = null, $view = null, $config = array())
+	public static function &getTmpInstance($option = null, $view = null, $config = array(), AContainer $container = null)
 	{
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
+        // TODO Check the following code to use only the container
 		if(array_key_exists('input', $config))
 		{
 			if ($config['input'] instanceof AInput)
 			{
 				$input = $config['input'];
 			}
-			else 
+			else
 			{
 				if (!is_array($config['input']))
 				{
@@ -74,11 +91,11 @@ class ADispatcher
 		}
 		else
 		{
-			$input = new AInput();
+			$input = $container->input;
 		}
-		
-		$defaultApp = AApplication::getInstance()->getName();
-		
+
+		$defaultApp = $container->application->getName();
+
 		if (!is_null($option))
 		{
 			$config['option'] = $option;
@@ -87,6 +104,7 @@ class ADispatcher
 		{
 			$config['option'] = $input->getCmd('option', $defaultApp);
 		}
+
 		if (!is_null($view))
 		{
 			$config['view'] = $view;
@@ -95,7 +113,7 @@ class ADispatcher
 		{
 			$config['view'] = $input->getCmd('view','');
 		}
-		
+
 		$input->set('option',	$config['option']);
 		$input->set('view',		$config['view']);
 		$config['input'] = $input;
@@ -139,17 +157,26 @@ class ADispatcher
 			$className = 'ADispatcher';
 		}
 
-		$instance = new $className($config);
+		$instance = new $className($config, $container);
 
 		return $instance;
 	}
-	
+
 	/**
 	 * Public constructor
-	 * 
-	 * @param   array  $config  The configuration variables
+	 *
+	 * @param   array       $config     The configuration variables
+     * @param   AContainer  $container  Application container
 	 */
-	public function __construct($config = array()) {
+	public function __construct($config = array(), AContainer $container = null)
+    {
+        $this->container = $container;
+
+        if(is_null($this->container))
+        {
+            $this->container = new AContainer();
+        }
+
 		// Cache the config
 		$this->config = $config;
 
@@ -157,14 +184,15 @@ class ADispatcher
 		if(array_key_exists('input', $config)) {
 			$this->input = $config['input'];
 		} else {
-			$this->input = new AInput();
+			$this->input = $this->container->input;
 		}
 
 		// Get the default values for the component and view names
-		$defaultApp = AApplication::getInstance()->getName();
+		$defaultApp = $container->application->getName();
 		$this->component	= $this->input->getCmd('option', $defaultApp);
 		$this->view			= $this->input->getCmd('view', $this->defaultView);
 		$this->layout		= $this->input->getCmd('layout', null);
+
 		if (empty($this->view))
 		{
 			$this->view = $this->defaultView;
@@ -195,13 +223,13 @@ class ADispatcher
 		$this->input->set('view',	$this->view);
 		$this->input->set('layout',	$this->layout);
 	}
-	
+
 	/**
 	 * The main code of the Dispatcher. It spawns the necessary controller and
 	 * runs it.
-	 * 
+	 *
 	 * @return  null
-	 * 
+	 *
 	 * @throws  Exception
 	 */
 	public function dispatch()
@@ -219,39 +247,46 @@ class ADispatcher
 		}
 
 		// Get and execute the controller
-		$defaultApp = AApplication::getInstance()->getName();
+		$defaultApp = $this->container->application->getName();
 		$option	= $this->input->getCmd('option', $defaultApp);
 		$view	= $this->input->getCmd('view', $this->defaultView);
 		$task	= $this->input->getCmd('task', 'default');
+
 		if (empty($task))
 		{
 			$task = $this->getTask($view);
 		}
-		
+
 		$this->input->set('view',$view);
 		$this->input->set('task',$task);
 
 		$config = $this->config;
 		$config['input'] = $this->input;
 
-		$controller = AController::getTmpInstance($option, $view, $config);
+		$controller = AController::getTmpInstance($option, $view, $config, $this->container);
 		$status = $controller->execute($task);
 
-		if($status === false) {
+		if($status === false)
+        {
 			throw new Exception(AText::_('ANGI_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
-		if(!$this->onAfterDispatch()) {
+		if(!$this->onAfterDispatch())
+        {
 			throw new Exception(AText::_('ANGI_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
-		$controller->redirect();
+        // Issue the redirect only if we're not in JSON format
+        if($this->input->getCmd('format', '') != 'json')
+        {
+            $controller->redirect();
+        }
 	}
 
 	/**
 	 * Executes right before the dispatcher tries to instantiate and run the
 	 * controller.
-	 * 
+	 *
 	 * @return  boolean  Return false to abort
 	 */
 	public function onBeforeDispatch()
@@ -261,13 +296,13 @@ class ADispatcher
 
 	/**
 	 * Executes right after the dispatcher runs the controller.
-	 * 
+	 *
 	 * @return  boolean  Return false to abort
 	 */
 	public function onAfterDispatch()
 	{
 		return true;
 	}
-	
+
 
 }

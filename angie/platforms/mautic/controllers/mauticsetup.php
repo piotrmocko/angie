@@ -19,11 +19,12 @@ class AngieControllerMauticSetup extends AngieControllerBaseSetup
 	{
         /** @var AngieModelMauticSetup $model */
 		$model = $this->getThisModel();
+
 		try
 		{
 			$writtenConfiguration = $model->applySettings();
 			$msg = null;
-            AApplication::getInstance()->session->set('writtenConfiguration', $writtenConfiguration);
+            $this->container->session->set('writtenConfiguration', $writtenConfiguration);
 
             $url = 'index.php?view=replacedata';
 		}
@@ -33,8 +34,16 @@ class AngieControllerMauticSetup extends AngieControllerBaseSetup
 			$url = 'index.php?view=setup';
 		}
 
-        AApplication::getInstance()->session->saveData();
+        $this->container->session->saveData();
 
 		$this->setRedirect($url, $msg, 'error');
+
+        // Encode the result if we're in JSON format
+        if($this->input->getCmd('format', '') == 'json')
+        {
+            $result['error'] = $msg;
+
+            echo json_encode($result);
+        }
 	}
 }

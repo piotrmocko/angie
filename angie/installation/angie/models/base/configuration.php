@@ -24,7 +24,7 @@ abstract class AngieModelBaseConfiguration extends AModel
     {
         if (!empty($this->configvars))
         {
-            ASession::getInstance()->set('configuration.variables', $this->configvars);
+            $this->container->session->set('configuration.variables', $this->configvars);
         }
     }
 
@@ -33,7 +33,7 @@ abstract class AngieModelBaseConfiguration extends AModel
      */
     public function saveToSession()
     {
-        ASession::getInstance()->set('configuration.variables', $this->configvars);
+        $this->container->session->set('configuration.variables', $this->configvars);
     }
 
     /**
@@ -42,7 +42,7 @@ abstract class AngieModelBaseConfiguration extends AModel
     public function reset()
     {
         $this->configvars = array();
-        ASession::getInstance()->remove('configuration.variables');
+        $this->container->session->remove('configuration.variables');
     }
 
     /**

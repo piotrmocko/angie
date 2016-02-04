@@ -13,14 +13,14 @@ class AngieViewDatabase extends AView
 	public function onBeforeMain()
 	{
 		/** @var AngieModelSteps $stepsModel */
-		$stepsModel = AModel::getAnInstance('Steps', 'AngieModel');
+		$stepsModel = AModel::getAnInstance('Steps', 'AngieModel', array(), $this->container);
 		/** @var AngieModelDatabase $dbModel */
-		$dbModel = AModel::getAnInstance('Database', 'AngieModel');
-		
+		$dbModel = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
+
 		$this->substep = $stepsModel->getActiveSubstep();
 		$this->number_of_substeps = $stepsModel->getNumberOfSubsteps();
 		$this->db = $dbModel->getDatabaseInfo($this->substep);
-		
+
 		return true;
 	}
 }

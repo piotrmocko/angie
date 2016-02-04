@@ -47,7 +47,7 @@ class AngieModelWordpressReplacedata extends AModel
 		if ( !is_object($this->db))
 		{
 			/** @var AngieModelDatabase $model */
-			$model      = AModel::getAnInstance('Database', 'AngieModel');
+			$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 			$keys       = $model->getDatabaseNames();
 			$firstDbKey = array_shift($keys);
 
@@ -79,7 +79,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	public function getReplacements($fromRequest = false)
 	{
-		$session      = ASession::getInstance();
+		$session      = $this->container->session;
 		$replacements = $session->get('dataReplacements', array());
 
 		if (empty($replacements))
@@ -141,7 +141,7 @@ class AngieModelWordpressReplacedata extends AModel
 			$additionalTables = array('#__blogs', '#__site', '#__sitemeta');
 
 			/** @var AngieModelWordpressConfiguration $config */
-			$config = AModel::getAnInstance('Configuration', 'AngieModel');
+			$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 			$mainBlogId = $config->get('blog_id_current_site', 1);
 
 			$map     = $this->getMultisiteMap($db);
@@ -193,7 +193,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	public function loadEngineStatus()
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		$this->replacements = $this->getReplacements();
 		$this->tables       = $session->get('replacedata.tables', array());
@@ -209,7 +209,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	public function saveEngineStatus()
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		$session->set('replacedata.tables', $this->tables);
 		$session->set('replacedata.currentTable', $this->currentTable);
@@ -265,7 +265,7 @@ class AngieModelWordpressReplacedata extends AModel
 		if ($this->isMultisite())
 		{
 			/** @var AngieModelWordpressConfiguration $config */
-			$config = AModel::getAnInstance('Configuration', 'AngieModel');
+			$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 			$mainBlogId = $config->get('blog_id_current_site', 1);
 
 			// First add the default core tables which are duplicated for each additional blog in the blog network
@@ -344,7 +344,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->timer = new ATimer($this->max_exec, 75);
 
 		/** @var AngieModelWordpressConfiguration $config */
-		$config    = AModel::getAnInstance('Configuration', 'AngieModel');
+		$config    = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 		$oldPrefix = $config->get('olddbprefix');
 		$newPrefix = $db->getPrefix();
 
@@ -358,7 +358,7 @@ class AngieModelWordpressReplacedata extends AModel
 				$blogIds = array_keys($map);
 
 				/** @var AngieModelWordpressConfiguration $config */
-				$config = AModel::getAnInstance('Configuration', 'AngieModel');
+				$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 				$mainBlogId = $config->get('blog_id_current_site', 1);
 
 				foreach ($blogIds as $id)
@@ -579,7 +579,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$replacements = array();
 
 		/** @var AngieModelWordpressConfiguration $config */
-		$config = AModel::getAnInstance('Configuration', 'AngieModel');
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 		// Main site's URL
 		$newReplacements = $this->getDefaultReplacementsForMainSite($config);
@@ -647,7 +647,7 @@ class AngieModelWordpressReplacedata extends AModel
 		if (is_null($map))
 		{
 			/** @var AngieModelWordpressConfiguration $config */
-			$config = AModel::getAnInstance('Configuration', 'AngieModel');
+			$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 			// Which site ID should I use?
 			$site_id = $config->get('site_id_current_site', 1);
@@ -684,7 +684,7 @@ class AngieModelWordpressReplacedata extends AModel
 	protected function isMultisite()
 	{
 		/** @var AngieModelWordpressConfiguration $config */
-		$config = AModel::getAnInstance('Configuration', 'AngieModel');
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 		return $config->get('multisite', false);
 	}

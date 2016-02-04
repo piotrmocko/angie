@@ -30,7 +30,7 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
 
         try
         {
-            /** @var AngieModelSetup $model */
+            /** @var AngieModelDrupal8Setup $model */
             $model  = $this->getThisModel();
             $config = '';
             $error  = '';
@@ -39,8 +39,8 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
 
             if(!$writtenConfiguration)
             {
-                /** @var AngieModelConfiguration $configModel */
-                $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+                /** @var AngieModelDrupal8Configuration $configModel */
+                $configModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
                 $config      = $configModel->getFileContents(APATH_SITE . '/sites/'.$key.'/settings.php');
                 $error       = AText::_('FINALISE_LBL_CONFIGINTRO').'<br/>'.AText::_('FINALISE_LBL_CONFIGOUTRO');
             }

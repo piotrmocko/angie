@@ -8,10 +8,14 @@
 
 defined('_AKEEBA') or die();
 
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
 $data = $this->input->getData();
 
 /** @var AngieModelSteps $stepsModel */
-$stepsModel = AModel::getAnInstance('Steps', 'AngieModel');
+$stepsModel = AModel::getAnInstance('Steps', 'AngieModel', array(), $this->container);
 $this->input->setData($data);
 
 // Previous step
@@ -21,7 +25,7 @@ if(!empty($prevStep['step']))
 {
 	$url = 'index.php?view=' . $prevStep['step']
 		. (!empty($prevStep['substep']) ? '&substep=' . $prevStep['substep'] : '');
-	ADocument::getInstance()->appendButton(
+	$document->appendButton(
 		'GENERIC_BTN_PREV', $url, '', 'arrow-left', 'btnPrev'
 	);
 }
@@ -35,12 +39,12 @@ if($stepsModel->getActiveStep() == 'database')
 	{
 		$url = 'index.php?view=' . $nextStep['step']
 			. (!empty($nextStep['substep']) ? '&substep=' . $nextStep['substep'] : '');
-		ADocument::getInstance()->appendButton(
+		$document->appendButton(
 			'GENERIC_BTN_SKIP', $url, 'warning', 'white forward', 'btnSkip'
 		);
 	}
 	$key = $stepsModel->getActiveSubstep();
-	ADocument::getInstance()->appendButton(
+	$document->appendButton(
 		'GENERIC_BTN_NEXT', 'javascript:databaseRunRestoration(\''.$key.'\'); return false;', 'primary', 'white arrow-right', 'btnNext'
 	);
 }
@@ -53,13 +57,13 @@ elseif($stepsModel->getActiveStep() == 'offsitedirs')
     {
         $url = 'index.php?view=' . $nextStep['step']
             . (!empty($nextStep['substep']) ? '&substep=' . $nextStep['substep'] : '');
-        ADocument::getInstance()->appendButton(
+        $document->appendButton(
             'GENERIC_BTN_SKIP', $url, 'warning', 'white forward', 'btnSkip'
         );
     }
 
     $key = $stepsModel->getActiveSubstep();
-    ADocument::getInstance()->appendButton(
+    $document->appendButton(
         'GENERIC_BTN_NEXT', 'javascript:offsitedirsRunRestoration(\''.$key.'\'); return false;', 'primary', 'white arrow-right', 'btnNext'
     );
 }
@@ -75,12 +79,12 @@ elseif($stepsModel->getActiveStep() == 'setup')
         {
             $url = 'index.php?view=' . $nextStep['step']
                 . (!empty($nextStep['substep']) ? '&substep=' . $nextStep['substep'] : '');
-            ADocument::getInstance()->appendButton(
+            $document->appendButton(
                 'GENERIC_BTN_SKIP', $url, 'warning', 'white forward', 'btnSkip'
             );
         }
 
-        ADocument::getInstance()->appendButton(
+        $document->appendButton(
             'GENERIC_BTN_NEXT', 'javascript:setupRunRestoration(\''.$key.'\'); return false;', 'primary multisite', 'white arrow-right', 'btnNext'
         );
     }
@@ -90,7 +94,7 @@ elseif($stepsModel->getActiveStep() == 'setup')
         {
             $url = 'index.php?view=' . $nextStep['step']
                 . (!empty($nextStep['substep']) ? '&substep=' . $nextStep['substep'] : '');
-            ADocument::getInstance()->appendButton(
+            $document->appendButton(
                 'GENERIC_BTN_NEXT', $url, 'primary', 'white arrow-right', 'btnNext'
             );
         }
@@ -104,7 +108,7 @@ else
 	{
 		$url = 'index.php?view=' . $nextStep['step']
 			. (!empty($nextStep['substep']) ? '&substep=' . $nextStep['substep'] : '');
-		ADocument::getInstance()->appendButton(
+		$document->appendButton(
 			'GENERIC_BTN_NEXT', $url, 'primary', 'white arrow-right', 'btnNext'
 		);
 	}

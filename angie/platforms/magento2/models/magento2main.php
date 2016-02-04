@@ -33,8 +33,8 @@ class AngieModelMagento2Main extends AngieModelBaseMain
             }
         }
 
-		ASession::getInstance()->set('version', $ret);
-		ASession::getInstance()->saveData();
+		$this->container->session->set('version', $ret);
+		$this->container->session->saveData();
 	}
 
 	/**

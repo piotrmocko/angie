@@ -10,13 +10,13 @@ defined('_AKEEBA') or die();
 
 class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-		$this->configvars = ASession::getInstance()->get('configuration.variables');
+		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars) || empty($this->configvars['blogname']))
 		{
@@ -457,7 +457,7 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 	{
         // Wordpress has some options set inside the db, too
         /** @var AngieModelDatabase $model */
-		$model      = AModel::getAnInstance('Database', 'AngieModel');
+		$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 		$keys       = $model->getDatabaseNames();
 		$firstDbKey = array_shift($keys);
 

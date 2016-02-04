@@ -28,8 +28,8 @@ class AngieModelWordpressMain extends AngieModelBaseMain
 			$ret = $wp_version;
 		}
 
-		ASession::getInstance()->set('version', $ret);
-		ASession::getInstance()->saveData();
+		$this->container->session->set('version', $ret);
+		$this->container->session->saveData();
 	}
 
 	/**

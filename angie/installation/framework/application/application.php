@@ -26,13 +26,21 @@ abstract class AApplication
 	/** @var string The name of the template's directory */
 	protected $template = null;
 
+    /** @var AContainer Application container */
+    protected $container = null;
+
 	/** @var array An array of application instances */
 	private static $instances = array();
 
-	/** @var AInput The input object */
+	/** @var AInput The input object
+     * @deprecated
+     */
 	public $input = null;
 
-	/** @var ASession The session object */
+	/**
+     * @var ASession The session object
+     * @deprecated
+     */
 	public $session = null;
 
 	/** @var array The application message queue */
@@ -41,18 +49,33 @@ abstract class AApplication
 	/**
 	 * Public constructor
 	 *
-	 * @param   array  $config  Configuration parameters
+	 * @param   array       $config     Configuration parameters
+     * @param   AContainer  $container  Application container
 	 */
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
-		// Set the application name
-		$this->name = $this->getName();
+        $this->container = $container;
+
+        if(is_null($this->container))
+        {
+            $this->container = new AContainer();
+        }
+
+        // Set the application name
+        if (empty($container['application_name']))
+        {
+            $container->application_name = $this->getName();
+        }
+
+        $this->name = $container->application_name;
 
 		// Load up the input
-		$this->input = new AInput();
+        // We keep it for the moment, but the correct usage is getting it from the container
+		$this->input = $container->input;
 
 		// Create a session
-		$this->session = ASession::getInstance();
+        // We keep it for the moment, but the correct usage is getting it from the container
+		$this->session = $this->container->session;
 
 		// Set up the template
 		if (array_key_exists('template', $config))
@@ -70,15 +93,16 @@ abstract class AApplication
 	/**
 	 * Gets an instance of the application
 	 *
-	 * @param   string  $name    The name of the application (folder name)
-	 * @param   array   $config  The configuration variables of the application
-	 * @param   string  $prefix  The prefix of the class name of the application
-	 *
+	 * @param   string      $name       The name of the application (folder name)
+	 * @param   array       $config     The configuration variables of the application
+	 * @param   string      $prefix     The prefix of the class name of the application
+	 * @param   AContainer  $container  Application container
+     *
 	 * @return  AApplication
 	 *
 	 * @throws  AExceptionApp
 	 */
-	public static function getInstance($name = null, $config = array(), $prefix = 'Angie')
+	public static function getInstance($name = null, $config = array(), $prefix = 'Angie', AContainer $container = null)
 	{
 		if (empty($name) && !empty(self::$instances))
 		{
@@ -92,24 +116,60 @@ abstract class AApplication
 
 		if(!array_key_exists($name, self::$instances))
 		{
-			$filePath = __DIR__ . '/../../'.$name.'/application.php';
-			$result = include_once($filePath);
-			if ($result === false)
-			{
-				throw new AExceptionApp("The application '$name' was not found on this server");
-			}
-
-			$className = ucfirst($prefix) . 'Application';
-			self::$instances[$name] = new $className($config);
+			self::$instances[$name] = self::getTmpInstance($name, $config, $prefix, $container);
 		}
 
 		return self::$instances[$name];
 	}
 
+    /**
+     * Gets a temporary instance of the application
+     *
+     * @param   string      $name       The name of the application (folder name)
+     * @param   array       $config     The configuration variables of the application
+     * @param   string      $prefix     The prefix of the class name of the application
+     * @param   AContainer  $container  Application container
+     *
+     * @return  AApplication
+     *
+     * @throws  AExceptionApp
+     */
+    public static function getTmpInstance($name, $config = array(), $prefix = 'Angie', AContainer $container = null)
+    {
+        if(is_null($container))
+        {
+            $container = new AContainer();
+        }
+
+        $filePath = __DIR__ . '/../../'.$name.'/application.php';
+        $result   = include_once($filePath);
+
+        if ($result === false)
+        {
+            throw new AExceptionApp("The application '$name' was not found on this server");
+        }
+
+        $className = ucfirst($prefix) . 'Application';
+
+        $instance = new $className($config, $container);
+
+        return $instance;
+    }
+
 	/**
 	 * Initialises the application
 	 */
 	abstract public function initialise();
+
+    /**
+     * Return Application
+     *
+     * @return \AContainer
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
 
 	/**
 	 * Dispatches the application
@@ -117,7 +177,8 @@ abstract class AApplication
 	public function dispatch()
 	{
 		@ob_start();
-		$dispatcher = ADispatcher::getAnInstance();
+		$dispatcher = $this->container->dispatcher;
+
 		$dispatcher->dispatch();
 		$result = @ob_get_clean();
 
@@ -161,12 +222,12 @@ abstract class AApplication
 		// For empty queue, if messages exists in the session, enqueue them first.
 		if (!count($this->messageQueue))
 		{
-			$sessionQueue = $this->session->get('application.queue');
+			$sessionQueue = $this->container->session->get('application.queue');
 
 			if (count($sessionQueue))
 			{
 				$this->messageQueue = $sessionQueue;
-				$this->session->remove('application.queue');
+				$this->container->session->remove('application.queue');
 			}
 		}
 
@@ -184,12 +245,12 @@ abstract class AApplication
 		// For empty queue, if messages exists in the session, enqueue them.
 		if (!count($this->messageQueue))
 		{
-			$sessionQueue = $this->session->get('application.queue');
+			$sessionQueue = $this->container->session->get('application.queue');
 
 			if (count($sessionQueue))
 			{
 				$this->messageQueue = $sessionQueue;
-				$this->session->remove('application.queue');
+				$this->container->session->remove('application.queue');
 			}
 		}
 
@@ -280,8 +341,8 @@ abstract class AApplication
 		// Persist messages if they exist.
 		if (count($this->messageQueue))
 		{
-			$this->session->set('application.queue', $this->messageQueue);
-			$this->session->saveData();
+			$this->container->session->set('application.queue', $this->messageQueue);
+			$this->container->session->saveData();
 		}
 
 		// If the headers have been sent, then we cannot send an additional location header
@@ -311,9 +372,9 @@ abstract class AApplication
 
 		if(is_null($instance))
 		{
-			$type = $this->input->getCmd('format', 'html');
+			$type = $this->container->input->getCmd('format', 'html');
 
-			$instance = ADocument::getInstance($type);
+			$instance = ADocument::getInstance($type, $this->container);
 		}
 
 		return $instance;
@@ -368,11 +429,11 @@ abstract class AApplication
 
 	/**
 	 * Returns the input object
-	 *
+	 * @deprecated
 	 * @return AInput
 	 */
 	public function getInput()
 	{
-		return $this->input;
+		return $this->container->input;
 	}
 }

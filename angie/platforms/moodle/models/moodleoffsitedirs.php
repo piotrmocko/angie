@@ -28,7 +28,7 @@ class AngieModelMoodleOffsitedirs extends AngieModelBaseOffsitedirs
         // Are we trying to restore the moodledata directory? If so let's save the target, so I can update the config file
         if($key == 'moodledata')
         {
-            ASession::getInstance()->set('directories.moodledata', $target);
+            $this->container->session->set('directories.moodledata', $target);
         }
 
         if(!file_exists($virtual))

@@ -17,7 +17,7 @@ defined('_AKEEBA') or die();
 <?php include __DIR__ . '/php/head.php' ?>
 </head>
 <body>
-<?php if (AApplication::getInstance()->getInput()->getCmd('tmpl', '') != 'component'): ?>
+<?php if (AApplication::getInstance()->getContainer()->input->getCmd('tmpl', '') != 'component'): ?>
 	<div id="wrap">
 		<div class="navbar navbar-inverse navbar-static-top">
 			<div class="navbar-inner">
@@ -38,7 +38,7 @@ defined('_AKEEBA') or die();
 <?php endif; ?>
 			<?php include __DIR__ . '/php/messages.php' ?>
 			<?php echo $this->getBuffer() ?>
-<?php if (AApplication::getInstance()->getInput()->getCmd('tmpl', '') != 'component'): ?>
+<?php if (AApplication::getInstance()->getContainer()->input->getCmd('tmpl', '') != 'component'): ?>
 		</div>
 	</div>
 	<div id="footer">

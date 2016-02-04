@@ -30,7 +30,7 @@ class AngieControllerDbrestore extends AController
 		}
 
 		/** @var AngieModelDatabase $model */
-		$model = AModel::getAnInstance('Database', 'AngieModel');
+		$model = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 		$savedData = $model->getDatabaseInfo($key);
 
 		if (is_object($savedData))
@@ -81,7 +81,7 @@ class AngieControllerDbrestore extends AController
 		$key = $this->input->get('key', null);
 
 		/** @var AngieModelDatabase $model */
-		$model = AModel::getAnInstance('Database', 'AngieModel');
+		$model = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 		$data = $model->getDatabaseInfo($key);
 
 		try

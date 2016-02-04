@@ -31,6 +31,6 @@ class AngieControllerMoodleFinalise extends AngieControllerBaseFinalise
 		@ob_end_clean();
 		echo '###'.json_encode($result).'###';
 
-		AApplication::getInstance()->close();
+        $this->container->application->close();
 	}
 }

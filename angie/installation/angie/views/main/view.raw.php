@@ -35,11 +35,11 @@ class AngieViewMain extends AView
 			return true;
 		}
 
-		/** @var AngieModelMain $model */
+		/** @var AngieModelBaseMain $model */
 		$model = $this->getModel();
 
 		/** @var ASession $session */
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		// Assign the results of the various checks
 		$this->reqSettings         = $model->getRequired();

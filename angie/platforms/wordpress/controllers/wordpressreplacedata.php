@@ -13,7 +13,7 @@ class AngieControllerWordpressReplacedata extends AController
 	public function main()
 	{
 		/** @var AngieModelWordpressConfiguration $config */
-		$config  = AModel::getAnInstance('Configuration', 'AngieModel');
+		$config  = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 		// These values are stored inside the session, after the setup step
 		$old_url = $config->get('oldurl');
@@ -48,17 +48,33 @@ class AngieControllerWordpressReplacedata extends AController
 			}
 			catch(Exception $e)
 			{
-				$result = array('msg' => 'Error ' . $e->getCode() . ': ' . $e->getMessage(), 'more' => false);
+				$result = array('error' => $e->getMessage(), 'msg' => 'Error ' . $e->getCode() . ': ' . $e->getMessage(), 'more' => false);
 			}
 		}
 
 		$model->saveEngineStatus();
 
-		AApplication::getInstance()->session->saveData();
+        $this->container->session->saveData();
 
-		@ob_end_clean();
-		echo '###'.json_encode($result).'###';
-
-		AApplication::getInstance()->close();
+		echo json_encode($result);
 	}
+
+    public function replaceneeded()
+    {
+        /** @var AngieModelWordpressConfiguration $config */
+        $config  = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+        $result  = true;
+
+        // These values are stored inside the session, after the setup step
+        $old_url = $config->get('oldurl');
+        $new_url = $config->get('homeurl');
+
+        // If we are restoring to the same URL we don't need to replace any data
+        if ($old_url == $new_url)
+        {
+            $result = false;
+        }
+
+        echo json_encode($result);
+    }
 }

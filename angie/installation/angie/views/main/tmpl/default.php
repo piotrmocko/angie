@@ -8,11 +8,17 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('angie/js/json.js');
-ADocument::getInstance()->addScript('angie/js/ajax.js');
-ADocument::getInstance()->addScript('platform/js/main.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('angie/js/json.js');
+$document->addScript('angie/js/ajax.js');
+$document->addScript('platform/js/main.js');
+
 $url = 'index.php';
-ADocument::getInstance()->addScriptDeclaration(<<<ENDSRIPT
+
+$document->addScriptDeclaration(<<<ENDSRIPT
 var akeebaAjax = null;
 $(document).ready(function(){
 	akeebaAjax = new akeebaAjaxConnector('$url');
@@ -20,10 +26,10 @@ $(document).ready(function(){
 ENDSRIPT
 );
 
-ADocument::getInstance()->appendButton(
+$document->appendButton(
 	'GENERIC_BTN_STARTOVER', 'index.php?view=main&task=startover', 'danger', 'white fire'
 );
-ADocument::getInstance()->appendButton(
+$document->appendButton(
 	'GENERIC_BTN_RECHECK', 'javascript:mainGetPage();', 'warning', 'white retweet'
 );
 

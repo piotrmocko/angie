@@ -12,22 +12,40 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 {
 	public function updatehtaccess()
 	{
-		// Make sure we have a file
-		$fileName = APATH_ROOT . '/.htaccess';
+        // Let's build the stack of possible files
+        $files = array(
+            APATH_ROOT . '/.htaccess',
+            APATH_ROOT . '/htaccess.bak'
+        );
 
-		if (!@file_exists($fileName))
-		{
-			$fileName = APATH_ROOT . '/htaccess.bak';
-		}
+        // Do I want to give more importance to .bak file first?
+        if($this->input->getInt('bak_first', 0))
+        {
+            rsort($files);
+        }
 
-		if (!@file_exists($fileName))
-		{
-			return true;
-		}
+        $fileName = false;
+
+        foreach($files as $file)
+        {
+            // Did I found what I'm looking for?
+            if(file_exists($file))
+            {
+                $fileName = $file;
+
+                break;
+            }
+        }
+
+        // No file? Let's stop here
+        if(!$fileName)
+        {
+            return true;
+        }
 
 		// Get the site's URL
 		/** @var AngieModelWordpressConfiguration $config */
-		$config  = AModel::getAnInstance('Configuration', 'AngieModel');
+		$config  = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 		$new_url = $config->get('siteurl');
 		$homeurl = $config->get('homeurl');
 		$newURI = new AUri($new_url);

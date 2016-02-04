@@ -10,13 +10,13 @@ defined('_AKEEBA') or die();
 
 class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-		$this->configvars = ASession::getInstance()->get('configuration.variables');
+		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars))
 		{
@@ -285,10 +285,10 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
     private function getStoreName()
     {
         $siteName = '';
-        $version  = ASession::getInstance()->get('version');
+        $version  = $this->container->session->get('version');
 
         /** @var AngieModelDatabase $model */
-        $model		 = AModel::getAnInstance('Database', 'AngieModel');
+        $model		 = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
         $keys		 = $model->getDatabaseNames();
         $firstDbKey	 = array_shift($keys);
 
@@ -345,7 +345,7 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 
     private function updateStore()
     {
-        $version  = ASession::getInstance()->get('version');
+        $version  = $this->container->session->get('version');
 
         $name = $this->get('dbtype');
         $options = array(

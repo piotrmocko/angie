@@ -12,7 +12,7 @@ class AngieViewReplacedata extends AView
 {
 	public function onBeforeMain()
 	{
-		ADocument::getInstance()->addScript('platform/js/replacedata.js');
+		$this->container->application->getDocument()->addScript('platform/js/replacedata.js');
 
 		/** @var AngieModelMauticReplacedata $model */
 		$model = $this->getModel();
