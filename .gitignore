@@ -1,0 +1,13 @@
+/.idea
+
+/angie/installation/platform
+/angie/installation/angie/platform
+/angie/installation/extrainfo.ini
+/angie/installation/log.txt
+/angie/installation/password.php
+/angie/installation/README.html
+/angie/installation/sql/*.s*
+/angie/installation/sql/*.ini
+/angie/installation/*.dat
+/angie/installation/tmp/*.dat
+/angie/installation/version.php
