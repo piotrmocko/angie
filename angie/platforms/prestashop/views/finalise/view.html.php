@@ -12,8 +12,6 @@ class AngieViewFinalise extends AView
 {
 	public function onBeforeMain()
 	{
-        $this->container->application->getDocument()->addScript('platform/js/finalise_wp.js');
-
 		$model = $this->getModel();
 
 		$this->showconfig = $model->getState('showconfig', 0);
