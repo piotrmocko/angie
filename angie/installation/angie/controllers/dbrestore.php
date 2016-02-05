@@ -50,7 +50,7 @@ class AngieControllerDbrestore extends AController
 
 		try
 		{
-			$restoreEngine = ADatabaseRestore::getInstance($key, $data);
+			$restoreEngine = ADatabaseRestore::getInstance($key, $data, $this->container);
 			$restoreEngine->removeInformationFromStorage();
 			$result = array(
 				'percent'	=> 0,
@@ -86,7 +86,7 @@ class AngieControllerDbrestore extends AController
 
 		try
 		{
-			$restoreEngine = ADatabaseRestore::getInstance($key, $data);
+			$restoreEngine = ADatabaseRestore::getInstance($key, $data, $this->container);
 			$result = $restoreEngine->stepRestoration();
 		}
 		catch (Exception $exc)
