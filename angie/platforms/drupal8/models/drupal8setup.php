@@ -15,6 +15,28 @@ class AngieModelDrupal8Setup extends AngieModelBaseSetup
      */
     protected $configModel;
 
+    /**
+     * I have to override the base method, since I could have more than one site and I have to
+     * manage the cache accordingly
+     *
+     * @param   string $folder
+     *
+     * @return  object
+     */
+    public function getStateVariables($folder = 'default')
+    {
+        static $params = array();
+
+        if(!isset($params[$folder]))
+        {
+            $params[$folder] = array();
+            $params[$folder] = array_merge($params[$folder], $this->getSiteParamsVars());
+            $params[$folder] = array_merge($params[$folder], $this->getSuperUsersVars());
+        }
+
+        return (object) $params[$folder];
+    }
+
 	/**
 	 * Gets the basic site parameters
 	 *
@@ -138,7 +160,7 @@ class AngieModelDrupal8Setup extends AngieModelBaseSetup
         $folder = trim($folder, " \t\n\r\0\x0B".DIRECTORY_SEPARATOR);
 
 		// Get the state variables and update the global configuration
-		$stateVars = $this->getStateVariables();
+		$stateVars = $this->getStateVariables($folder);
 		// -- General settings
 		$this->configModel->set('sitename', $stateVars->sitename, $folder);
 		$this->configModel->set('site_mail', $stateVars->siteemail, $folder);
