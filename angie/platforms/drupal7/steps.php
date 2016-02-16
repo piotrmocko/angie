@@ -48,8 +48,8 @@ class PlatformSteps
             $directories[] = $file->getPathname();
         }
 
-        /** @var AngieModelDrupal7Setup $configModel */
-        $configModel = AModel::getAnInstance('Setup', 'AngieModel');
+        /** @var AngieModelDrupal7Setup $setupModel */
+        $setupModel = AModel::getAnInstance('Setup', 'AngieModel');
 
         // Ok, now I got them all, now let's iterate inside them and double check if there's a settings.php file
         // If it's there, it means that we are in a multisite installation and we have to update those files/folders
@@ -59,7 +59,7 @@ class PlatformSteps
             {
                 // Wait, before adding such directory to the stack, I have to update them with the new domain name
                 // ie from oldsite.local.slave to newsite.com.slave
-                $directory = $configModel->updateSlaveDirectory($directory);
+                $directory = $setupModel->updateSlaveDirectory($directory);
 
                 $extraSetup[] = basename($directory);
             }
