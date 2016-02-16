@@ -48,18 +48,20 @@ class PlatformSteps
             $directories[] = $file->getPathname();
         }
 
+        /** @var AngieModelDrupal7Setup $configModel */
+        $configModel = AModel::getAnInstance('Setup', 'AngieModel');
+
+        // Ok, now I got them all, now let's iterate inside them and double check if there's a settings.php file
+        // If it's there, it means that we are in a multisite installation and we have to update those files/folders
         foreach($directories as $directory)
         {
-            $iterator = new DirectoryIterator($directory);
-
-            foreach($iterator as $file)
+            if(file_exists($directory.'/settings.php'))
             {
-                if($file->getFilename() != 'settings.php')
-                {
-                    continue;
-                }
+                // Wait, before adding such directory to the stack, I have to update them with the new domain name
+                // ie from oldsite.local.slave to newsite.com.slave
+                $directory = $configModel->updateSlaveDirectory($directory);
 
-                $extraSetup[] = basename($file->getPath());
+                $extraSetup[] = $directory;
             }
         }
 

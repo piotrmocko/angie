@@ -310,4 +310,9 @@ class AngieModelDrupal7Setup extends AngieModelBaseSetup
 
         return $db;
     }
+
+    public function updateSlaveDirectory($directory)
+    {
+        return $directory;
+    }
 }
