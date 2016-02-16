@@ -61,7 +61,7 @@ class PlatformSteps
                 // ie from oldsite.local.slave to newsite.com.slave
                 $directory = $configModel->updateSlaveDirectory($directory);
 
-                $extraSetup[] = $directory;
+                $extraSetup[] = basename($directory);
             }
         }
 
