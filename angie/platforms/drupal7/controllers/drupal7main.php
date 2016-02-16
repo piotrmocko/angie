@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieControllerDrupal7Main extends AngieControllerBaseMain
 {
 	/**
-	 * Try to read configuration.php
+	 * Try to read settings.php
 	 */
 	public function getconfig()
 	{
@@ -41,4 +41,25 @@ class AngieControllerDrupal7Main extends AngieControllerBaseMain
 			echo json_encode(false);
 		}
 	}
+
+    /**
+     * Is this a multisite installation?
+     */
+    public function isMultisite()
+    {
+        /** @var AngieModelDrupal7Configuration $configModel */
+        $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+        $folders = $configModel->getSettingsFolders();
+
+        // If I have more than a folder containing the settings.php file it means that this is
+        // a multisite installation
+        if(count($folders) > 1)
+        {
+            echo json_encode(true);
+        }
+        else
+        {
+            echo json_encode(false);
+        }
+    }
 }

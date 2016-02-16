@@ -64,4 +64,35 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
 
         echo json_encode($result);
     }
+
+    /**
+     * This method allows to update the slave directories with the new hostname. It's never invoked inside ANGIE,
+     * it's only used by UNiTE
+     */
+    public function updateSlaveDirectories()
+    {
+        /** @var AngieModelDrupal8Configuration $configModel */
+        $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+        /** @var AngieModelDrupal8Setup $setupModel */
+        $setupModel = AModel::getAnInstance('Setup', 'AngieModel');
+
+        // Do I have a multi-site environment? If so I have to display the setup page several times
+        $directories = $configModel->getSettingsFolders();
+
+        // We have to update
+        foreach($directories as $directory)
+        {
+            // Skip the default directory
+            if($directory == 'default')
+            {
+                continue;
+            }
+
+            // Wait, before adding such directory to the stack, I have to update them with the new domain name
+            // ie from oldsite.local.slave to newsite.com.slave
+            $setupModel->updateSlaveDirectory(APATH_ROOT.'/sites/'.$directory);
+        }
+
+        echo json_encode(true);
+    }
 }
