@@ -25,44 +25,29 @@ class PlatformSteps
             return $steps;
         }
 
-		// Do I have a multi-site environment? If so I have to display the setup page several times
-        $iterator    = new DirectoryIterator(APATH_ROOT.'/sites');
-        $directories = array();
-        $extraSetup  = array();
-
-        // First of all let's get all the directories. I have to exclude the "all" one since there could be a massive
-        // amount of files/directories
-        foreach($iterator as $file)
-        {
-            if($file->isDot() || !$file->isDir())
-            {
-                continue;
-            }
-
-            // Let's skip the "all" and "default" one, additional sites can't be there
-            if($file->getFilename() == 'all' || $file->getFilename() == 'default')
-            {
-                continue;
-            }
-
-            $directories[] = $file->getPathname();
-        }
-
+        /** @var AngieModelDrupal8Configuration $configModel */
+        $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
         /** @var AngieModelDrupal8Setup $setupModel */
         $setupModel = AModel::getAnInstance('Setup', 'AngieModel');
 
-        // Ok, now I got them all, now let's iterate inside them and double check if there's a settings.php file
-        // If it's there, it means that we are in a multisite installation and we have to update those files/folders
+        // Do I have a multi-site environment? If so I have to display the setup page several times
+        $extraSetup  = array();
+        $directories = $configModel->getSettingsFolders();
+
+        // We have to update
         foreach($directories as $directory)
         {
-            if(file_exists($directory.'/settings.php'))
+            // Skip the default directory
+            if($directory == 'default')
             {
-                // Wait, before adding such directory to the stack, I have to update them with the new domain name
-                // ie from oldsite.local.slave to newsite.com.slave
-                $directory = $setupModel->updateSlaveDirectory($directory);
-
-                $extraSetup[] = basename($directory);
+                continue;
             }
+
+            // Wait, before adding such directory to the stack, I have to update them with the new domain name
+            // ie from oldsite.local.slave to newsite.com.slave
+            $directory = $setupModel->updateSlaveDirectory(APATH_ROOT.'/sites/'.$directory);
+
+            $extraSetup[] = basename($directory);
         }
 
         if($extraSetup)
@@ -82,6 +67,6 @@ class PlatformSteps
             $steps['finalise'] = $finalise;
         }
 
-		return $steps;
+        return $steps;
 	}
 }

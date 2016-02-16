@@ -624,7 +624,7 @@ PHP;
      *
      * @return array
      */
-    private function getSettingsFolders()
+    public function getSettingsFolders()
     {
         // Do I have a multi-site environment? If so I have to display the setup page several times
         $iterator     = new DirectoryIterator(APATH_ROOT.'/sites');
@@ -651,16 +651,9 @@ PHP;
 
         foreach($directories as $directory)
         {
-            $iterator = new DirectoryIterator($directory);
-
-            foreach($iterator as $file)
+            if(file_exists($directory.'/settings.php'))
             {
-                if($file->getFilename() != 'settings.php')
-                {
-                    continue;
-                }
-
-                $extraFolders[] = basename($file->getPath());
+                $extraFolders[] = basename($directory);
             }
         }
 
