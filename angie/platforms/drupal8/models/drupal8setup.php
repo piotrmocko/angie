@@ -293,4 +293,57 @@ class AngieModelDrupal8Setup extends AngieModelBaseSetup
 
         return $db;
     }
+
+    /**
+     * Renames the directory containing the old host name to the new one
+     *
+     * @param   string  $directory  Absolute path to the slave directory with the old hostname
+     *
+     * @return  string
+     */
+    public function updateSlaveDirectory($directory)
+    {
+        // No need to continue if the directory is not valid
+        if(!is_dir($directory))
+        {
+            return $directory;
+        }
+
+        // First of all, let's get the old hostname
+        /** @var AngieModelDrupal8Main $mainModel */
+        $mainModel = AModel::getAnInstance('Main', 'AngieModel', array(), $this->container);
+        $extraInfo = $mainModel->getExtraInfo();
+
+        // No host information? Well, let's stop here
+        if(!isset($extraInfo['host']) || !$extraInfo['host'])
+        {
+            return $directory;
+        }
+
+        $uri = AUri::getInstance();
+
+        $oldHost = $extraInfo['host']['current'];
+        $newHost = $uri->getHost();
+
+        // If the old host name is not inside the folder name, there's no point in continuing
+        if(strpos($directory, $oldHost) === false)
+        {
+            return $directory;
+        }
+
+        // Can't fetch the new host? Let's stop here
+        if(!$newHost)
+        {
+            return $directory;
+        }
+
+        $newDirectory = str_replace($oldHost, $newHost, $directory);
+
+        if(!rename($directory, $newDirectory))
+        {
+            return $directory;
+        }
+
+        return $newDirectory;
+    }
 }
