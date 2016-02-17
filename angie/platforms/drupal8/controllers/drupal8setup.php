@@ -69,7 +69,7 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
      * This method allows to update the slave directories with the new hostname. It's never invoked inside ANGIE,
      * it's only used by UNiTE
      */
-    public function updateSlaveDirectories()
+    public function updateslavedirectories()
     {
         /** @var AngieModelDrupal8Configuration $configModel */
         $configModel = AModel::getAnInstance('Configuration', 'AngieModel');

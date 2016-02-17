@@ -47,7 +47,7 @@ class AngieControllerDrupal8Main extends AngieControllerBaseMain
     /**
      * Is this a multisite installation?
      */
-    public function isMultisite()
+    public function ismultisite()
     {
         /** @var AngieModelDrupal8Configuration $configModel */
         $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
