@@ -298,10 +298,11 @@ class AngieModelDrupal8Setup extends AngieModelBaseSetup
      * Renames the directory containing the old host name to the new one
      *
      * @param   string  $directory  Absolute path to the slave directory with the old hostname
+     * @param   string  $host       Force the host to a specific domain. This is used when we're restoring using UNiTE
      *
      * @return  string
      */
-    public function updateSlaveDirectory($directory)
+    public function updateSlaveDirectory($directory, $host = 'SERVER')
     {
         // No need to continue if the directory is not valid
         if(!is_dir($directory))
@@ -320,7 +321,7 @@ class AngieModelDrupal8Setup extends AngieModelBaseSetup
             return $directory;
         }
 
-        $uri = AUri::getInstance();
+        $uri = AUri::getInstance($host);
 
         $oldHost = $extraInfo['host']['current'];
         $newHost = $uri->getHost();

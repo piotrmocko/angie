@@ -76,6 +76,8 @@ class AngieControllerDrupal7Setup extends AngieControllerBaseSetup
         /** @var AngieModelDrupal7Setup $setupModel */
         $setupModel = AModel::getAnInstance('Setup', 'AngieModel');
 
+        $host = $this->input->getString('host', 'SERVER');
+
         // Do I have a multi-site environment? If so I have to display the setup page several times
         $directories = $configModel->getSettingsFolders();
 
@@ -90,7 +92,7 @@ class AngieControllerDrupal7Setup extends AngieControllerBaseSetup
 
             // Wait, before adding such directory to the stack, I have to update them with the new domain name
             // ie from oldsite.local.slave to newsite.com.slave
-            $setupModel->updateSlaveDirectory(APATH_ROOT.'/sites/'.$directory);
+            $setupModel->updateSlaveDirectory(APATH_ROOT.'/sites/'.$directory, $host);
         }
 
         echo json_encode(true);
