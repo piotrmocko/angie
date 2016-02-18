@@ -362,6 +362,24 @@ class AngieModelDrupal7Setup extends AngieModelBaseSetup
             return $directory;
         }
 
+        // Ok, I have successfully renamed the folder, now I have to update the Configuration model
+        // since it stores all the values using the folder name
+        $oldNamespace = basename($directory);
+        $newNamespace = basename($newDirectory);
+
+        /** @var AngieModelDrupal7Configuration $configModel */
+        $configModel = $this->configModel;
+        $configVars  = $configModel->getConfigvars();
+
+        if(isset($configVars[$oldNamespace]))
+        {
+            // Let's migrate all the values. Old values are still set, but we can live with that
+            foreach($configVars[$oldNamespace] as $key => $value)
+            {
+                $configModel->set($key, $value, $newNamespace);
+            }
+        }
+
         return $newDirectory;
     }
 }

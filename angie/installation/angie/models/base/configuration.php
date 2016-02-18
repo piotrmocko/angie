@@ -29,6 +29,16 @@ abstract class AngieModelBaseConfiguration extends AModel
     }
 
     /**
+     * Public getter for the configvars variable
+     * 
+     * @return array
+     */
+    public function getConfigvars()
+    {
+        return $this->configvars;
+    }
+
+    /**
      * Saves the modified configuration variables to the session
      */
     public function saveToSession()
