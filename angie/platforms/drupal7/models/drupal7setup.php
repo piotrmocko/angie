@@ -380,6 +380,10 @@ class AngieModelDrupal7Setup extends AngieModelBaseSetup
             }
         }
 
+        // Finally register the association between the old namespace with the new one
+        // it will be useful if we have a multi database installation, see AngieModelDrupal7Configuration::getDatabase()
+        $configModel->set('hostMapping', array($newNamespace => $oldNamespace), 'default');
+
         return $newDirectory;
     }
 }

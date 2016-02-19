@@ -525,6 +525,8 @@ PHP;
 
         // Do I have a multidb environment or everything is stored inside the same db with a different prefix
         $multidb = $this->configvars['multidb'];
+        // Do I have a host mapping (domain name changed)?
+        $hostMapping = $this->get('hostMapping', array(), 'default');
 
         // Separated databases, this is the easiest scenario
         if($multidb)
@@ -535,6 +537,12 @@ PHP;
             }
             else
             {
+                // Do I have a mapping for this key? If so let's use that
+                if(isset($hostMapping[$key]))
+                {
+                    $key = $hostMapping[$key];
+                }
+                
                 // Let's perform a partial search
                 foreach($keys as $storedKey)
                 {
