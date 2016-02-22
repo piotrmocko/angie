@@ -18,8 +18,19 @@ class AngieModelMagento2Setup extends AngieModelBaseSetup
 	protected function getSiteParamsVars()
 	{
 		$ret = array(
-			'adminurl' => $this->getState('adminurl', $this->configModel->get('adminurl', 'Restored website'))
+			'adminurl' => $this->getState('adminurl', $this->configModel->get('adminurl', 'Restored website')),
+			// We need a the URL of the shop, usually ANGIE can detect it, but if we're using UNiTE to restore the
+			// backup it can't detect it, so we have to externally supply it
+			'livesite' => $this->getState('livesite', $this->configModel->get('livesite', ''))
 		);
+
+		// Double check we have a valid livesite URL
+		if($ret['livesite'])
+		{
+			require_once APATH_INSTALLATION.'/angie/helpers/setup.php';
+
+			$ret['livesite'] = AngieHelperSetup::cleanLiveSite($ret['livesite']);
+		}
 
 		return $ret;
 	}
@@ -68,6 +79,7 @@ class AngieModelMagento2Setup extends AngieModelBaseSetup
 
 		// -- General settings
 		$this->configModel->set('adminurl', $stateVars->adminurl);
+		$this->configModel->set('livesite', $stateVars->livesite);
 
 		// -- Database settings
 		$connectionVars = $this->getDbConnectionVars();
