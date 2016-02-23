@@ -130,7 +130,18 @@ class AngieModelMagentoConfiguration extends AngieModelBaseConfiguration
 
         $db = ADatabaseFactory::getInstance()->getDriver($name, $options);
 
-        $url = str_replace('/installation', '', AUri::root());
+        // If supplied in the request (ie restoring using UNiTE) let's use that URL
+        $livesite = $this->get('livesite', '');
+
+        if(!$livesite)
+        {
+            $livesite = AUri::root();
+        }
+
+        $url = str_replace('/installation', '', $livesite);
+
+        // The URL must end with a slash
+        $url = rtrim($url, '/').'/';
 
         $query = $db->getQuery(true)
                     ->update($db->qn('#__core_config_data'))

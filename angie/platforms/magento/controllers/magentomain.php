@@ -23,7 +23,7 @@ class AngieControllerMagentoMain extends AngieControllerBaseMain
         $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
-		$filename = APATH_SITE . '/wp-config.php';
+		$filename = APATH_SITE . '/app/etc/local.xml';
 		if (file_exists($filename))
 		{
 			$vars = $model->loadFromFile($filename);
