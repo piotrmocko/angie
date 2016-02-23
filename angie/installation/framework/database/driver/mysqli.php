@@ -320,18 +320,29 @@ class ADatabaseDriverMysqli extends ADatabaseDriver
 	{
 		if (is_null($this->supportsUTF8MB4))
 		{
+			// Get the client driver (mysqli, mysqlnd) version
 			$client_version = mysqli_get_client_info();
 
+			// Get the MySQL server version
+			$server_version = $this->getVersion();
+
+			// We need MySQL server 5.5.3 or later for UTF8MB4 support
+			$this->supportsUTF8MB4 = version_compare($server_version, '5.5.3', '>=');
+
+			// Now we must make sure the client driver also supports UTF8MB4. Minimum acceptable version is 5.5.3 (the
+			// same version as MySQL, that's when the UTF8MB4 support was added in the first place).
+			$minVersion = '5.5.3';
+
+			// However, if we have mysqlnd a different version scheme was followed. We need mysqlnd version 5.0.9 or
+			// later for UTF8MB4 support.
 			if (strpos($client_version, 'mysqlnd') !== false)
 			{
 				$client_version = preg_replace('/^\D+([\d.]+).*/', '$1', $client_version);
+				$minVersion = '5.0.9';
+			}
 
-				$this->supportsUTF8MB4 = version_compare($client_version, '5.0.9', '>=');
-			}
-			else
-			{
-				$this->supportsUTF8MB4 = version_compare($client_version, '5.5.3', '>=');
-			}
+			// UTF8MB4 support equals server version match AND client version match (BOTH conditions must be fulfilled)
+			$this->supportsUTF8MB4 = $this->supportsUTF8MB4 && version_compare($client_version, $minVersion, '>=');
 		}
 
 		return $this->supportsUTF8MB4;
