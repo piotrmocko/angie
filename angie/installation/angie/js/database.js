@@ -7,6 +7,7 @@
 
 var databaseKey = null;
 var databaseThrottle = 100;
+var databasePasswordMessage = '';
 
 /**
  * Initialisation of the page
@@ -83,6 +84,15 @@ function databaseRunRestoration(key)
 	else if (databaseThrottle >= 60000)
 	{
 		databaseThrottle = 60000;
+	}
+
+	// Check whether the password contains non-ASCII characters and show a warning
+	if (databasePasswordMessage.length && (/^[a-zA-Z0-9- ]*$/.test(data.dbinfo.dbpass) == false))
+	{
+		if (!window.confirm(databasePasswordMessage))
+		{
+			return;
+		}
 	}
 
 	// Set up the modal dialog

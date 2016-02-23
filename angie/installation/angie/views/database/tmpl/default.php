@@ -13,7 +13,11 @@ $this->loadHelper('select');
 ADocument::getInstance()->addScript('angie/js/json.js');
 ADocument::getInstance()->addScript('angie/js/ajax.js');
 ADocument::getInstance()->addScript('angie/js/database.js');
+
 $url = 'index.php';
+$dbPassMessage = AText::_('DATABASE_ERR_COMPLEXPASSWORD');
+$dbPassMessage = str_replace("\n", '\\n', $dbPassMessage);
+
 ADocument::getInstance()->addScriptDeclaration(<<<JS
 var akeebaAjax = null;
 $(document).ready(function(){
@@ -23,6 +27,8 @@ $(document).ready(function(){
 	    $(this).hide();
 	    $('#advancedWrapper').show();
 	});
+
+	databasePasswordMessage = '$dbPassMessage';
 });
 JS
 );
