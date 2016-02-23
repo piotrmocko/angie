@@ -138,8 +138,9 @@ class AngieModelMoodleSetup extends AngieModelBaseSetup
 
 	private function applySuperAdminChanges()
 	{
-		require_once APATH_INSTALLATION.'/platform/password.php';
-
+        // Let's load the password compatibility file
+        require_once APATH_ROOT.'/installation/framework/utils/password.php';
+        
 		// Get the Super User ID. If it's empty, skip.
 		$id = $this->getState('superuserid', 0);
 		if (!$id)
