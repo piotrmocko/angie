@@ -12,18 +12,6 @@ class AngieViewFinalise extends AView
 {
 	public function onBeforeMain()
 	{
-        $this->container->application->getDocument()->addScriptDeclaration(<<<ENDSRIPT
-var akeebaAjax = null;
-$(document).ready(function(){
-    akeebaAjax = new akeebaAjaxConnector('index.php');
-
-    akeebaAjax.callJSON({
-        'view'   : 'runscripts',
-        'format' : 'raw'
-    });
-});
-ENDSRIPT
-);
 		$model = $this->getModel();
 
 		$this->showconfig = $model->getState('showconfig', 0);
