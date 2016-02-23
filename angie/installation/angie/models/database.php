@@ -86,7 +86,7 @@ class AngieModelDatabase extends AModel
 
 						if (!array_key_exists('utf8mb4', $data))
 						{
-							$data['utf8mb4'] = defined('ANGIE_ALLOW_UTF8MB4_DEFAULT') ? ANGIE_ALLOW_UTF8MB4_DEFAULT : false;;
+							$data['utf8mb4'] = defined('ANGIE_ALLOW_UTF8MB4_DEFAULT') ? ANGIE_ALLOW_UTF8MB4_DEFAULT : false;
 						}
 
 						if (!array_key_exists('maxexectime', $data))

@@ -37,6 +37,38 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 		$this->configModel->set('siteurl', $ret['siteurl']);
 		$this->configModel->set('homeurl', $ret['homeurl']);
 
+		// Special handling: if we were told to downgrade data from utf8mb4 to utf8 and the dbcharset or dbcollation
+		// contains utf8mb4 we have to downgrade that too to utf8.
+		/** @var AngieModelDatabase $dbModel */
+		$dbModel       = AModel::getTmpInstance('Database', 'AngieModel');
+		$allDbIni      = $dbModel->getDatabasesIni();
+		$dbNames       = $dbModel->getDatabaseNames();
+		$firstDb       = array_shift($dbNames);
+		$dbIni         = $allDbIni[ $firstDb ];
+		$dbOptions     = array(
+			'driver'   => $dbIni['dbtype'],
+			'database' => $dbIni['dbname'],
+			'select'   => 0,
+			'host'     => $dbIni['dbhost'],
+			'user'     => $dbIni['dbuser'],
+			'password' => $dbIni['dbpass'],
+			'prefix'   => $dbIni['prefix'],
+		);
+		$db            = ADatabaseDriver::getInstance($dbOptions);
+		$downgradeUtf8 = $dbIni['utf8tables'] && (
+				!$dbIni['utf8mb4']
+				|| ($dbIni['utf8mb4'] && !$db->supportsUtf8mb4())
+			);
+
+		if ($downgradeUtf8)
+		{
+			$ret['dbcharset']   = str_replace('utf8mb4', 'utf8', $ret['dbcharset']);
+			$ret['dbcollation'] = str_replace('utf8mb4', 'utf8', $ret['dbcollation']);
+
+			$this->configModel->set('dbcharset', $ret['dbcharset']);
+			$this->configModel->set('dbcollation', $ret['dbcollation']);
+		}
+
 		return $ret;
 	}
 
