@@ -17,7 +17,9 @@ class AngieModelMoodleSetup extends AngieModelBaseSetup
 	 */
 	protected function getSiteParamsVars()
 	{
-		$wwwroot = str_replace('/installation/', '', AUri::root());
+        // Do I have a www_root coming from UNiTE? If so, use it
+        $wwwroot = $this->input->get('livesite', AUri::root());
+		$wwwroot = str_replace('/installation/', '', $wwwroot);
 
 		// Create the host from the wwwroot - This regex is not optimal, but let's use the same used by Moodle
 		preg_match('|^[a-z]+://([a-zA-Z0-9-.]+)|i', $wwwroot, $matches);
@@ -140,7 +142,7 @@ class AngieModelMoodleSetup extends AngieModelBaseSetup
 	{
         // Let's load the password compatibility file
         require_once APATH_ROOT.'/installation/framework/utils/password.php';
-        
+
 		// Get the Super User ID. If it's empty, skip.
 		$id = $this->getState('superuserid', 0);
 		if (!$id)
