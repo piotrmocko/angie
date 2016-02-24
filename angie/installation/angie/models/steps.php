@@ -70,10 +70,15 @@ class AngieModelSteps extends AModel
 		$this->steps = $this->defaultSteps;
 
 		$data = $this->input->getData();
-		$this->steps['database'] = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container)->getDatabaseNames();
+        
+        /** @var AngieModelDatabase $dbModel */
+        $dbModel = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
+		$this->steps['database'] = $dbModel->getDatabaseNames();
 
 		// Do I have off-site directories?
-        $offsitedirs = AModel::getAnInstance('Offsitedirs', 'AngieModel', array(), $this->container)->getDirs();
+        /** @var AngieModelBaseOffsitedirs $offsiteModel */
+        $offsiteModel = AModel::getAnInstance('Offsitedirs', 'AngieModel', array(), $this->container);
+        $offsitedirs  = $offsiteModel->getDirs();
 
         if($offsitedirs)
         {

@@ -29,7 +29,9 @@ class AngieControllerOffsitedirs extends AController
 
 		try
 		{
-            $this->getThisModel()->moveDir($key);
+            /** @var AngieModelBaseOffsitedirs $model */
+            $model = $this->getThisModel();
+            $model->moveDir($key);
 
 			$result = array(
 				'percent'	=> 100,
