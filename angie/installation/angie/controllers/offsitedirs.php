@@ -50,4 +50,16 @@ class AngieControllerOffsitedirs extends AController
 
 		echo json_encode($result);
 	}
+
+    /**
+     * Do I have any offsite dir that I have to restore?
+     */
+    public function hasoffsitedirs()
+    {
+        /** @var AngieModelBaseOffsitedirs $model */
+        $model = $this->getThisModel();
+        $dirs  = $model->getDirs();
+
+        echo json_encode((bool)count($dirs));
+    }
 }
