@@ -27,6 +27,9 @@ abstract class ADocument
 
 	protected $styleDeclarations = array();
 
+    /** @var \AContainer Application container */
+    protected $container;
+
 	private static $instances = array();
 
 	private $buttons = array();
@@ -35,25 +38,38 @@ abstract class ADocument
 	 * Return the static instance of the document
 	 *
 	 * @param   string  $type  The document type (html or json)
+     * @param   AContainer $container Application container
 	 *
 	 * @return  ADocument
 	 */
-	public static function getInstance($type = 'html')
+	public static function getInstance($type = 'html', AContainer $container = null)
 	{
 		if(!array_key_exists($type, self::$instances))
 		{
 			$className = 'ADocument' . ucfirst($type);
+
 			if (!class_exists($className))
 			{
 				$className = 'ADocumentHtml';
 			}
-			self::$instances[$type] = new $className;
+
+			self::$instances[$type] = new $className($container);
 		}
 
 		return self::$instances[$type];
 	}
 
-	/**
+    public function __construct(AContainer $container = null)
+    {
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
+        $this->container = $container;
+    }
+
+    /**
 	 * Sets the buffer (contains the main content of the HTML page or the entire JSON response)
 	 *
 	 * @param   string  $buffer
@@ -210,6 +226,7 @@ abstract class ADocument
 	 * @param   string  $url      The URL of the button's action. Prefix with "javascript:" for an onClick Javascript action
 	 * @param   string  $type     The addon btn- Bootstrap classes, space separated, e.g. 'primary large'
 	 * @param   string  $icon     The Bootstrap icon- classes, space separated, e.g. 'white arrow-left'
+     * @param   string  $id
 	 */
 	public function appendButton($message, $url, $type = 'primary', $icon = '', $id = '')
 	{
@@ -282,7 +299,7 @@ abstract class ADocument
 	/**
 	 * Return all button definitions
 	 *
-	 * @return  type  array
+	 * @return  array  array
 	 */
 	public function getButtons()
 	{

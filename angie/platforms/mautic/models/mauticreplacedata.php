@@ -47,7 +47,7 @@ class AngieModelMauticReplacedata extends AModel
 		if ( !is_object($this->db))
 		{
 			/** @var AngieModelDatabase $model */
-			$model      = AModel::getAnInstance('Database', 'AngieModel');
+			$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 			$keys       = $model->getDatabaseNames();
 			$firstDbKey = array_shift($keys);
 
@@ -79,7 +79,7 @@ class AngieModelMauticReplacedata extends AModel
 	 */
 	public function getReplacements($fromRequest = false)
 	{
-		$session      = ASession::getInstance();
+		$session      = $this->container->session;
 		$replacements = $session->get('dataReplacements', array());
 
 		if (empty($replacements))
@@ -166,7 +166,7 @@ class AngieModelMauticReplacedata extends AModel
 	 */
 	public function loadEngineStatus()
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		$this->replacements = $this->getReplacements();
 		$this->tables       = $session->get('replacedata.tables', array());
@@ -182,7 +182,7 @@ class AngieModelMauticReplacedata extends AModel
 	 */
 	public function saveEngineStatus()
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		$session->set('replacedata.tables', $this->tables);
 		$session->set('replacedata.currentTable', $this->currentTable);
@@ -316,8 +316,8 @@ class AngieModelMauticReplacedata extends AModel
 	{
 		$replacements = array();
 
-		/** @var AngieModelConfiguration $config */
-		$config = AModel::getAnInstance('Configuration', 'AngieModel');
+		/** @var AngieModelMauticConfiguration $config */
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 		// Main site's URL
 		$newReplacements = $this->getDefaultReplacementsForMainSite($config);
@@ -366,7 +366,7 @@ class AngieModelMauticReplacedata extends AModel
 	/**
 	 * Internal method to get the default replacements for the main site URL
 	 *
-	 * @param   AngieModelConfiguration $config The configuration model
+	 * @param   AngieModelBaseConfiguration $config The configuration model
 	 *
 	 * @return  array  Any replacements to add
 	 */

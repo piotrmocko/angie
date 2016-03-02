@@ -24,8 +24,8 @@ class AngieControllerBaseMain extends AController
 
     public function startover()
     {
-        ASession::getInstance()->reset();
-        ASession::getInstance()->saveData();
+        $this->container->session->reset();
+        $this->container->session->saveData();
         $this->setRedirect('index.php?view=main');
     }
 }

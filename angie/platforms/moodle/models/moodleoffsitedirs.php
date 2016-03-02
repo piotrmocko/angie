@@ -19,6 +19,12 @@ class AngieModelMoodleOffsitedirs extends AngieModelBaseOffsitedirs
     public function moveDir($key)
     {
         $dirs = $this->getDirs(true, true);
+
+        if(!isset($dirs[$key]))
+        {
+            throw new Exception(AText::_('OFFSITEDIRS_VIRTUAL_DIR_NOT_FOUND'), 0);
+        }
+        
         $dir  = $dirs[$key];
         $info = $this->input->get('info', array(), 'array');
 
@@ -28,7 +34,7 @@ class AngieModelMoodleOffsitedirs extends AngieModelBaseOffsitedirs
         // Are we trying to restore the moodledata directory? If so let's save the target, so I can update the config file
         if($key == 'moodledata')
         {
-            ASession::getInstance()->set('directories.moodledata', $target);
+            $this->container->session->set('directories.moodledata', $target);
         }
 
         if(!file_exists($virtual))

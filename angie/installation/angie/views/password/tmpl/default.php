@@ -36,4 +36,8 @@ $(document).ready(function(){
 
 ENDSCRIPT;
 
-$x = ADocument::getInstance()->addScriptDeclaration($script);
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$x = $document->addScriptDeclaration($script);

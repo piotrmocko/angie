@@ -28,7 +28,7 @@ class AngieModelDatabase extends AModel
 	{
 		if (empty($this->dbini))
 		{
-			$this->dbini = ASession::getInstance()->get('databases.dbini', null);
+			$this->dbini = $this->container->session->get('databases.dbini', null);
 			if (empty($this->dbini))
 			{
 				$filename = APATH_INSTALLATION . '/sql/databases.ini';
@@ -114,7 +114,7 @@ class AngieModelDatabase extends AModel
 					$this->dbini = $temp;
 				}
 
-				ASession::getInstance()->set('databases.dbini', $this->dbini);
+                $this->container->session->set('databases.dbini', $this->dbini);
 			}
 		}
 
@@ -126,7 +126,7 @@ class AngieModelDatabase extends AModel
 	 */
 	public function saveDatabasesIni()
 	{
-		ASession::getInstance()->set('databases.dbini', $this->dbini);
+        $this->container->session->set('databases.dbini', $this->dbini);
 	}
 
 	/**

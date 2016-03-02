@@ -18,10 +18,10 @@ class AngieControllerJoomlaMain extends AngieControllerBaseMain
 		// Load the default configuration and save it to the session
 		$data = $this->input->getData();
 
-        /** @var AngieModelConfiguration $model */
-		$model = AModel::getAnInstance('Configuration', 'AngieModel');
-		$this->input->setData($data);
-		ASession::getInstance()->saveData();
+        /** @var AngieModelBaseConfiguration $model */
+        $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+        $this->input->setData($data);
+        $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
 		$filename = APATH_SITE . '/configuration.php';
@@ -35,7 +35,7 @@ class AngieControllerJoomlaMain extends AngieControllerBaseMain
 				$model->set($k, $v);
 			}
 
-			ASession::getInstance()->saveData();
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}

@@ -10,13 +10,18 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('angie/js/json.js');
-ADocument::getInstance()->addScript('angie/js/ajax.js');
-ADocument::getInstance()->addScript('platform/js/setup.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('angie/js/json.js');
+$document->addScript('angie/js/ajax.js');
+$document->addScript('platform/js/setup.js');
 
 $url = 'index.php';
 $hashUrl = AUri::base().'platform/newhash.php';
-ADocument::getInstance()->addScriptDeclaration(<<<JS
+
+$document->addScriptDeclaration(<<<JS
 var akeebaAjax = null;
 var hashUrl    = '$hashUrl';
 $(document).ready(function(){

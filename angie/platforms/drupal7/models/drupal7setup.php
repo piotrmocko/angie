@@ -10,6 +10,28 @@ defined('_AKEEBA') or die();
 
 class AngieModelDrupal7Setup extends AngieModelBaseSetup
 {
+    /**
+     * I have to override the base method, since I could have more than one site and I have to
+     * manage the cache accordingly
+     *
+     * @param   string $folder
+     *
+     * @return  object
+     */
+    public function getStateVariables($folder = 'default')
+    {
+        static $params = array();
+
+        if(!isset($params[$folder]))
+        {
+            $params[$folder] = array();
+            $params[$folder] = array_merge($params[$folder], $this->getSiteParamsVars());
+            $params[$folder] = array_merge($params[$folder], $this->getSuperUsersVars());
+        }
+
+        return (object) $params[$folder];
+    }
+
 	/**
 	 * Gets the basic site parameters
 	 *
@@ -154,7 +176,7 @@ class AngieModelDrupal7Setup extends AngieModelBaseSetup
         $folder = trim($folder, " \t\n\r\0\x0B".DIRECTORY_SEPARATOR);
 
 		// Get the state variables and update the global configuration
-		$stateVars = $this->getStateVariables();
+		$stateVars = $this->getStateVariables($folder);
 		// -- General settings
 		$this->configModel->set('sitename', $stateVars->sitename, $folder);
 		$this->configModel->set('site_mail', $stateVars->siteemail, $folder);
@@ -287,5 +309,81 @@ class AngieModelDrupal7Setup extends AngieModelBaseSetup
         $db = ADatabaseFactory::getInstance()->getDriver($name, $options);
 
         return $db;
+    }
+
+    /**
+     * Renames the directory containing the old host name to the new one
+     *
+     * @param   string  $directory  Absolute path to the slave directory with the old hostname
+     * @param   string  $host       Force the host to a specific domain. This is used when we're restoring using UNiTE
+     *
+     * @return  string
+     */
+    public function updateSlaveDirectory($directory, $host = 'SERVER')
+    {
+        // No need to continue if the directory is not valid
+        if(!is_dir($directory))
+        {
+            return $directory;
+        }
+
+        // First of all, let's get the old hostname
+        /** @var AngieModelDrupal7Main $mainModel */
+        $mainModel = AModel::getAnInstance('Main', 'AngieModel', array(), $this->container);
+        $extraInfo = $mainModel->getExtraInfo();
+
+        // No host information? Well, let's stop here
+        if(!isset($extraInfo['host']) || !$extraInfo['host'])
+        {
+            return $directory;
+        }
+
+        $uri = AUri::getInstance($host);
+
+        $oldHost = $extraInfo['host']['current'];
+        $newHost = $uri->getHost();
+
+        // If the old host name is not inside the folder name, there's no point in continuing
+        if(strpos($directory, $oldHost) === false)
+        {
+            return $directory;
+        }
+
+        // Can't fetch the new host? Let's stop here
+        if(!$newHost)
+        {
+            return $directory;
+        }
+
+        $newDirectory = str_replace($oldHost, $newHost, $directory);
+
+        if(!rename($directory, $newDirectory))
+        {
+            return $directory;
+        }
+
+        // Ok, I have successfully renamed the folder, now I have to update the Configuration model
+        // since it stores all the values using the folder name
+        $oldNamespace = basename($directory);
+        $newNamespace = basename($newDirectory);
+
+        /** @var AngieModelDrupal7Configuration $configModel */
+        $configModel = $this->configModel;
+        $configVars  = $configModel->getConfigvars();
+
+        if(isset($configVars[$oldNamespace]))
+        {
+            // Let's migrate all the values. Old values are still set, but we can live with that
+            foreach($configVars[$oldNamespace] as $key => $value)
+            {
+                $configModel->set($key, $value, $newNamespace);
+            }
+        }
+
+        // Finally register the association between the old namespace with the new one
+        // it will be useful if we have a multi database installation, see AngieModelDrupal7Configuration::getDatabase()
+        $configModel->set('hostMapping', array($newNamespace => $oldNamespace), 'default');
+
+        return $newDirectory;
     }
 }

@@ -30,7 +30,7 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
 
         try
         {
-            /** @var AngieModelSetup $model */
+            /** @var AngieModelDrupal8Setup $model */
             $model  = $this->getThisModel();
             $config = '';
             $error  = '';
@@ -39,8 +39,8 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
 
             if(!$writtenConfiguration)
             {
-                /** @var AngieModelConfiguration $configModel */
-                $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+                /** @var AngieModelDrupal8Configuration $configModel */
+                $configModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
                 $config      = $configModel->getFileContents(APATH_SITE . '/sites/'.$key.'/settings.php');
                 $error       = AText::_('FINALISE_LBL_CONFIGINTRO').'<br/>'.AText::_('FINALISE_LBL_CONFIGOUTRO');
             }
@@ -63,5 +63,38 @@ class AngieControllerDrupal8Setup extends AngieControllerBaseSetup
         }
 
         echo json_encode($result);
+    }
+
+    /**
+     * This method allows to update the slave directories with the new hostname. It's never invoked inside ANGIE,
+     * it's only used by UNiTE
+     */
+    public function updateslavedirectories()
+    {
+        /** @var AngieModelDrupal8Configuration $configModel */
+        $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+        /** @var AngieModelDrupal8Setup $setupModel */
+        $setupModel = AModel::getAnInstance('Setup', 'AngieModel');
+
+        $host = $this->input->getString('host', 'SERVER');
+
+        // Do I have a multi-site environment? If so I have to display the setup page several times
+        $directories = $configModel->getSettingsFolders();
+
+        // We have to update
+        foreach($directories as $directory)
+        {
+            // Skip the default directory
+            if($directory == 'default')
+            {
+                continue;
+            }
+
+            // Wait, before adding such directory to the stack, I have to update them with the new domain name
+            // ie from oldsite.local.slave to newsite.com.slave
+            $setupModel->updateSlaveDirectory(APATH_ROOT.'/sites/'.$directory, $host);
+        }
+
+        echo json_encode(true);
     }
 }

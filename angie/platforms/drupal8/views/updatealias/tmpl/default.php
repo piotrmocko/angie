@@ -10,7 +10,11 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('platform/js/updatealias.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('platform/js/updatealias.js');
 
 echo $this->loadAnyTemplate('steps/buttons');
 echo $this->loadAnyTemplate('steps/steps');

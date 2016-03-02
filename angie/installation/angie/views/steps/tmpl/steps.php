@@ -10,7 +10,7 @@ defined('_AKEEBA') or die();
 
 $data = $this->input->getData();
 /** @var AngieModelSteps $stepsModel */
-$stepsModel = AModel::getAnInstance('Steps', 'AngieModel');
+$stepsModel = AModel::getAnInstance('Steps', 'AngieModel', array(), $this->container);
 $this->input->setData($data);
 $crumbs = $stepsModel->getBreadCrumbs();
 $i = 0;

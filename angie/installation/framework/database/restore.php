@@ -141,14 +141,25 @@ abstract class ADatabaseRestore
 	 */
 	protected $queries = null;
 
+    /** @var  AContainer    Application container */
+    protected $container;
+
 	/**
 	 * Public constructor. Initialises the database restoration engine.
 	 *
-	 * @param   type  $dbkey        The databases.ini key of the current database
-	 * @param   type  $dbiniValues  The databases.ini configuration variables for the current database
+	 * @param   string      $dbkey          The databases.ini key of the current database
+	 * @param   string      $dbiniValues    The databases.ini configuration variables for the current database
+     * @param   AContainer  $container      Application container
 	 */
-	public function __construct($dbkey, $dbiniValues)
+	public function __construct($dbkey, $dbiniValues, AContainer $container = null)
 	{
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
+        $this->container = $container;
+
 		$this->dbkey = $dbkey;
 		$this->dbiniValues = $dbiniValues;
 
@@ -200,14 +211,15 @@ abstract class ADatabaseRestore
 	 *
 	 * @staticvar  array  $instances  The array of ADatabaseRestore instances
 	 *
-	 * @param   string  $dbkey        The key of the database being restored
-	 * @param   array   $dbiniValues  The database restoration configuration variables
+	 * @param   string      $dbkey        The key of the database being restored
+	 * @param   array       $dbiniValues  The database restoration configuration variables
+     * @param   AContainer  $container      Application container
 	 *
 	 * @return  ADatabaseRestore
 	 *
 	 * @throws Exception
 	 */
-	public static function getInstance($dbkey, $dbiniValues = null)
+	public static function getInstance($dbkey, $dbiniValues = null, AContainer $container = null)
 	{
 		static $instances = array();
 
@@ -223,8 +235,13 @@ abstract class ADatabaseRestore
 				$dbiniValues = (array)$dbiniValues;
 			}
 
+            if(is_null($container))
+            {
+                $container = AApplication::getInstance()->getContainer();
+            }
+
 			$class = 'ADatabaseRestore' . ucfirst($dbiniValues['dbtype']);
-			$instances[$dbkey] = new $class($dbkey, $dbiniValues);
+			$instances[$dbkey] = new $class($dbkey, $dbiniValues, $container);
 		}
 
 		return $instances[$dbkey];
@@ -237,7 +254,8 @@ abstract class ADatabaseRestore
 	{
 		$variables = array('start', 'foffset', 'totalqueries', 'curpart',
 			'partsmap', 'totalsize', 'runsize');
-		$session = ASession::getInstance();
+		$session = $this->container->session;
+
 		foreach($variables as $var)
 		{
 			$session->remove('restore.' . $this->dbkey . '.' . $var);
@@ -254,7 +272,7 @@ abstract class ADatabaseRestore
 	 */
 	protected function getFromStorage($var, $default = null)
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		return $session->get('restore.' . $this->dbkey . '.' . $var, $default);
 	}
@@ -267,7 +285,7 @@ abstract class ADatabaseRestore
 	 */
 	protected function setToStorage($var, $value)
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
 
 		return $session->set('restore.' . $this->dbkey . '.' . $var, $value);
 	}
@@ -360,7 +378,7 @@ abstract class ADatabaseRestore
 			$this->setToStorage('start', $this->start);
 			$this->setToStorage('totalqueries', $this->totalqueries);
 
-			ASession::getInstance()->saveData();
+			$this->container->session->saveData();
 		}
 	}
 
@@ -383,17 +401,19 @@ abstract class ADatabaseRestore
 	   $this->setToStorage('curpart', $this->curpart);
 	   $this->setToStorage('foffset', $this->foffset);
 
-	   ASession::getInstance()->saveData();
+	   $this->container->session->saveData();
 
 	   return $this->openFile();
    }
 
-	/**
-	 * Opens the SQL part file whose ID is specified in the $curpart variable
-	 * and updates the $file, $start and $foffset variables.
-	 *
-	 * @return  bool  True on success
-	 */
+    /**
+     * Opens the SQL part file whose ID is specified in the $curpart variable
+     * and updates the $file, $start and $foffset variables.
+     *
+     * @return bool True on success
+     *
+     * @throws \Exception
+     */
 	protected function openFile()
 	{
 		if (!is_numeric($this->curpart))
@@ -685,7 +705,7 @@ abstract class ADatabaseRestore
 			$this->removeInformationFromStorage();
 		}
 
-		ASession::getInstance()->saveData();
+		$this->container->session->saveData();
 
 		// Calculate estimated time
 		$bytesPerSecond = $bytes_in_step / $this->timer->getRunningTime();

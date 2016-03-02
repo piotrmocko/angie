@@ -49,7 +49,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
         $ret['livesite'] = AngieHelperSetup::cleanLiveSite($ret['livesite']);
 
-        if (version_compare(ASession::getInstance()->get('jversion'), '3.2', 'ge'))
+        if (version_compare($this->container->session->get('jversion'), '3.2', 'ge'))
         {
             $ret['mailonline'] = $this->getState('mailonline', $this->configModel->get('mailonline', '1'));
         }
@@ -214,7 +214,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		$this->configModel->set('tmp_path', $stateVars->tmppath);
 		$this->configModel->set('log_path', $stateVars->logspath);
 
-        if (version_compare(ASession::getInstance()->get('jversion'), '3.2', 'ge'))
+        if (version_compare($this->container->session->get('jversion'), '3.2', 'ge'))
         {
             $this->configModel->set('mailonline', $stateVars->mailonline);
         }
@@ -299,10 +299,10 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
     private function updateTFA($oldsecret, $newsecret)
     {
-        ASession::getInstance()->set('tfa_warning', false);
+        $this->container->session->set('tfa_warning', false);
 
         // There is no TFA in Joomla < 3.2
-        $jversion = ASession::getInstance()->get('jversion');
+        $jversion = $this->container->session->get('jversion');
         if(version_compare($jversion, '3.2', 'lt'))
         {
             return;
@@ -350,7 +350,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
         if(!FOFEncryptAes::isSupported())
         {
             // If not, set a flag, so we will display a big, fat warning in the finalize screen
-            ASession::getInstance()->set('tfa_warning', true);
+            $this->container->session->set('tfa_warning', true);
 
             // Let's disable them
             $query = $db->getQuery(true)
@@ -436,7 +436,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		$cryptpass = $crypt.':'.$salt;
 
 		// Get the Joomla! version. If none was detected we assume it's 1.5.0 (so we can use the legacy method)
-		$jVersion = ASession::getInstance()->get('jversion', '1.5.0');
+		$jVersion = $this->container->session->get('jversion', '1.5.0');
 
 		// If we're restoring Joomla! 3.2.2 or later which fully supports bCrypt then we need to get a bCrypt-hashed
 		// password.

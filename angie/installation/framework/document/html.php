@@ -14,9 +14,9 @@ class ADocumentHtml extends ADocument
 {
 	public function render()
 	{
-		$template = AApplication::getInstance()->getTemplate();
+		$template = $this->container->application->getTemplate();
 		$templatePath = APATH_THEMES . '/' . $template;
-		
+
 		include $templatePath . '/index.php';
 	}
 }

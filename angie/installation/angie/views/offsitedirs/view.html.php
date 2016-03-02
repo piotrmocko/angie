@@ -12,8 +12,10 @@ class AngieViewOffsitedirs extends AView
 {
 	public function onBeforeMain()
 	{
-		$stepsModel   = AModel::getAnInstance('Steps', 'AngieModel');
-        $offsiteModel = AModel::getAnInstance('Offsitedirs', 'AngieModel');
+        /** @var AngieModelSteps $stepsModel */
+		$stepsModel   = AModel::getAnInstance('Steps', 'AngieModel', array(), $this->container);
+        /** @var AngieModelOffsitedirs $offsiteModel */
+        $offsiteModel = AModel::getAnInstance('Offsitedirs', 'AngieModel', array(), $this->container);
 
         $substeps   = $offsiteModel->getDirs(true, true);
 		$cursubstep = $stepsModel->getActiveSubstep();

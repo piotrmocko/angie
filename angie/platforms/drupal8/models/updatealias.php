@@ -52,7 +52,7 @@ class AngieModelUpdatealias extends AModel
 
         // Let's use Configuration model function to extract the data we need
         /** @var AngieModelDrupal8Configuration $configModel */
-        $configModel = AModel::getTmpInstance('Configuration', 'AngieModel');
+        $configModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
         $aliases = $configModel->extractVariables($tokens, 'sites');
 

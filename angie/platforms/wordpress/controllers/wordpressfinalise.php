@@ -28,9 +28,6 @@ class AngieControllerWordpressFinalise extends AngieControllerBaseFinalise
 			}
 		}
 
-		@ob_end_clean();
-		echo '###'.json_encode($result).'###';
-
-		AApplication::getInstance()->close();
+		echo json_encode($result);
 	}
 }

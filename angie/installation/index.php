@@ -53,8 +53,12 @@ try
         define('ANGIE_INSTALLER_NAME', 'Generic');
     }
 
+    $container = new AContainer(array(
+        'application_name'	=> 'angie'
+    ));
+
 	// Create the application
-	$application = AApplication::getInstance('angie');
+	$application = $container->application;
 
 	// Initialise the application
 	$application->initialise();

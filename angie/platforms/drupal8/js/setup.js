@@ -24,46 +24,13 @@ $(document).ready(function(){
             return false;
         }
 
-        // Do I have to calculate the hash for the new password?
-        if($('#superuserpassword').val() != '')
-        {
-            $.ajax(hashUrl, {
-                type : 'GET',
-                asynch : false,
-                data : {
-                    'pass' : $('#superuserpassword').val()
-                },
-                success : function(result){
-                    $('#hash').val(result);
-                    document.forms.setupForm.submit();
-                }
-            });
-        }
-        else
-        {
-            document.forms.setupForm.submit();
-        }
+        document.forms.setupForm.submit();
 
 		return false;
 	});
 });
 function setupRunRestoration(key)
 {
-    // Do I have to calculate the hash for the new password?
-    if($('#superuserpassword').val() != '')
-    {
-        $.ajax(hashUrl, {
-            type : 'GET',
-            asynch : false,
-            data : {
-                'pass' : $('#superuserpassword').val()
-            },
-            success : function(result){
-                $('#hash').val(result);
-            }
-        });
-    }
-
     $('input[name="task"]').val('applyjson');
     $('input[name="format"]').val('json');
     $('input[name="substep"]').val(key);

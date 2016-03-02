@@ -10,13 +10,13 @@ defined('_AKEEBA') or die();
 
 class AngieModelPhpbbConfiguration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-		$this->configvars = ASession::getInstance()->get('configuration.variables');
+		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars))
 		{

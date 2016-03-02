@@ -16,13 +16,13 @@ defined('_AKEEBA') or die();
  */
 class AngieModelDrupal8Configuration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-	    $this->configvars = ASession::getInstance()->get('configuration.variables');
+	    $this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars) || empty($this->configvars['default']['sitename']))
 		{
@@ -572,11 +572,13 @@ PHP;
     public function getDatabase($key = null)
     {
         /** @var AngieModelDatabase $model */
-        $model           = AModel::getAnInstance('Database', 'AngieModel');
+        $model           = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
         $keys            = $model->getDatabaseNames();
 
         // Do I have a multidb environment or everything is stored inside the same db with a different prefix
         $multidb = $this->configvars['multidb'];
+        // Do I have a host mapping (domain name changed)?
+        $hostMapping = $this->get('hostMapping', array(), 'default');
 
         // Separated databases, this is the easiest scenario
         if($multidb)
@@ -587,6 +589,12 @@ PHP;
             }
             else
             {
+                // Do I have a mapping for this key? If so let's use that
+                if(isset($hostMapping[$key]))
+                {
+                    $key = $hostMapping[$key];
+                }
+
                 // Let's perform a partial search
                 foreach($keys as $storedKey)
                 {
@@ -624,7 +632,7 @@ PHP;
      *
      * @return array
      */
-    private function getSettingsFolders()
+    public function getSettingsFolders()
     {
         // Do I have a multi-site environment? If so I have to display the setup page several times
         $iterator     = new DirectoryIterator(APATH_ROOT.'/sites');
@@ -651,16 +659,9 @@ PHP;
 
         foreach($directories as $directory)
         {
-            $iterator = new DirectoryIterator($directory);
-
-            foreach($iterator as $file)
+            if(file_exists($directory.'/settings.php'))
             {
-                if($file->getFilename() != 'settings.php')
-                {
-                    continue;
-                }
-
-                $extraFolders[] = basename($file->getPath());
+                $extraFolders[] = basename($directory);
             }
         }
 

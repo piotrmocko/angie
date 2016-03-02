@@ -18,7 +18,7 @@ class AngieModelBaseOffsitedirs extends AModel
         {
             if(!$force)
             {
-                $this->offsiteini = ASession::getInstance()->get('directories.offsiteini', null);
+                $this->offsiteini = $this->container->session->get('directories.offsiteini', null);
             }
 
             if (empty($this->offsiteini))
@@ -62,7 +62,7 @@ class AngieModelBaseOffsitedirs extends AModel
 
                 $this->offsiteini = $temp;
 
-                ASession::getInstance()->set('directories.offsiteini', $this->offsiteini);
+                $this->container->session->set('directories.offsiteini', $this->offsiteini);
             }
         }
 
@@ -72,6 +72,12 @@ class AngieModelBaseOffsitedirs extends AModel
     public function moveDir($key)
     {
         $dirs = $this->getDirs(true, true);
+        
+        if(!isset($dirs[$key]))
+        {
+            throw new Exception(AText::_('OFFSITEDIRS_VIRTUAL_DIR_NOT_FOUND'), 0);
+        }
+        
         $dir  = $dirs[$key];
         $info = $this->input->get('info', array(), 'array');
 

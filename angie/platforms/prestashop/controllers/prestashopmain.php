@@ -19,11 +19,9 @@ class AngieControllerPrestashopMain extends AngieControllerBaseMain
 		$data   = $this->input->getData();
 
         /** @var AngieModelPrestashopConfiguration $model */
-		$model  = AModel::getAnInstance('Configuration', 'AngieModel');
-
-		$this->input->setData($data);
-
-		ASession::getInstance()->saveData();
+        $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+        $this->input->setData($data);
+        $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration
 		$filename = APATH_SITE . '/config/settings.inc.php';
@@ -36,7 +34,7 @@ class AngieControllerPrestashopMain extends AngieControllerBaseMain
 				$model->set($k, $v);
 			}
 
-			ASession::getInstance()->saveData();
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}

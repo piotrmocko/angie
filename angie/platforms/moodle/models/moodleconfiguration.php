@@ -10,10 +10,10 @@ defined('_AKEEBA') or die();
 
 class AngieModelMoodleConfiguration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Get the Moodle version from the configuration or the session
 		if (array_key_exists('version', $config))
@@ -22,11 +22,11 @@ class AngieModelMoodleConfiguration extends AngieModelBaseConfiguration
 		}
 		else
 		{
-			$moodleVersion = ASession::getInstance()->get('version', '2.0.0');
+			$moodleVersion = $this->container->session->get('version', '2.0.0');
 		}
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-		$this->configvars = ASession::getInstance()->get('configuration.variables');
+		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars))
 		{
@@ -142,7 +142,7 @@ class AngieModelMoodleConfiguration extends AngieModelBaseConfiguration
 
 		// Moodle has some options set inside the db, too
 		/** @var AngieModelDatabase $model */
-		$model		 = AModel::getAnInstance('Database', 'AngieModel');
+		$model		 = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 		$keys		 = $model->getDatabaseNames();
 		$firstDbKey	 = array_shift($keys);
 
@@ -242,7 +242,7 @@ class AngieModelMoodleConfiguration extends AngieModelBaseConfiguration
 							$line = '$CFG->'.$key." = '".$value."';";
 							break;
 						case 'dataroot':
-							$value = ASession::getInstance()->get('directories.moodledata', $this->get('dataroot'));
+							$value = $this->container->session->get('directories.moodledata', $this->get('dataroot'));
 							$line = '$CFG->'.$key." = '".$value."';";
 							break;
 						case 'admin':
@@ -281,7 +281,8 @@ class AngieModelMoodleConfiguration extends AngieModelBaseConfiguration
 		// the configuration file write fails, the user has only to manually update the
 		// config file and he's ready to go.
 
-		$model		 = AModel::getAnInstance('Database', 'AngieModel');
+        /** @var AngieModelDatabase $model */
+		$model		 = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 		$keys		 = $model->getDatabaseNames();
 		$firstDbKey	 = array_shift($keys);
 

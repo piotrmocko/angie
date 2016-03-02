@@ -12,16 +12,17 @@ class AngieControllerSession extends AController
 {
 	public function main()
 	{
-		$session = ASession::getInstance();
+		$session = $this->container->session;
+
 		if ($session->isStorageWorking())
 		{
 			$this->setRedirect('index.php?view=main');
 			return;
 		}
-		
+
 		parent::main();
 	}
-	
+
 	public function fix()
 	{
 		try
@@ -31,7 +32,7 @@ class AngieControllerSession extends AController
 		}
 		catch (Exception $exc)
 		{
-			AApplication::getInstance()->enqueueMessage($exc->getMessage(), 'error');
+			$this->container->application->enqueueMessage($exc->getMessage(), 'error');
 			$this->task = 'main';
 			$this->doTask = 'main';
 			$this->main();

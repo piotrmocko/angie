@@ -19,9 +19,9 @@ class AngieControllerMauticMain extends AngieControllerBaseMain
 		$data = $this->input->getData();
 
         /** @var AngieModelMauticConfiguration $model */
-		$model = AModel::getAnInstance('Configuration', 'AngieModel');
-		$this->input->setData($data);
-		ASession::getInstance()->saveData();
+        $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+        $this->input->setData($data);
+        $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
 		$filename = APATH_SITE . '/app/config/local.php';
@@ -34,7 +34,7 @@ class AngieControllerMauticMain extends AngieControllerBaseMain
 				$model->set($k, $v);
 			}
 
-			ASession::getInstance()->saveData();
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}

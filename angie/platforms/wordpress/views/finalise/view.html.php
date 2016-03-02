@@ -12,17 +12,17 @@ class AngieViewFinalise extends AView
 {
 	public function onBeforeMain()
 	{
-        ADocument::getInstance()->addScript('platform/js/finalise_wp.js');
+        $this->container->application->getDocument()->addScript('platform/js/finalise_wp.js');
 
 		$model = $this->getModel();
 
-		$writtenConfiguration = AApplication::getInstance()->session->get('writtenConfiguration', true);
+		$writtenConfiguration = $this->container->session->get('writtenConfiguration', true);
 		$this->showconfig = !$writtenConfiguration;
 
 		if ($this->showconfig)
 		{
-			/** @var AngieModelConfiguration $configurationModel */
-			$configurationModel = AModel::getAnInstance('Configuration', 'AngieModel');
+			/** @var AngieModelWordpressConfiguration $configurationModel */
+			$configurationModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 			$this->configuration = $configurationModel->getFileContents();
 		}
 

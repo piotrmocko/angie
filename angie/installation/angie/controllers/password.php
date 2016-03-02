@@ -15,10 +15,10 @@ class AngieControllerPassword extends AController
 		$parts = explode(':', AKEEBA_PASSHASH);
 		$password = $this->input->get('password', '', 'raw');
 		$passHash = md5($password . $parts[1]);
-		
-		ASession::getInstance()->set('angie.passhash', $passHash);
-		ASession::getInstance()->saveData();
-		
+
+        $this->container->session->set('angie.passhash', $passHash);
+        $this->container->session->saveData();
+
 		if($passHash == $parts[0])
 		{
 			$this->setRedirect('index.php?view=main');

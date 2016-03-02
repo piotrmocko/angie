@@ -12,15 +12,10 @@ class AngieViewFinalise extends AView
 {
 	public function onBeforeMain()
 	{
-        ADocument::getInstance()->addScriptDeclaration(<<<ENDSRIPT
+        $this->container->application->getDocument()->addScriptDeclaration(<<<ENDSRIPT
 var akeebaAjax = null;
 $(document).ready(function(){
     akeebaAjax = new akeebaAjaxConnector('index.php');
-
-    akeebaAjax.callJSON({
-        'view'   : 'runscripts',
-        'format' : 'raw'
-    });
 });
 ENDSRIPT
 );
@@ -30,16 +25,8 @@ ENDSRIPT
 
 		if ($this->showconfig)
 		{
-			$this->configuration = AModel::getAnInstance('Configuration', 'AngieModel')->getFileContents();
+			$this->configuration = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container)->getFileContents();
 		}
-
-        if(ASession::getInstance()->get('tfa_warning', false))
-        {
-            $this->extra_warning  = '<div class="alert alert-block alert-error">';
-            $this->extra_warning .=     '<h4 class="alert-heading">'.AText::_('FINALISE_TFA_DISABLED_TITLE').'</h4>';
-            $this->extra_warning .=     '<p>'.AText::_('FINALISE_TFA_DISABLED_BODY').'</p>';
-            $this->extra_warning .= '</div>';
-        }
 
 		return true;
 	}

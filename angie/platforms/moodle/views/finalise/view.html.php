@@ -12,25 +12,13 @@ class AngieViewFinalise extends AView
 {
 	public function onBeforeMain()
 	{
-        ADocument::getInstance()->addScriptDeclaration(<<<ENDSRIPT
-var akeebaAjax = null;
-$(document).ready(function(){
-    akeebaAjax = new akeebaAjaxConnector('index.php');
-
-    akeebaAjax.callJSON({
-        'view'   : 'runscripts',
-        'format' : 'raw'
-    });
-});
-ENDSRIPT
-);
 		$model = $this->getModel();
 
 		$this->showconfig = $model->getState('showconfig', 0);
 
 		if ($this->showconfig)
 		{
-			$this->configuration = AModel::getAnInstance('Configuration', 'AngieModel')->getFileContents();
+			$this->configuration = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container)->getFileContents();
 		}
 
 		return true;

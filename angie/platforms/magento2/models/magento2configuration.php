@@ -10,13 +10,13 @@ defined('_AKEEBA') or die();
 
 class AngieModelMagento2Configuration extends AngieModelBaseConfiguration
 {
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
-		parent::__construct($config);
+		parent::__construct($config, $container);
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
-		$this->configvars = ASession::getInstance()->get('configuration.variables');
+		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars))
 		{
@@ -116,7 +116,15 @@ class AngieModelMagento2Configuration extends AngieModelBaseConfiguration
 
         $db = ADatabaseFactory::getInstance()->getDriver($name, $options);
 
-        $url = str_replace('/installation', '', AUri::root());
+        // If supplied in the request (ie restoring using UNiTE) let's use that URL
+        $livesite = $this->get('livesite', '');
+
+        if(!$livesite)
+        {
+            $livesite = AUri::root();
+        }
+
+        $url = str_replace('/installation', '', $livesite);
 
         $query = $db->getQuery(true)
                     ->update($db->qn('#__core_config_data'))

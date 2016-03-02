@@ -10,11 +10,15 @@
 
 defined('_AKEEBA') or die();
 
-ADocument::getInstance()->addScript('angie/js/json.js');
-ADocument::getInstance()->addScript('angie/js/ajax.js');
-ADocument::getInstance()->addScript('platform/js/setup.js');
+/** @var $this AView */
+
+$document = $this->container->application->getDocument();
+
+$document->addScript('angie/js/json.js');
+$document->addScript('angie/js/ajax.js');
+$document->addScript('platform/js/setup.js');
 $url = 'index.php';
-ADocument::getInstance()->addScriptDeclaration(<<<ENDSRIPT
+$document->addScriptDeclaration(<<<ENDSRIPT
 var akeebaAjax = null;
 $(document).ready(function(){
 	akeebaAjax = new akeebaAjaxConnector('$url');

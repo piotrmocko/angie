@@ -20,13 +20,14 @@ abstract class AngieModelBaseSetup extends AModel
     /**
      * Overridden constructor
      *
-     * @param   array  $config  Configuration array
+     * @param   array       $config     Configuration array
+     * @param   \AContainer $container
      */
-    public function __construct($config = array())
+    public function __construct($config = array(), AContainer $container = null)
     {
-        parent::__construct($config);
+        parent::__construct($config, $container);
 
-        $this->configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+        $this->configModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
     }
 
     /**
@@ -62,7 +63,7 @@ abstract class AngieModelBaseSetup extends AModel
     protected function getDbConnectionVars()
     {
         /** @var AngieModelDatabase $model */
-        $model		 = AModel::getAnInstance('Database', 'AngieModel');
+        $model		 = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
         $keys		 = $model->getDatabaseNames();
         $firstDbKey	 = array_shift($keys);
 

@@ -19,20 +19,22 @@ class AngieControllerDrupal8Main extends AngieControllerBaseMain
 		$data = $this->input->getData();
 
         /** @var AngieModelBaseConfiguration $model */
-		$model = AModel::getAnInstance('Configuration', 'AngieModel');
+		$model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 		$this->input->setData($data);
-		ASession::getInstance()->saveData();
+		$this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
 		$filename = APATH_SITE . '/sites/default/settings.php';
 		if (file_exists($filename))
 		{
 			$vars = $model->loadFromFile($filename);
-			foreach ($vars as $k => $v)
+
+            foreach ($vars as $k => $v)
 			{
 				$model->set($k, $v);
 			}
-			ASession::getInstance()->saveData();
+
+            $this->container->session->saveData();
 
 			echo json_encode(true);
 		}
@@ -41,4 +43,25 @@ class AngieControllerDrupal8Main extends AngieControllerBaseMain
 			echo json_encode(false);
 		}
 	}
+
+    /**
+     * Is this a multisite installation?
+     */
+    public function ismultisite()
+    {
+        /** @var AngieModelDrupal8Configuration $configModel */
+        $configModel = AModel::getAnInstance('Configuration', 'AngieModel');
+        $folders = $configModel->getSettingsFolders();
+
+        // If I have more than a folder containing the settings.php file it means that this is
+        // a multisite installation
+        if(count($folders) > 1)
+        {
+            echo json_encode(true);
+        }
+        else
+        {
+            echo json_encode(false);
+        }
+    }
 }

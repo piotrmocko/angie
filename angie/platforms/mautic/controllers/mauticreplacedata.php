@@ -13,7 +13,7 @@ class AngieControllerMauticReplacedata extends AController
 	public function main()
 	{
 		/** @var AngieModelMauticConfiguration $config */
-		$config  = AModel::getAnInstance('Configuration', 'AngieModel');
+		$config  = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 		// These values are stored inside the session, after the setup step
 		$old_url = $config->get('old_live_site');
@@ -35,7 +35,7 @@ class AngieControllerMauticReplacedata extends AController
 		$method = $this->input->getCmd('method', '');
 		$result = false;
 
-		/** @var AngieModelReplacedata $model */
+		/** @var AngieModelMauticReplacedata $model */
 		$model = $this->getThisModel();
 
 		$model->loadEngineStatus();
@@ -54,11 +54,11 @@ class AngieControllerMauticReplacedata extends AController
 
 		$model->saveEngineStatus();
 
-		AApplication::getInstance()->session->saveData();
+		$this->container->session->saveData();
 
 		@ob_end_clean();
 		echo '###'.json_encode($result).'###';
 
-		AApplication::getInstance()->close();
+        $this->container->application->close();
 	}
 }

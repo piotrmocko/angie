@@ -145,6 +145,9 @@ class AController
 	 */
 	protected $viewName = null;
 
+    /** @var \AContainer Application container */
+    protected $container;
+
 	/**
 	 * A copy of the AView object used in this triad
 	 *
@@ -167,17 +170,23 @@ class AController
 	 * @param   string  $option  Component name, e.g. com_foobar
 	 * @param   string  $view    The view name, also used for the controller name
 	 * @param   array   $config  Configuration parameters
+     * @param   AContainer $container   Application container
 	 *
 	 * @return  AController
 	 */
-	public static function &getAnInstance($option = null, $view = null, $config = array())
+	public static function &getAnInstance($option = null, $view = null, $config = array(), AContainer $container = null)
 	{
 		static $instances = array();
 
 		$hash = $option . $view;
 		if (!array_key_exists($hash, $instances))
 		{
-			$instances[$hash] = self::getTmpInstance($option, $view, $config);
+            if(is_null($container))
+            {
+                $container = AApplication::getInstance()->getContainer();
+            }
+
+			$instances[$hash] = self::getTmpInstance($option, $view, $config, $container);
 		}
 
 		return $instances[$hash];
@@ -190,35 +199,22 @@ class AController
 	 * @param   string  $option  The component name, e.g. com_foobar
 	 * @param   string  $view    The view name, e.g. cpanel
 	 * @param   array   $config  Configuration parameters
+     * @param   AContainer $container   Application container
 	 *
 	 * @return  AController  A disposable class instance
 	 */
-	public static function &getTmpInstance($option = null, $view = null, $config = array())
+	public static function &getTmpInstance($option = null, $view = null, $config = array(), AContainer $container = null)
 	{
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
 		// Get the Input
-		if(array_key_exists('input', $config))
-		{
-			if ($config['input'] instanceof AInput)
-			{
-				$input = $config['input'];
-			}
-			else
-			{
-				if (!is_array($config['input']))
-				{
-					$config['input'] = (array)$config['input'];
-				}
-				$config['input'] = array_merge($_REQUEST, $config['input']);
-				$input = new AInput($config['input']);
-			}
-		}
-		else
-		{
-			$input = new AInput();
-		}
+        $input = $container->input;
 
 		// Determine the option (component name) and view
-		$defaultApp = AApplication::getInstance()->getName();
+		$defaultApp = $container->application->getName();
 
 		if (!is_null($option))
 		{
@@ -309,7 +305,7 @@ class AController
 			$className = 'AController';
 		}
 
-		$instance = new $className($config);
+		$instance = new $className($config, $container);
 
 		return $instance;
 	}
@@ -318,9 +314,17 @@ class AController
 	 * Public constructor of the Controller class
 	 *
 	 * @param   array  $config  Optional configuration parameters
+     * @param   AContainer  $container  Application container
 	 */
-	public function __construct($config = array())
+	public function __construct($config = array(), AContainer $container = null)
 	{
+        if(is_null($container))
+        {
+            $container = AApplication::getInstance()->getContainer();
+        }
+
+        $this->container = $container;
+
 		// Initialise
 		$this->methods = array();
 		$this->message = null;
@@ -330,28 +334,7 @@ class AController
 		$this->taskMap = array();
 
 		// Get the input
-		if(array_key_exists('input', $config))
-		{
-			if ($config['input'] instanceof AInput)
-			{
-				$input = $config['input'];
-			}
-			else
-			{
-				if (!is_array($config['input']))
-				{
-					$config['input'] = (array)$config['input'];
-				}
-				$config['input'] = array_merge($_REQUEST, $config['input']);
-				$input = new AInput($config['input']);
-			}
-		}
-		else
-		{
-			$input = new AInput();
-		}
-		$config['input'] = $input;
-		$this->input = $input;
+		$this->input = $this->container->input;
 
 		// Determine the methods to exclude from the base class.
 		$xMethods = get_class_methods('AController');
@@ -375,7 +358,7 @@ class AController
 		}
 
 		// Get the default values for the component and view names
-		$defaultApp = AApplication::getInstance()->getName();
+		$defaultApp = $this->container->application->getName();
 		$this->component = $this->input->get('option',	$defaultApp,	'cmd');
 		$this->view      = $this->input->get('view',	'cpanel',		'cmd');
 		$this->layout    = $this->input->get('layout',	null,			'cmd');
@@ -469,14 +452,16 @@ class AController
 		}
 	}
 
-	/**
-	 * Executes a given controller task. The onBefore<task> and onAfter<task>
-	 * methods are called automatically if they exist.
-	 *
-	 * @param   string  $task  The task to execute, e.g. "browse"
-	 *
-	 * @return  null|bool  False on execution failure
-	 */
+    /**
+     * Executes a given controller task. The onBefore<task> and onAfter<task>
+     * methods are called automatically if they exist.
+     *
+     * @param   string $task The task to execute, e.g. "browse"
+     *
+     * @return  bool|null False on execution failure
+     *
+     * @throws \Exception
+     */
 	public function execute($task)
 	{
 		$this->task = $task;
@@ -569,15 +554,19 @@ class AController
 		$this->display();
 	}
 
-	/**
-	 * Returns the default model associated with the current view
-	 * @return FOFModel The global instance of the model (singleton)
-	 */
+    /**
+     * Returns the default model associated with the current view
+     *
+     * @param array $config
+     *
+     * @return \FOFModel The global instance of the model (singleton)
+     */
 	public final function getThisModel($config = array())
 	{
 		if (!is_object($this->modelObject))
 		{
 			$prefix = ucfirst($this->component).'Model';
+
 			if (!empty($this->modelName))
 			{
 				$modelName = ucfirst($this->modelName);
@@ -587,42 +576,42 @@ class AController
 				$modelName = ucfirst($this->view);
 			}
 
-			if (!array_key_exists('input', $config) || !($config['input'] instanceof AInput))
-			{
-				$config['input'] = $this->input;
-			}
 			$this->modelObject = $this->getModel($modelName, $prefix, $config);
 		}
 
 		return $this->modelObject;
 	}
 
-	/**
-	 * Returns current view object
-	 * @return FOFView The global instance of the view object (singleton)
-	 */
+    /**
+     * Returns current view object
+     * @param array $config
+     *
+     * @return \FOFView The global instance of the view object (singleton)
+     *
+     * @throws \Exception
+     */
 	public final function getThisView($config = array())
 	{
 		if (!is_object($this->viewObject))
 		{
-			$prefix = null;
+			$prefix   = null;
 			$viewName = null;
 			$viewType = null;
 
 			$prefix = ucfirst($this->component).'View';
-			if(!empty($this->viewName)) {
+
+			if(!empty($this->viewName))
+            {
 				$viewName = ucfirst($this->viewName);
-			} else {
+			}
+            else
+            {
 				$viewName = ucfirst($this->view);
 			}
 
-			$viewType	= $this->input->getCmd('format', 'html');
+			$viewType = $this->container->input->getCmd('format', 'html');
 
-			if (!array_key_exists('input', $config) || !($config['input'] instanceof AInput))
-			{
-				$config['input'] = $this->input;
-			}
-			$config['input']->set('base_path', $this->basePath);
+			$this->container->input->set('base_path', $this->basePath);
 
 			$this->viewObject = $this->getView( $viewName, $viewType, $prefix, $config);
 		}
@@ -638,7 +627,8 @@ class AController
 		$modelName	 = preg_replace( '/[^A-Z0-9_]/i', '', $name );
 		$classPrefix = preg_replace( '/[^A-Z0-9_]/i', '', $prefix );
 
-		$result = AModel::getAnInstance($modelName, $classPrefix, $config);
+		$result = AModel::getAnInstance($modelName, $classPrefix, $config, $this->container );
+
 		return $result;
 	}
 
@@ -661,15 +651,6 @@ class AController
 		$classPrefix = preg_replace( '/[^A-Z0-9_]/i', '', $prefix );
 		$viewType	 = preg_replace( '/[^A-Z0-9_]/i', '', $type );
 
-		if (($config['input'] instanceof AInput))
-		{
-			$tmpInput = $config['input'];
-		}
-		else
-		{
-			$tmpInput = new AInput($config['input']);
-		}
-
 		// Guess the component name and view
 		if (!empty($prefix))
 		{
@@ -680,10 +661,12 @@ class AController
 		{
 			$component = '';
 		}
-		if (empty($component) && array_key_exists('input', $config))
+
+		if (empty($component))
 		{
-			$component = $tmpInput->get('option', $component, 'cmd');
+			$component = $this->container->input->get('option', $component, 'cmd');
 		}
+
 		if (array_key_exists('option', $config))
 		{
 			if($config['option'])
@@ -694,10 +677,12 @@ class AController
 		$config['option'] = $component;
 
 		$view = strtolower($viewName);
-		if (empty($view) && array_key_exists('input', $config))
+
+		if (empty($view))
 		{
-			$view = $tmpInput->get('view', $view, 'cmd');
+			$view = $this->container->input->get('view', $view, 'cmd');
 		}
+
 		if (array_key_exists('view', $config))
 		{
 			if ($config['view'])
@@ -705,14 +690,11 @@ class AController
 				$view = $config['view'];
 			}
 		}
+
 		$config['view'] = $view;
 
-		if (array_key_exists('input', $config))
-		{
-			$tmpInput->set('option', $config['option']);
-			$tmpInput->set('view', $config['view']);
-			$config['input'] = $tmpInput;
-		}
+        $this->container->input->set('option', $config['option']);
+        $this->container->input->set('view', $config['view']);
 
 		// Get the base paths where the view class files are expected to live
 		$basePaths = array(
@@ -767,7 +749,8 @@ class AController
 			}
 		}
 
-		if(!class_exists($viewClass)) {
+		if(!class_exists($viewClass))
+        {
 			//$viewClass = 'AView'.ucfirst($type);
 			$viewClass = 'AView';
 		}
@@ -775,7 +758,8 @@ class AController
 		// Setup View configuration options
 		$basePath = APATH_INSTALLATION;
 
-		if(!array_key_exists('template_path', $config)) {
+		if(!array_key_exists('template_path', $config))
+        {
 			$config['template_path'] = array(
 				$basePath . '/' . $config['option'] . '/platform/views/' . $config['view'] . '/tmpl',
 				$basePath . '/platform/views/' . $config['view'] . '/tmpl',
@@ -783,7 +767,8 @@ class AController
 			);
 		}
 
-		if(!array_key_exists('helper_path', $config)) {
+		if(!array_key_exists('helper_path', $config))
+        {
 			$config['helper_path'] = array(
 				$basePath . '/' . $config['option'] . '/platform/helpers',
 				$basePath . '/platform/helpers',
@@ -791,7 +776,8 @@ class AController
 			);
 		}
 
-		$result = new $viewClass($config);
+		$result = new $viewClass($config, $this->container);
+
 		return $result;
 	}
 
@@ -953,10 +939,12 @@ class AController
 		if (empty($this->name))
 		{
 			$r = null;
+
 			if (!preg_match('/(.*)Controller/i', get_class($this), $r))
 			{
 				throw new Exception(AText::_('ANGI_APPLICATION_ERROR_CONTROLLER_GET_NAME'), 500);
 			}
+
 			$this->name = strtolower($r[1]);
 		}
 
@@ -983,16 +971,18 @@ class AController
 		return $this->methods;
 	}
 
-	/**
-	 * Method to get a reference to the current view and load it if necessary.
-	 *
-	 * @param   string  $name    The view name. Optional, defaults to the controller name.
-	 * @param   string  $type    The view type. Optional.
-	 * @param   string  $prefix  The class prefix. Optional.
-	 * @param   array   $config  Configuration array for view. Optional.
-	 *
-	 * @return  AView  Reference to the view or an error.
-	 */
+    /**
+     * Method to get a reference to the current view and load it if necessary.
+     *
+     * @param   string  $name       The view name. Optional, defaults to the controller name.
+     * @param   string  $type       The view type. Optional.
+     * @param   string  $prefix     The class prefix. Optional.
+     * @param   array   $config     Configuration array for view. Optional.
+     *
+     * @return \AView Reference to the view or an error.
+     *
+     * @throws \Exception
+     */
 	public function getView($name = '', $type = '', $prefix = '', $config = array())
 	{
 		static $views;
@@ -1038,7 +1028,7 @@ class AController
 	{
 		if ($this->redirect)
 		{
-			$app = AApplication::getInstance();
+			$app = $this->container->application;
 			$app->redirect($this->redirect, $this->message, $this->messageType);
 		}
 
@@ -1137,6 +1127,7 @@ class AController
 	public function setRedirect($url, $msg = null, $type = null)
 	{
 		$this->redirect = $url;
+
 		if ($msg !== null)
 		{
 			// Controller may have set this directly
