@@ -213,6 +213,17 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 		$new_config = '';
 		$old_config = file_get_contents($file);
 
+        // Check if the file is UTF encoded with BOM. We have to remove it or we will get a white page
+        // Sadly several editors are setting the flag automatically; since they are not visible, the user has
+        // no easy method to remove them
+        $bom = pack("CCC", 0xef, 0xbb, 0xbf);
+
+        if (strncmp($old_config, $bom, 3) === 0)
+        {
+            // Let's strip out any BOM char
+            $old_config = substr($old_config, 3);
+        }
+
 		$lines = explode("\n", $old_config);
 
 		foreach ($lines as $line)
