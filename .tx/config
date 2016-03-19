@@ -58,10 +58,13 @@ source_lang = en-GB
 type = INI
 
 [akeebabackup.angie_drupal8]
+file_filter = angie/platforms/drupal8/language/<lang>.ini
 source_file = angie/platforms/drupal8/language/en-GB.ini
 source_lang = en-GB
+type = INI
 
 [akeebabackup.angie_magento2]
+file_filter = angie/platforms/magento2/language/<lang>.ini
 source_file = angie/platforms/magento2/language/en-GB.ini
 source_lang = en-GB
-
+type = INI
