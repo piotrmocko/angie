@@ -28,6 +28,11 @@ class AngieControllerBaseFinalise extends AController
 		{
 			opcache_reset();
 		}
+		// Also do that for APC cache
+		elseif (function_exists('apc_clear_cache'))
+		{
+			@apc_clear_cache();
+		}
 
 		// If we have removed files, ANGIE will return a 500 Internal Server
 		// Error instead of the result. This works around it.
