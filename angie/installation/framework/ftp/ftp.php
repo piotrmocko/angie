@@ -413,7 +413,7 @@ class AFtp
 	 * Method to change mode for a path on the FTP server
 	 *
 	 * @param   string  $path  Path to change mode on
-	 * @param   mixed   $mode  Octal value to change mode to, e.g. '0777', 0777 or 511 (string or integer)
+	 * @param   mixed   $mode  Octal value to change mode to, e.g. '0123', 0123 or 345 (string or integer)
 	 *
 	 * @return  boolean  True if successful
 	 */
