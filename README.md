@@ -14,3 +14,7 @@ in the backup archive and which information they should collect.
 
 GNU General Public License version 3 or, at your option, any later version published by the FSF. See `LICENSE` for more
 information.
+
+## INTERNAL PROJECT – NO SUPPORT THROUGH GITHUB
+
+This is meant to be an internal software development project for use with our software. We do not accept issues or support requests from third parties in this GitHub project. Please use the Support section of our site for generic support. If you have found a bug please use the Contact Us form on our site.
