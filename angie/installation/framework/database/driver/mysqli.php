@@ -194,6 +194,12 @@ class ADatabaseDriverMysqli extends ADatabaseDriver
 		// Set sql_mode to non_strict mode
 		mysqli_query($this->connection, "SET @@SESSION.sql_mode = '';");
 
+		// Set the max_allowed_packet variable to a larger value (64Mb), so we can restore columns with huge data in it
+		// MySQL is very fishy about this option: in some version we can change only the GLOBAL, in others only the SESSION...
+		// We will try both, worst case scenario they simply won't work
+		@mysqli_query($this->connection, "SET GLOBAL max_allowed_packet=67108864;");
+		@mysqli_query($this->connection, "SET SESSION max_allowed_packet=67108864;");
+
 		// If auto-select is enabled select the given database.
 		if ($this->options['select'] && !empty($this->options['database']))
 		{
