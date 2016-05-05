@@ -147,6 +147,27 @@ class ADatabaseDriverPdomysql extends ADatabaseDriverMysqli
 		{
 		}
 
+		// Set the max_allowed_packet variable to a larger value (64Mb), so we can restore columns with huge data in it
+		// MySQL is very fishy about this option: in some version we can change only the GLOBAL, in others only the SESSION...
+		// We will try both, worst case scenario they simply won't work
+		try
+		{
+			$this->connection->exec('SET GLOBAL max_allowed_packet=67108864;');
+		}
+		catch (Exception $e)
+		{
+			// Ignore the error
+		}
+
+		try
+		{
+			$this->connection->exec('SET SESSION max_allowed_packet=67108864;');
+		}
+		catch (Exception $e)
+		{
+			// Ignore the error
+		}
+
 		$this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this->connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
 
