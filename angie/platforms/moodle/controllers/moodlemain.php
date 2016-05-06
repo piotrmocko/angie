@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieControllerMoodleMain extends AngieControllerBaseMain
 {
 	/**
-	 * Try to read configuration.php
+	 * Try to read the configuration
 	 */
 	public function getconfig()
 	{

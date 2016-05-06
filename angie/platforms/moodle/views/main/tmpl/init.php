@@ -9,7 +9,7 @@
 defined('_AKEEBA') or die();
 
 echo $this->loadAnyTemplate('steps/steps', array(
-	'helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-joomla.html#angie-joomla-first',
+	'helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-moodle.html#angie-moodle-first',
 	'videourl' => 'https://www.akeebabackup.com/videos/1214-akeeba-solo/1637-abts05-restoring-site-new-server.html'
 ));
 ?>

@@ -12,7 +12,7 @@ defined('_AKEEBA') or die();
 class IniProcess
 {
     /**
-     * Language file processing callback. Converts Joomla messages into Wordpress ones
+     * Language file processing callback. Converts Joomla messages into Magento ones
      *
      * @param   string  $filename  The full path to the file being loaded
      * @param   array   $strings   The key/value array of the translations

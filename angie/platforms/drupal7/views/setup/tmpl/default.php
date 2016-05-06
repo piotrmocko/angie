@@ -31,7 +31,7 @@ JS
 $this->loadHelper('select');
 
 echo $this->loadAnyTemplate('steps/buttons');
-echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-joomla-setup.html'));
+echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-drupal-setup.html'));
 
 $key = str_replace('.', '_', $this->input->getCmd('substep', 'default'));
 

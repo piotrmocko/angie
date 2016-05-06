@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieModelMagento2Main extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the WordPress version in use
+	 * Try to detect the Magento version in use
 	 */
 	public function detectVersion()
 	{

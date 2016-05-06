@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieControllerDrupal8Main extends AngieControllerBaseMain
 {
 	/**
-	 * Try to read configuration.php
+	 * Try to read settings.php
 	 */
 	public function getconfig()
 	{

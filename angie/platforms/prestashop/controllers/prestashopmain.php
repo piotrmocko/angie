@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieControllerPrestashopMain extends AngieControllerBaseMain
 {
 	/**
-	 * Try to read configuration
+	 * Try to read the configuration
 	 */
 	public function getconfig()
 	{

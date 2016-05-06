@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieModelPrestashopMain extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the WordPress version in use
+	 * Try to detect the Prestashop version in use
 	 */
 	public function detectVersion()
 	{

@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieModelMoodleMain extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the Joomla! version in use
+	 * Try to detect the Moodle version in use
 	 */
 	public function detectVersion()
 	{

@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieModelMauticMain extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the Joomla! version in use
+	 * Try to detect the Mautic version in use
 	 */
 	public function detectVersion()
 	{

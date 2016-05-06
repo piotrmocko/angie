@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-wordpress.html#angie-wordpress-first'));
+echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-magento.html#angie-magento-first'));
 ?>
 
 <?php if (!$this->reqMet): ?>

@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieControllerMagentoMain extends AngieControllerBaseMain
 {
 	/**
-	 * Try to read configuration.php
+	 * Try to read app/etc/local.xml
 	 */
 	public function getconfig()
 	{

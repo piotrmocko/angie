@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieModelDrupal7Main extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the Joomla! version in use
+	 * Try to detect the Drupal version in use
 	 */
 	public function detectVersion()
 	{
