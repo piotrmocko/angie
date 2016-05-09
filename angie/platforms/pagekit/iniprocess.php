@@ -26,7 +26,7 @@ class IniProcess
         {
             $v = str_replace('Joomla!', 'PageKit', $v);
             $v = str_replace('Joomla', 'PageKit', $v);
-            $v = str_replace('configuration.php', 'app/system/config.php', $v);
+            $v = str_replace('configuration.php', 'config.php', $v);
 
             $strings[$k] = $v;
         }

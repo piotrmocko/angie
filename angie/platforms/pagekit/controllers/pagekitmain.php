@@ -16,14 +16,15 @@ class AngieControllerPagekitMain extends AngieControllerBaseMain
 	public function getconfig()
 	{
 		// Load the default configuration and save it to the session
-		/*$data   = $this->input->getData();
-
+		$data   = $this->input->getData();
+		
+		/** @var AngieModelPAgekitConfiguration $model */
         $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
         $this->input->setData($data);
         $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
-		$filename = APATH_SITE . '/app/etc/local.xml';
+		$filename = APATH_ROOT . '/config.php';
 		if (file_exists($filename))
 		{
 			$vars = $model->loadFromFile($filename);
@@ -40,7 +41,7 @@ class AngieControllerPagekitMain extends AngieControllerBaseMain
 		else
 		{
 			echo json_encode(false);
-		}*/
+		}
 
 		echo json_encode(true);
 	}

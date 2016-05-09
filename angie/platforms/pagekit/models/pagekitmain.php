@@ -24,9 +24,11 @@ class AngieModelPagekitMain extends AngieModelBaseMain
 			// Pagekit expects that a variable named $path exists, so let's create a dummy one
 			$path = 'foobar';
 			$config = include_once $filename;
+
+			$ret = $config['application']['version'];
 		}
 
-		$this->container->session->set('version', $config['application']['version']);
+		$this->container->session->set('version', $ret);
 		$this->container->session->saveData();
 	}
 
@@ -48,28 +50,10 @@ class AngieModelPagekitMain extends AngieModelBaseMain
 				'current'	=> version_compare(phpversion(), $minPHPVersion, 'ge'),
 				'warning'	=> false,
 			);
-						
-			$phpOptions[] = array (
-				'label'		=> AText::_('MAIN_LBL_REQ_MCGPCOFF'),
-				'current'	=> (ini_get('magic_quotes_gpc') == false),
-				'warning'	=> false,
-			);
 
-			$phpOptions[] = array (
-				'label'		=> AText::_('MAIN_LBL_REQ_REGGLOBALS'),
-				'current'	=> (ini_get('register_globals') == false),
-				'warning'	=> false,
-			);
-		
 			$phpOptions[] = array (
 				'label'		=> AText::_('MAIN_LBL_REQ_ZLIB'),
 				'current'	=> extension_loaded('zlib'),
-				'warning'	=> false,
-			);
-
-			$phpOptions[] = array (
-				'label'		=> AText::_('MAIN_LBL_REQ_XML'),
-				'current'	=> extension_loaded('xml'),
 				'warning'	=> false,
 			);
 
@@ -79,24 +63,23 @@ class AngieModelPagekitMain extends AngieModelBaseMain
 				'warning'	=> false,
 			);
 
-			if (extension_loaded( 'mbstring' ))
-			{
-				$option = array (
-					'label'		=> AText::_( 'MAIN_REQ_MBLANGISDEFAULT' ),
-					'current'	=> (strtolower(ini_get('mbstring.language')) == 'neutral'),
-					'warning'	=> false,
-				);
-				$option['notice'] = $option['current'] ? null : AText::_('MAIN_MSG_NOTICEMBLANGNOTDEFAULT');
-				$phpOptions[] = $option;
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_LBL_REQ_SIMPLEXML'),
+				'current'	=> extension_loaded('simplexml'),
+				'warning'	=> false,
+			);
 
-				$option = array (
-					'label'		=> AText::_('MAIN_REQ_MBSTRINGOVERLOAD'),
-					'current'	=> (ini_get('mbstring.func_overload') == 0),
-					'warning'	=> false,
-				);
-				$option['notice'] = $option['current'] ? null : AText::_('MAIN_MSG_NOTICEMBSTRINGOVERLOAD');
-				$phpOptions[] = $option;
-			}
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_LBL_REQ_MBSTRING'),
+				'current'	=> extension_loaded('mbstring'),
+				'warning'	=> false,
+			);
+
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_LBL_REQ_DOM'),
+				'current'	=> extension_loaded('dom'),
+				'warning'	=> false,
+			);
 
 			$phpOptions[] = array (
 				'label'		=> AText::_('MAIN_LBL_REQ_INIPARSER'),
@@ -128,14 +111,6 @@ class AngieModelPagekitMain extends AngieModelBaseMain
 
 		if (empty($phpOptions))
 		{
-			$jVersion = $this->container->session->get('jversion');
-
-			$phpOptions[] = array(
-				'label'			=> AText::_('MAIN_REC_SAFEMODE'),
-				'current'		=> (bool) ini_get('safe_mode'),
-				'recommended'	=> false,
-			);
-
 			$phpOptions[] = array(
 				'label'			=> AText::_('MAIN_REC_DISPERRORS'),
 				'current'		=> (bool) ini_get('display_errors'),
@@ -148,31 +123,22 @@ class AngieModelPagekitMain extends AngieModelBaseMain
 				'recommended'	=> true,
 			);
 
-			$phpOptions[] = array(
-				'label'			=> AText::_('MAIN_REC_MCR'),
-				'current'		=> (bool) ini_get('magic_quotes_runtime'),
-				'recommended'	=> false,
-			);
-
-			if (version_compare($jVersion, '3.0.0', 'lt'))
-			{
-				$phpOptions[] = array(
-					'label'			=> AText::_('MAIN_REC_MCGPC'),
-					'current'		=> (bool) ini_get('magic_quotes_gpc'),
-					'recommended'	=> false,
-				);
-			}
-
-			$phpOptions[] = array(
-				'label'			=> AText::_('MAIN_REC_OUTBUF'),
-				'current'		=> (bool) ini_get('output_buffering'),
-				'recommended'	=> false,
+			$phpOptions[] = array (
+				'label'		    => AText::_('MAIN_REC_XML'),
+				'current'	    => extension_loaded('xml'),
+				'recommended'	=> true,
 			);
 
 			$phpOptions[] = array(
-				'label'			=> AText::_('MAIN_REC_SESSIONAUTO'),
-				'current'		=> (bool) ini_get('session.auto_start'),
-				'recommended'	=> false,
+				'label'		    => AText::_('MAIN_REC_CURL'),
+				'current'	    => function_exists('curl_init'),
+				'recommended'	=> true,
+			);
+
+			$phpOptions[] = array(
+				'label'		    => AText::_('MAIN_LBL_REQ_ICONV'),
+				'current'	    => extension_loaded('iconv'),
+				'recommended'	=> true,
 			);
 
 			$phpOptions[] = array(
