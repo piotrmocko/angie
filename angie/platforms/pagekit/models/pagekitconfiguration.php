@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieModelPAgekitConfiguration extends AngieModelBaseConfiguration
+class AngieModelPagekitConfiguration extends AngieModelBaseConfiguration
 {
 	public function __construct($config = array(), AContainer $container = null)
 	{
