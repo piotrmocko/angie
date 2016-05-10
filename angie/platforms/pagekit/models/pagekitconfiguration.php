@@ -18,14 +18,20 @@ class AngieModelPAgekitConfiguration extends AngieModelBaseConfiguration
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
 		$this->configvars = $this->container->session->get('configuration.variables');
 
-		if (empty($this->configvars))
+		if (empty($this->configvars) || empty($this->configvars['sitename']))
 		{
 			$this->configvars = $this->getDefaultConfig();
-			$realConfig = $this->loadFromFile(APATH_ROOT . '/config.php');
+			$realConfig       = array();
+
+			if (empty($this->configvars['sitename']))
+			{
+				$realConfig = $this->loadFromFile(APATH_CONFIGURATION . '/config.php');
+				$this->getOptionsFromDatabase($realConfig);
+			}
 
 			$this->configvars = array_merge($this->configvars, $realConfig);
 
-			if (!empty($this->configvars))
+			if ( !empty($this->configvars))
 			{
 				$this->saveToSession();
 			}
@@ -47,7 +53,7 @@ class AngieModelPAgekitConfiguration extends AngieModelBaseConfiguration
         $config['dbprefix']     = '';
 
         // Other
-        $config['adminurl'] = '';
+        $config['sitename'] = '';
 
         return $config;
     }
@@ -61,7 +67,27 @@ class AngieModelPAgekitConfiguration extends AngieModelBaseConfiguration
      */
     public function loadFromFile($file)
     {
-        $config          = array();
+        $config = array();
+
+	    if (file_exists($file))
+	    {
+		    $pageKitConfig = include_once $file;
+
+		    $config['driver'] = $pageKitConfig['database']['default'];
+
+		    $connection = $pageKitConfig['database']['connections'][$config['driver']];
+
+		    $config['dbprefix'] = $connection['prefix'];
+
+		    // We have such info only if we're using MySQL
+		    if($config['driver'] != 'sqlite')
+		    {
+			    $config['dbhost']   = $connection['host'];
+			    $config['dbuser']   = $connection['user'];
+			    $config['dbpass']   = $connection['password'];
+			    $config['dbname']   = $connection['dbname'];
+		    }
+	    }
 
 		return $config;
     }
@@ -87,4 +113,49 @@ class AngieModelPAgekitConfiguration extends AngieModelBaseConfiguration
     {
         return true;
     }
+
+	/**
+	 * @param $config
+	 */
+	protected function getOptionsFromDatabase(&$config)
+	{
+		// PageKit has some options set inside the db, too
+		/** @var AngieModelDatabase $model */
+		$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
+		$keys       = $model->getDatabaseNames();
+		$firstDbKey = array_shift($keys);
+
+		$connectionVars = $model->getDatabaseInfo($firstDbKey);
+
+		try
+		{
+			$name    = $connectionVars->dbtype;
+			$options = array(
+				'database' => $connectionVars->dbname,
+				'select'   => 1,
+				'host'     => $connectionVars->dbhost,
+				'user'     => $connectionVars->dbuser,
+				'password' => $connectionVars->dbpass,
+				'prefix'   => $connectionVars->prefix
+			);
+
+			$db = ADatabaseFactory::getInstance()->getDriver($name, $options);
+
+			$query = $db->getQuery(true)
+						->select($db->qn('value'))
+						->from('#__system_config')
+						->where($db->qn('name') . ' = ' . $db->q('system/site'));
+			$pk_options = $db->setQuery($query)->loadResult();
+
+			$pk_options = json_decode($pk_options, true);
+
+			if ($pk_options && isset($pk_options['title']))
+			{
+				$config['sitename'] = $pk_options['title'];
+			}
+		}
+		catch (Exception $exc)
+		{
+		}
+	}
 }
