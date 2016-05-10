@@ -43,12 +43,25 @@ class AngieModelPagekitSetup extends AngieModelBaseSetup
 		{
 			$query = $db->getQuery(true)
 				->select(array(
-					$db->qn('user_id') . ' AS ' . $db->qn('id'),
+					$db->qn('id'),
 					$db->qn('username'),
-					$db->qn('email')
+					$db->qn('email'),
+					$db->qn('roles')
 				))
-				->from($db->qn('#__admin_user'));
-			$ret['superusers'] = $db->setQuery($query)->loadObjectList(0);
+				->from($db->qn('#__system_user'));
+			$users = $db->setQuery($query)->loadObjectList();
+
+			// Since the permission is stored inside the "role" field as implded array, let's fetch the whole
+			// list and then analyze every user. PageKit is blog-oriented, so there shouldn't be thousands of users
+			foreach ($users as $user)
+			{
+				$roles = explode(',', $user->roles);
+
+				if (in_array(3, $roles))
+				{
+					$ret['superusers'][] = $user;
+				}
+			}
 		}
 		catch (Exception $exc)
 		{
@@ -96,13 +109,14 @@ class AngieModelPagekitSetup extends AngieModelBaseSetup
 	{
 		// Get the Super User ID. If it's empty, skip.
 		$id = $this->getState('superuserid', 0);
+
 		if (!$id)
 		{
 			return false;
 		}
 
 		// Get the Super User email and password
-		$email = $this->getState('superuseremail', '');
+		$email     = $this->getState('superuseremail', '');
 		$password1 = $this->getState('superuserpassword', '');
 		$password2 = $this->getState('superuserpasswordrepeat', '');
 
@@ -131,24 +145,20 @@ class AngieModelPagekitSetup extends AngieModelBaseSetup
 			throw new Exception(AText::_('SETUP_ERR_PASSWORDSDONTMATCH'));
 		}
 
-		// Connect to the database
-		$db = $this->getDatabase();
+		// Let's load the password compatibility file
+		require_once APATH_ROOT.'/installation/framework/utils/password.php';
 
-		$base = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-		for ($i = 0, $salt = '', $lc = strlen($base)-1; $i < 32; $i++)
-		{
-			$salt .= $base[mt_rand(0, $lc)];
-		}
-
-		$crypt = md5($salt.$password1).':'.$salt;
+		// Create a new bCrypt-bashed password. At the time of this writing (July 2015) PageKit is using a cost of 10
+		$cryptpass = password_hash($password1, PASSWORD_BCRYPT, array('cost' => 10));
 
 		// Update the database record
+		$db = $this->getDatabase();
+
 		$query = $db->getQuery(true)
-			->update($db->qn('#__admin_user'))
-			->set($db->qn('password') . ' = ' . $db->q($crypt))
+			->update($db->qn('#__system_user'))
+			->set($db->qn('password') . ' = ' . $db->q($cryptpass))
 			->set($db->qn('email') . ' = ' . $db->q($email))
-			->where($db->qn('user_id') . ' = ' . $db->q($id));
+			->where($db->qn('id') . ' = ' . $db->q($id));
 		$db->setQuery($query)->execute();
 
 		return true;
