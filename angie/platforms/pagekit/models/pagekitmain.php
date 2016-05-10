@@ -23,7 +23,7 @@ class AngieModelPagekitMain extends AngieModelBaseMain
 		{
 			// Pagekit expects that a variable named $path exists, so let's create a dummy one
 			$path = 'foobar';
-			$config = include_once $filename;
+			$config = include $filename;
 
 			$ret = $config['application']['version'];
 		}
