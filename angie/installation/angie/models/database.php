@@ -99,6 +99,12 @@ class AngieModelDatabase extends AModel
 							$data['throttle'] = 250;
 						}
 
+						// If we are using SQLite, let's replace any token we found inside the dbname index
+						if ($data['dbtype'] == 'sqlite')
+						{
+							$data['dbname'] = str_replace('#SITEROOT#', APATH_ROOT, $data['dbname']);
+						}
+
 						if ($key == 'site.sql')
 						{
 							$siteSQL = $data;
