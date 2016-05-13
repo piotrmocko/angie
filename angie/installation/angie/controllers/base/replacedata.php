@@ -25,7 +25,7 @@ abstract class AngieControllerBaseReplacedata extends AController
 
 	/**
 	 * Checks if we really have to perform a replacement or not (ie we moved to a new domain or not)
-	 * 
+	 *
 	 * @return bool
 	 */
 	abstract protected function checkReplaceNeeded();
