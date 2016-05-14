@@ -12,7 +12,7 @@ defined('_AKEEBA') or die();
 class IniProcess
 {
     /**
-     * Language file processing callback. Converts Joomla messages into Magento ones
+     * Language file processing callback. Converts Joomla messages into Pagekit ones
      *
      * @param   string  $filename  The full path to the file being loaded
      * @param   array   $strings   The key/value array of the translations
@@ -24,9 +24,9 @@ class IniProcess
     {
         foreach ($strings as $k => $v)
         {
-            $v = str_replace('Joomla!', 'Magento', $v);
-            $v = str_replace('Joomla', 'Magento', $v);
-            $v = str_replace('configuration.php', 'app/etc/local.xml', $v);
+            $v = str_replace('Joomla!', 'PageKit', $v);
+            $v = str_replace('Joomla', 'PageKit', $v);
+            $v = str_replace('configuration.php', 'config.php', $v);
 
             $strings[$k] = $v;
         }
