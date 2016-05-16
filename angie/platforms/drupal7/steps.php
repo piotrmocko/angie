@@ -19,6 +19,10 @@ class PlatformSteps
 	 */
 	public function additionalSteps(array $steps)
 	{
+		$finalise = array_pop($steps);
+		$steps['replacedata'] = null;
+		$steps['finalise'] = $finalise;
+		
         // Let's double check that we really have the sites folder
         if(!is_dir(APATH_ROOT.'/sites'))
         {
