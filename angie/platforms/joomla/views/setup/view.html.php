@@ -12,8 +12,10 @@ class AngieViewSetup extends AView
 {
 	public function onBeforeMain()
 	{
-		$this->stateVars = $this->getModel()->getStateVariables();
-		$this->hasFTP = function_exists('ftp_connect');
+		/** @var AngieModelJoomlaSetup $model */
+		$model           = $this->getModel();
+		$this->stateVars = $model->getStateVariables();
+		$this->hasFTP    = function_exists('ftp_connect');
 
 		return true;
 	}

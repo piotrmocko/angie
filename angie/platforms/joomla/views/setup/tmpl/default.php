@@ -89,6 +89,16 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</div>
 				</div>
 				<div class="control-group">
+					<label class="control-label" for="force_ssl">
+						<?php echo AText::_('SETUP_LABEL_FORCESSL'); ?>
+					</label>
+					<div class="controls">
+						<?php echo AngieHelperSelect::forceSSL($this->stateVars->force_ssl); ?>
+						<span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
+							  title="<?php echo AText::_('SETUP_LABEL_FORCESSL_TIP') ?>"></span>
+					</div>
+				</div>
+				<div class="control-group">
 					<label class="control-label" for="cookiedomain">
 						<?php echo AText::_('SETUP_LBL_COOKIEDOMAIN'); ?>
 					</label>

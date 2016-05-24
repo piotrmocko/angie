@@ -426,4 +426,15 @@ abstract class AngieHelperSelect
 
 		return self::genericlist($options, $name, array('onchange' => 'setupSuperUserChange()'), 'value', 'text', $selected, $id);
 	}
+
+	public static function forceSSL($selected = '0')
+	{
+		$options[] = self::option(0, AText::_('SETUP_LABEL_FORCESSL_NONE'));
+		$options[] = self::option(1, AText::_('SETUP_LABEL_FORCESSL_ADMINONLY'));
+		$options[] = self::option(2, AText::_('SETUP_LABEL_FORCESSL_ENTIRESITE'));
+
+		return self::genericlist($options, 'force_ssl', array('class' => 'input-medium'), 'value', 'text', $selected);
+	}
+
+
 }
