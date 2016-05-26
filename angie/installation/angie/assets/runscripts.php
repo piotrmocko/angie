@@ -34,7 +34,17 @@ class RunScripts extends JApplicationWeb
 
         if ($manifestClass && method_exists($manifestClass, 'update'))
         {
-            $manifestClass->update($installer);
+	        // At the moment (Joomla 3.5.1) the update will fail since Joomla will try to clear its cache. In order
+	        // to do so, it requests the Application some states of the model. Since there is no "Joomla application"
+	        // an exception is raised. Let's catch it to avoid some unpleasant error message
+	        try
+	        {
+		        $manifestClass->update($installer);
+	        }
+	        catch (Exception $e)
+	        {
+		        // Don't cry if it fails
+	        }
         }
     }
 }
