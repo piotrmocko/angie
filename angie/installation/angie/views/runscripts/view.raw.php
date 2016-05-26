@@ -41,6 +41,9 @@ class AngieViewRunscripts extends AView
             require_once JPATH_ADMINISTRATOR . '/components/com_akeeba/helpers/jsonlib.php';
         }
 
+	    // Manually require the configuration file
+	    JFactory::getConfig(JPATH_CONFIGURATION.'/configuration.php');
+
         // Load the JApplicationCli class
         JLoader::import('joomla.application.web');
 
