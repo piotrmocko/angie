@@ -921,6 +921,8 @@ class AngieModelWordpressReplacedata extends AModel
 			APATH_SITE.'/htaccess.bak',
 			APATH_SITE.'/.user.ini.bak',
 			APATH_SITE.'/.user.ini',
+			APATH_SITE.'/php.ini',
+			APATH_SITE.'/php.ini.bak',
 			// Wordfence is storing the absolute path inside their file. Because __DIR__ is too mainstream..
 			APATH_SITE.'/wordfence-waf.php',
 		);
