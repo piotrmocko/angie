@@ -709,6 +709,16 @@ class AngieModelWordpressReplacedata extends AModel
 			return $replacements;
 		}
 
+		// Let's get the reference of the previous absolute path
+		/** @var AngieModelBaseMain $mainModel */
+		$mainModel  = AModel::getAnInstance('Main', 'AngieModel', array(), $this->container);
+		$extra_info = $mainModel->getExtraInfo();
+
+		if (isset($extra_info['root']) && $extra_info['root'])
+		{
+			$replacements[$extra_info['root']['current']] = APATH_SITE;
+		}
+
 		// Replace the absolute URL to the site
 		$replacements[$old_url] = $new_url;
 
