@@ -108,43 +108,51 @@ abstract class AngieModelBaseMain extends AModel
         {
             $filename = APATH_INSTALLATION . '/extrainfo.ini';
 
-            if (file_exists($filename))
-            {
-                $parsedData = AngieHelperIni::parse_ini_file($filename, false);
-                $extraInfo  = array();
+	        if (file_exists($filename))
+	        {
+		        $parsedData = AngieHelperIni::parse_ini_file($filename, false);
+		        $extraInfo  = array();
 
-                if(array_key_exists('host', $parsedData))
-                {
-                    $extraInfo['host'] = array(
-                        'label'		=> AText::_('MAIN_EXTRAINFO_HOST'),
-                        'current'	=> $parsedData['host']
-                    );
-                }
+		        if (array_key_exists('host', $parsedData))
+		        {
+			        $extraInfo['host'] = array(
+				        'label'   => AText::_('MAIN_EXTRAINFO_HOST'),
+				        'current' => $parsedData['host']
+			        );
+		        }
 
-                if(array_key_exists('backup_date', $parsedData))
-                {
-                    $extraInfo['backup_date'] = array(
-                        'label'		=> AText::_('MAIN_EXTRAINFO_BACKUPDATE'),
-                        'current'	=> $parsedData['backup_date'] . ' UTC'
-                    );
-                }
+		        if (array_key_exists('backup_date', $parsedData))
+		        {
+			        $extraInfo['backup_date'] = array(
+				        'label'   => AText::_('MAIN_EXTRAINFO_BACKUPDATE'),
+				        'current' => $parsedData['backup_date'] . ' UTC'
+			        );
+		        }
 
-                if(array_key_exists('akeeba_version', $parsedData))
-                {
-                    $extraInfo['akeeba_version'] = array(
-                        'label'		=> AText::_('MAIN_EXTRAINFO_AKEEBAVERSION'),
-                        'current'	=> $parsedData['akeeba_version']
-                    );
-                }
+		        if (array_key_exists('akeeba_version', $parsedData))
+		        {
+			        $extraInfo['akeeba_version'] = array(
+				        'label'   => AText::_('MAIN_EXTRAINFO_AKEEBAVERSION'),
+				        'current' => $parsedData['akeeba_version']
+			        );
+		        }
 
-                if(array_key_exists('php_version', $parsedData))
-                {
-                    $extraInfo['php_version'] = array(
-                        'label'		=> AText::_('MAIN_EXTRAINFO_PHPVERSION'),
-                        'current'	=> $parsedData['php_version']
-                    );
-                }
-            }
+		        if (array_key_exists('php_version', $parsedData))
+		        {
+			        $extraInfo['php_version'] = array(
+				        'label'   => AText::_('MAIN_EXTRAINFO_PHPVERSION'),
+				        'current' => $parsedData['php_version']
+			        );
+		        }
+
+		        if (array_key_exists('root', $parsedData))
+		        {
+			        $extraInfo['root'] = array(
+				        'label'   => AText::_('MAIN_EXTRAINFO_ROOT'),
+				        'current' => $parsedData['root']
+			        );
+		        }
+	        }
         }
 
         return $extraInfo;
