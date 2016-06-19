@@ -27,8 +27,20 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	 */
 	protected function getSiteParamsVars()
 	{
+		$jVersion = $this->container->session->get('jversion', '3.6.0');
+
+		// Default tmp directory: tmp in the root of the site
 		$defaultTmpPath = APATH_ROOT . '/tmp';
-		$defaultLogPath = APATH_ROOT . '/log';
+		// Default logs directory: logs in the administrator directory of the site
+		$defaultLogPath = APATH_ADMINISTRATOR . '/logs';
+
+		// If it's a Joomla! 1.x, 2.x or 3.0 to 3.5 site (inclusive) the default log dir is in the site's root
+		if (!empty($jVersion) && version_compare($jVersion, '3.5.999', 'le'))
+		{
+			// I use log instead of logs because "logs" isn't writeable on many hosts.
+			$defaultLogPath = APATH_ROOT . '/log';
+		}
+
 		$defaultSSL     = 2;
 
 		if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on')
