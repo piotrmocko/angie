@@ -259,13 +259,20 @@ class AngieModelWordpressReplacedata extends AngieModelBaseReplacedata
 		return array('msg' => AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'), 'more' => true);
 	}
 
-	/**
-		// Am I done with DB replacement? If so let's update some files
-		if (!$more)
+	public function stepEngine()
+	{
+		$result = parent::stepEngine();
+
+		if (isset($result['more']) && !$result['more'])
 		{
+			// Am I done with DB replacement? If so let's update some files
 			$this->updateFiles();
 		}
 
+		return $result;
+	}
+
+	/**
 	 * Returns the default replacement values
 	 *
 	 * @return array
@@ -537,7 +544,6 @@ class AngieModelWordpressReplacedata extends AngieModelBaseReplacedata
 
 		return $replacements;
 	}
-	}
 
 	/**
 	 * Updates known files that are storing absolute paths inside them
@@ -546,14 +552,14 @@ class AngieModelWordpressReplacedata extends AngieModelBaseReplacedata
 	{
 		$files = array(
 			// I'll try to apply the changes to those files and their "backup" counterpart
-			APATH_SITE.'/.htaccess',
-			APATH_SITE.'/htaccess.bak',
-			APATH_SITE.'/.user.ini.bak',
-			APATH_SITE.'/.user.ini',
-			APATH_SITE.'/php.ini',
-			APATH_SITE.'/php.ini.bak',
+			APATH_SITE . '/.htaccess',
+			APATH_SITE . '/htaccess.bak',
+			APATH_SITE . '/.user.ini.bak',
+			APATH_SITE . '/.user.ini',
+			APATH_SITE . '/php.ini',
+			APATH_SITE . '/php.ini.bak',
 			// Wordfence is storing the absolute path inside their file. Because __DIR__ is too mainstream..
-			APATH_SITE.'/wordfence-waf.php',
+			APATH_SITE . '/wordfence-waf.php',
 		);
 
 		foreach ($files as $file)
@@ -572,4 +578,5 @@ class AngieModelWordpressReplacedata extends AngieModelBaseReplacedata
 
 			file_put_contents($file, $contents);
 		}
+	}
 }
