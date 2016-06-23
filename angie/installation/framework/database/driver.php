@@ -44,7 +44,7 @@ abstract class ADatabaseDriver implements ADatabaseInterface
 	 *
 	 * @var    string
 	 */
-	private $_database;
+	protected $_database;
 
 	/**
 	 * The name of the database driver.

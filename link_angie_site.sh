@@ -49,5 +49,10 @@ done
 for FILE in "${FILES[@]}"
 do
 	echo "Copying \"${FILE}\"..."
-	cp ${SOURCE_DIR}/${FILE} ${1}/installation/${FILE}
+
+	if [ -e $1/installation/${FILE} ]; then
+		rm $1/installation/${FILE}
+	fi
+
+	ln ${SOURCE_DIR}/${FILE} ${1}/installation/${FILE}
 done

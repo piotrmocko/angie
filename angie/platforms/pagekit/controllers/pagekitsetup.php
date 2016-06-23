@@ -8,15 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieViewSetup extends AView
+class AngieControllerPagekitSetup extends AngieControllerBaseSetup
 {
-	public function onBeforeMain()
-	{
-		/** @var AngieModelJoomlaSetup $model */
-		$model           = $this->getModel();
-		$this->stateVars = $model->getStateVariables();
-		$this->hasFTP    = function_exists('ftp_connect');
 
-		return true;
-	}
 }

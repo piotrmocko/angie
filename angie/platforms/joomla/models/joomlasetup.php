@@ -12,12 +12,12 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 {
     public function getStateVariables()
     {
-        // I have to extend the parent method to include FTP params, too
-        $params = (array) parent::getStateVariables();
+	    // I have to extend the parent method to include FTP params, too
+	    $params = (array) parent::getStateVariables();
 
-        $params = array_merge($params, $this->getFTPParamsVars());
+	    $params = array_merge($params, $this->getFTPParamsVars());
 
-        return (object) $params;
+	    return (object) $params;
     }
 
 	/**
@@ -27,32 +27,51 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	 */
 	protected function getSiteParamsVars()
 	{
-		$defaultTmpPath	 = APATH_ROOT . '/tmp';
-		$defaultLogPath	 = APATH_ROOT . '/log';
+		$jVersion = $this->container->session->get('jversion', '3.6.0');
+
+		// Default tmp directory: tmp in the root of the site
+		$defaultTmpPath = APATH_ROOT . '/tmp';
+		// Default logs directory: logs in the administrator directory of the site
+		$defaultLogPath = APATH_ADMINISTRATOR . '/logs';
+
+		// If it's a Joomla! 1.x, 2.x or 3.0 to 3.5 site (inclusive) the default log dir is in the site's root
+		if (!empty($jVersion) && version_compare($jVersion, '3.5.999', 'le'))
+		{
+			// I use log instead of logs because "logs" isn't writeable on many hosts.
+			$defaultLogPath = APATH_ROOT . '/log';
+		}
+
+		$defaultSSL     = 2;
+
+		if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on')
+		{
+			$defaultSSL = 0;
+		}
 
 		$ret = array(
-			'sitename'		 => $this->getState('sitename', $this->configModel->get('sitename', 'Restored website')),
-			'siteemail'		 => $this->getState('siteemail', $this->configModel->get('mailfrom', 'no-reply@example.com')),
-			'emailsender'	 => $this->getState('emailsender', $this->configModel->get('fromname', 'Restored website')),
-			'livesite'		 => $this->getState('livesite', $this->configModel->get('live_site', '')),
-			'cookiedomain'	 => $this->getState('cookiedomain', $this->configModel->get('cookie_domain', '')),
-			'cookiepath'	 => $this->getState('cookiepath', $this->configModel->get('cookie_path', '')),
-			'tmppath'		 => $this->getState('tmppath', $this->configModel->get('tmp_path', $defaultTmpPath)),
-			'logspath'		 => $this->getState('logspath', $this->configModel->get('log_path', $defaultLogPath)),
-			'default_tmp'	 => $defaultTmpPath,
-			'default_log'	 => $defaultLogPath,
-			'site_root_dir'	 => APATH_ROOT,
+			'sitename'      => $this->getState('sitename', $this->configModel->get('sitename', 'Restored website')),
+			'siteemail'     => $this->getState('siteemail', $this->configModel->get('mailfrom', 'no-reply@example.com')),
+			'emailsender'   => $this->getState('emailsender', $this->configModel->get('fromname', 'Restored website')),
+			'livesite'      => $this->getState('livesite', $this->configModel->get('live_site', '')),
+			'cookiedomain'  => $this->getState('cookiedomain', $this->configModel->get('cookie_domain', '')),
+			'cookiepath'    => $this->getState('cookiepath', $this->configModel->get('cookie_path', '')),
+			'tmppath'       => $this->getState('tmppath', $this->configModel->get('tmp_path', $defaultTmpPath)),
+			'logspath'      => $this->getState('logspath', $this->configModel->get('log_path', $defaultLogPath)),
+			'force_ssl'     => $this->getState('force_ssl', $this->configModel->get('force_ssl', $defaultSSL)),
+			'default_tmp'   => $defaultTmpPath,
+			'default_log'   => $defaultLogPath,
+			'site_root_dir' => APATH_ROOT,
 		);
 
-        // Let's cleanup the live site url
-        require_once APATH_INSTALLATION.'/angie/helpers/setup.php';
+		// Let's cleanup the live site url
+		require_once APATH_INSTALLATION . '/angie/helpers/setup.php';
 
-        $ret['livesite'] = AngieHelperSetup::cleanLiveSite($ret['livesite']);
+		$ret['livesite'] = AngieHelperSetup::cleanLiveSite($ret['livesite']);
 
-        if (version_compare($this->container->session->get('jversion'), '3.2', 'ge'))
-        {
-            $ret['mailonline'] = $this->getState('mailonline', $this->configModel->get('mailonline', '1'));
-        }
+		if (version_compare($this->container->session->get('jversion'), '3.2', 'ge'))
+		{
+			$ret['mailonline'] = $this->getState('mailonline', $this->configModel->get('mailonline', '1'));
+		}
 
 		// Deal with tmp and logs path
 		if (!@is_dir($ret['tmppath']))
@@ -82,117 +101,117 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	 * @return  array
 	 */
     private function getFTPParamsVars()
-	{
-		$ret = array(
-			'ftpenable'	 => $this->getState('enableftp', $this->configModel->get('ftp_enable', 0)),
-			'ftphost'	 => $this->getState('ftphost', $this->configModel->get('ftp_host', '')),
-			'ftpport'	 => $this->getState('ftpport', $this->configModel->get('ftp_port', 21)),
-			'ftpuser'	 => $this->getState('ftpuser', $this->configModel->get('ftp_user', '')),
-			'ftppass'	 => $this->getState('ftppass', $this->configModel->get('ftp_pass', '')),
-			'ftpdir'	 => $this->getState('ftpdir', $this->configModel->get('ftp_root', '')),
-		);
+    {
+	    $ret = array(
+		    'ftpenable' => $this->getState('enableftp', $this->configModel->get('ftp_enable', 0)),
+		    'ftphost'   => $this->getState('ftphost', $this->configModel->get('ftp_host', '')),
+		    'ftpport'   => $this->getState('ftpport', $this->configModel->get('ftp_port', 21)),
+		    'ftpuser'   => $this->getState('ftpuser', $this->configModel->get('ftp_user', '')),
+		    'ftppass'   => $this->getState('ftppass', $this->configModel->get('ftp_pass', '')),
+		    'ftpdir'    => $this->getState('ftpdir', $this->configModel->get('ftp_root', '')),
+	    );
 
-		return $ret;
-	}
+	    return $ret;
+    }
 
     protected function getSuperUsersVars()
-	{
-		$ret = array();
+    {
+	    $ret = array();
 
-		// Connect to the database
-		try
-		{
-			$db = $this->getDatabase();
-		}
-		catch (Exception $exc)
-		{
-			return $ret;
-		}
+	    // Connect to the database
+	    try
+	    {
+		    $db = $this->getDatabase();
+	    }
+	    catch (Exception $exc)
+	    {
+		    return $ret;
+	    }
 
-		// Find the Super User groups
-		try
-		{
-			$query = $db->getQuery(true)
-				->select($db->qn('rules'))
-				->from($db->qn('#__assets'))
-				->where($db->qn('parent_id') . ' = ' . $db->q(0));
-			$db->setQuery($query, 0, 1);
-			$rulesJSON	 = $db->loadResult();
-			$rules		 = json_decode($rulesJSON, true);
+	    // Find the Super User groups
+	    try
+	    {
+		    $query = $db->getQuery(true)
+		                ->select($db->qn('rules'))
+		                ->from($db->qn('#__assets'))
+		                ->where($db->qn('parent_id') . ' = ' . $db->q(0));
+		    $db->setQuery($query, 0, 1);
+		    $rulesJSON = $db->loadResult();
+		    $rules     = json_decode($rulesJSON, true);
 
-			$rawGroups = $rules['core.admin'];
-			$groups = array();
+		    $rawGroups = $rules['core.admin'];
+		    $groups    = array();
 
-			if (empty($rawGroups))
-			{
-				return $ret;
-			}
+		    if (empty($rawGroups))
+		    {
+			    return $ret;
+		    }
 
-			foreach ($rawGroups as $g => $enabled)
-			{
-				if ($enabled)
-				{
-					$groups[] = $db->q($g);
-				}
-			}
+		    foreach ($rawGroups as $g => $enabled)
+		    {
+			    if ($enabled)
+			    {
+				    $groups[] = $db->q($g);
+			    }
+		    }
 
-			if (empty($groups))
-			{
-				return $ret;
-			}
-		}
-		catch (Exception $exc)
-		{
-			return $ret;
-		}
+		    if (empty($groups))
+		    {
+			    return $ret;
+		    }
+	    }
+	    catch (Exception $exc)
+	    {
+		    return $ret;
+	    }
 
-		// Get the user IDs of users belonging to the SA groups
-		try
-		{
-			$query = $db->getQuery(true)
-				->select($db->qn('user_id'))
-				->from($db->qn('#__user_usergroup_map'))
-				->where($db->qn('group_id') . ' IN(' . implode(',', $groups) . ')' );
-			$db->setQuery($query);
-			$rawUserIDs = $db->loadColumn(0);
+	    // Get the user IDs of users belonging to the SA groups
+	    try
+	    {
+		    $query = $db->getQuery(true)
+		                ->select($db->qn('user_id'))
+		                ->from($db->qn('#__user_usergroup_map'))
+		                ->where($db->qn('group_id') . ' IN(' . implode(',', $groups) . ')');
+		    $db->setQuery($query);
+		    $rawUserIDs = $db->loadColumn(0);
 
-			if (empty($rawUserIDs))
-			{
-				return $ret;
-			}
+		    if (empty($rawUserIDs))
+		    {
+			    return $ret;
+		    }
 
-			$userIDs = array();
+		    $userIDs = array();
 
-			foreach ($rawUserIDs as $id)
-			{
-				$userIDs[] = $db->q($id);
-			}
-		}
-		catch (Exception $exc)
-		{
-			return $ret;
-		}
+		    foreach ($rawUserIDs as $id)
+		    {
+			    $userIDs[] = $db->q($id);
+		    }
+	    }
+	    catch (Exception $exc)
+	    {
+		    return $ret;
+	    }
 
-		// Get the user information for the Super Administrator users
-		try
-		{
-			$query = $db->getQuery(true)
-				->select(array(
-					$db->qn('id'),
-					$db->qn('username'),
-					$db->qn('email'),
-				))->from($db->qn('#__users'))
-				->where($db->qn('id'). ' IN(' . implode(',', $userIDs) . ')');
-			$db->setQuery($query);
-			$ret['superusers'] = $db->loadObjectList(0);
-		}
-		catch (Exception $exc)
-		{
-			return $ret;
-		}
+	    // Get the user information for the Super Administrator users
+	    try
+	    {
+		    $query = $db->getQuery(true)
+		                ->select(array(
+			                $db->qn('id'),
+			                $db->qn('username'),
+			                $db->qn('email'),
+		                ))->from($db->qn('#__users'))
+		                ->where($db->qn('id') . ' IN(' . implode(',', $userIDs) . ')');
+		    $db->setQuery($query);
+		    $ret['superusers'] = $db->loadObjectList(0);
+	    }
+	    catch (Exception $exc)
+	    {
+		    return $ret;
+	    }
 
-		return $ret;
-	}
+	    return $ret;
+    }
 
 	/**
 	 * Apply the settings to the configuration.php file and the database
@@ -213,11 +232,12 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		$this->configModel->set('cookie_path', $stateVars->cookiepath);
 		$this->configModel->set('tmp_path', $stateVars->tmppath);
 		$this->configModel->set('log_path', $stateVars->logspath);
+		$this->configModel->set('force_ssl', $stateVars->force_ssl);
 
-        if (version_compare($this->container->session->get('jversion'), '3.2', 'ge'))
-        {
-            $this->configModel->set('mailonline', $stateVars->mailonline);
-        }
+		if (version_compare($this->container->session->get('jversion'), '3.2', 'ge'))
+		{
+			$this->configModel->set('mailonline', $stateVars->mailonline);
+		}
 
 		// -- FTP settings
 		$this->configModel->set('ftp_enable', ($stateVars->ftpenable ? 1 : 0));
@@ -236,22 +256,22 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		$this->configModel->set('db', $connectionVars->dbname);
 		$this->configModel->set('dbprefix', $connectionVars->prefix);
 
-        // Let's get the old secret key, since we need it to update encrypted stored data
-        $oldsecret = $this->configModel->get('secret', '');
-        $newsecret = $this->genRandomPassword(32);
+		// Let's get the old secret key, since we need it to update encrypted stored data
+		$oldsecret = $this->configModel->get('secret', '');
+		$newsecret = $this->genRandomPassword(32);
 
 		// -- Override the secret key
 		$this->configModel->set('secret', $newsecret);
 
-        $this->updateEncryptedData($oldsecret, $newsecret);
+		$this->updateEncryptedData($oldsecret, $newsecret);
 
 		$this->configModel->saveToSession();
 
 		// Get the configuration.php file and try to save it
 		$configurationPHP = $this->configModel->getFileContents();
-		$filepath = APATH_SITE . '/configuration.php';
+		$filepath         = APATH_SITE . '/configuration.php';
 
-		if (! @file_put_contents($filepath, $configurationPHP))
+		if (!@file_put_contents($filepath, $configurationPHP))
 		{
 			if ($this->configModel->get('ftp_enable', 0))
 			{
@@ -261,6 +281,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 				$ftpuser = $this->configModel->get('ftp_user', '');
 				$ftppass = $this->configModel->get('ftp_pass', '');
 				$ftproot = $this->configModel->get('ftp_root', '');
+
 				try
 				{
 					$ftp = AFtp::getInstance($ftphost, $ftpport, array('type' => FTP_AUTOASCII), $ftpuser, $ftppass);
@@ -273,11 +294,11 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 					// Fail gracefully
 					return false;
 				}
+
+				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		return true;
@@ -299,117 +320,117 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
     private function updateTFA($oldsecret, $newsecret)
     {
-        $this->container->session->set('tfa_warning', false);
+	    $this->container->session->set('tfa_warning', false);
 
-        // There is no TFA in Joomla < 3.2
-        $jversion = $this->container->session->get('jversion');
-        if(version_compare($jversion, '3.2', 'lt'))
-        {
-            return;
-        }
+	    // There is no TFA in Joomla < 3.2
+	    $jversion = $this->container->session->get('jversion');
 
-        $db = $this->getDatabase();
+	    if (version_compare($jversion, '3.2', 'lt'))
+	    {
+		    return;
+	    }
 
-        $query = $db->getQuery(true)
-                    ->select('COUNT(extension_id)')
-                    ->from($db->qn('#__extensions'))
-                    ->where($db->qn('type').' = '.$db->q('plugin'))
-                    ->where($db->qn('folder').' = '.$db->q('twofactorauth'))
-                    ->where($db->qn('enabled').' = '.$db->q('1'));
-        $count = $db->setQuery($query)->loadResult();
+	    $db = $this->getDatabase();
 
-        // No enabled plugin, there is no point in continuing
-        if(!$count)
-        {
-            return;
-        }
+	    $query = $db->getQuery(true)
+	                ->select('COUNT(extension_id)')
+	                ->from($db->qn('#__extensions'))
+	                ->where($db->qn('type') . ' = ' . $db->q('plugin'))
+	                ->where($db->qn('folder') . ' = ' . $db->q('twofactorauth'))
+	                ->where($db->qn('enabled') . ' = ' . $db->q('1'));
+	    $count = $db->setQuery($query)->loadResult();
 
-        $query = $db->getQuery(true)
-                    ->select('*')
-                    ->from($db->qn('#__users'))
-                    ->where($db->qn('otpKey').' != '.$db->q(''))
-                    ->where($db->qn('otep').' != '.$db->q(''));
+	    // No enabled plugin, there is no point in continuing
+	    if (!$count)
+	    {
+		    return;
+	    }
 
-        $users = $db->setQuery($query)->loadObjectList();
+	    $query = $db->getQuery(true)
+	                ->select('*')
+	                ->from($db->qn('#__users'))
+	                ->where($db->qn('otpKey') . ' != ' . $db->q(''))
+	                ->where($db->qn('otep') . ' != ' . $db->q(''));
 
-        // There are no users with TFA configured, let's stop here
-        if(!$users)
-        {
-            return;
-        }
+	    $users = $db->setQuery($query)->loadObjectList();
 
-        // Otherwise I'll get a blank page
-        if(!defined('FOF_INCLUDED'))
-        {
-            define('FOF_INCLUDED', 1);
-        }
+	    // There are no users with TFA configured, let's stop here
+	    if (!$users)
+	    {
+		    return;
+	    }
 
-        include_once APATH_LIBRARIES.'/fof/encrypt/aes.php';
+	    // Otherwise I'll get a blank page
+	    if (!defined('FOF_INCLUDED'))
+	    {
+		    define('FOF_INCLUDED', 1);
+	    }
 
-        // Does this host support AES?
-        if(!FOFEncryptAes::isSupported())
-        {
-            // If not, set a flag, so we will display a big, fat warning in the finalize screen
-            $this->container->session->set('tfa_warning', true);
+	    include_once APATH_LIBRARIES . '/fof/encrypt/aes.php';
 
-            // Let's disable them
-            $query = $db->getQuery(true)
-                        ->update($db->qn('#__extensions'))
-                        ->set($db->qn('enabled').' = '.$db->q('0'))
-                        ->where($db->qn('type').' = '.$db->q('plugin'))
-                        ->where($db->qn('folder').' = '.$db->q('twofactorauth'));
-            $db->setQuery($query)->execute();
+	    // Does this host support AES?
+	    if (!FOFEncryptAes::isSupported())
+	    {
+		    // If not, set a flag, so we will display a big, fat warning in the finalize screen
+		    $this->container->session->set('tfa_warning', true);
 
-            return;
-        }
+		    // Let's disable them
+		    $query = $db->getQuery(true)
+		                ->update($db->qn('#__extensions'))
+		                ->set($db->qn('enabled') . ' = ' . $db->q('0'))
+		                ->where($db->qn('type') . ' = ' . $db->q('plugin'))
+		                ->where($db->qn('folder') . ' = ' . $db->q('twofactorauth'));
+		    $db->setQuery($query)->execute();
 
-        $oldaes = new FOFEncryptAes($oldsecret, 256);
-        $newaes = new FOFEncryptAes($newsecret, 256);
+		    return;
+	    }
 
-        foreach($users as $user)
-        {
-            $update = (object) array(
-                'id'     => $user->id,
-                'otpKey' => '',
-                'otep'   => ''
-            );
+	    $oldaes = new FOFEncryptAes($oldsecret, 256);
+	    $newaes = new FOFEncryptAes($newsecret, 256);
 
-            list($method, $otpKey) = explode(':', $user->otpKey);
-            $update->otpKey = $oldaes->decryptString($otpKey);
-            $update->otpKey = $method.':'.$newaes->encryptString($update->otpKey);
+	    foreach ($users as $user)
+	    {
+		    $update = (object) array(
+			    'id'     => $user->id,
+			    'otpKey' => '',
+			    'otep'   => ''
+		    );
 
-            $update->otep = $oldaes->decryptString($user->otep);
-            $update->otep = $newaes->encryptString($update->otep);
+		    list($method, $otpKey) = explode(':', $user->otpKey);
 
-            $db->updateObject('#__users', $update, 'id');
-        }
+		    $update->otpKey = $oldaes->decryptString($otpKey);
+		    $update->otpKey = $method . ':' . $newaes->encryptString($update->otpKey);
+		    $update->otep   = $oldaes->decryptString($user->otep);
+		    $update->otep   = $newaes->encryptString($update->otep);
+
+		    $db->updateObject('#__users', $update, 'id');
+	    }
     }
 
 	private function applySuperAdminChanges()
 	{
 		// Get the Super User ID. If it's empty, skip.
 		$id = $this->getState('superuserid', 0);
+
 		if (!$id)
 		{
 			return false;
 		}
 
 		// Get the Super User email and password
-		$email = $this->getState('superuseremail', '');
+		$email     = $this->getState('superuseremail', '');
 		$password1 = $this->getState('superuserpassword', '');
 		$password2 = $this->getState('superuserpasswordrepeat', '');
 
 		// If the email is empty but the passwords are not, fail
 		if (empty($email))
 		{
-			if(empty($password1) && empty($password2))
+			if (empty($password1) && empty($password2))
 			{
 				return false;
 			}
-			else
-			{
-				throw new Exception(AText::_('SETUP_ERR_EMAILEMPTY'));
-			}
+
+			throw new Exception(AText::_('SETUP_ERR_EMAILEMPTY'));
 		}
 
 		// If the passwords are empty, skip
@@ -424,16 +445,16 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 			throw new Exception(AText::_('SETUP_ERR_PASSWORDSDONTMATCH'));
 		}
 
-        // Let's load the password compatibility file
-        require_once APATH_ROOT.'/installation/framework/utils/password.php';
+		// Let's load the password compatibility file
+		require_once APATH_ROOT . '/installation/framework/utils/password.php';
 
 		// Connect to the database
-		$db		 = $this->getDatabase();
+		$db = $this->getDatabase();
 
 		// Create a new salt and encrypted password (legacy method for Joomla! 1.5.0 through 3.2.0)
-		$salt = $this->genRandomPassword(32);
-		$crypt = md5($password1.$salt);
-		$cryptpass = $crypt.':'.$salt;
+		$salt      = $this->genRandomPassword(32);
+		$crypt     = md5($password1 . $salt);
+		$cryptpass = $crypt . ':' . $salt;
 
 		// Get the Joomla! version. If none was detected we assume it's 1.5.0 (so we can use the legacy method)
 		$jVersion = $this->container->session->get('jversion', '1.5.0');
@@ -448,10 +469,10 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
 		// Update the database record
 		$query = $db->getQuery(true)
-			->update($db->qn('#__users'))
-			->set($db->qn('password') . ' = ' . $db->q($cryptpass))
-			->set($db->qn('email') . ' = ' . $db->q($email))
-			->where($db->qn('id') . ' = ' . $db->q($id));
+		            ->update($db->qn('#__users'))
+		            ->set($db->qn('password') . ' = ' . $db->q($cryptpass))
+		            ->set($db->qn('email') . ' = ' . $db->q($email))
+		            ->where($db->qn('id') . ' = ' . $db->q($id));
 		$db->setQuery($query);
 		$db->execute();
 
@@ -460,17 +481,22 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
 	private function genRandomPassword($length = 8)
 	{
-		$salt = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		$len = strlen($salt);
+		$salt     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		$len      = strlen($salt);
 		$makepass = '';
 
 		$stat = @stat(__FILE__);
-		if(empty($stat) || !is_array($stat)) $stat = array(php_uname());
+
+		if (empty($stat) || !is_array($stat))
+		{
+			$stat = array(php_uname());
+		}
 
 		mt_srand(crc32(microtime() . implode('|', $stat)));
 
-		for ($i = 0; $i < $length; $i ++) {
-			$makepass .= $salt[mt_rand(0, $len -1)];
+		for ($i = 0; $i < $length; $i++)
+		{
+			$makepass .= $salt[mt_rand(0, $len - 1)];
 		}
 
 		return $makepass;
