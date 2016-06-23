@@ -11,3 +11,5 @@
 /angie/installation/*.dat
 /angie/installation/tmp/*.dat
 /angie/installation/version.php
+
+link_angie_site_davide.sh
