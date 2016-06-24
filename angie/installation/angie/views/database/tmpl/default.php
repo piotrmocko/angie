@@ -26,11 +26,6 @@ var akeebaAjax = null;
 $(document).ready(function(){
 	akeebaAjax = new akeebaAjaxConnector('$url');
 
-	$('#showAdvanced').click(function(){
-	    $(this).hide();
-	    $('#advancedWrapper').show();
-	});
-
 	databasePasswordMessage = '$dbPassMessage';
 });
 JS
@@ -160,13 +155,9 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 				</div>
 			</div>
 		</div>
-
-        <div style="text-align: center;margin-top:40px">
-            <span id="showAdvanced" class="btn btn-primary"><?php echo AText::_('DATABASE_SHOW_ADVANCED')?></span>
-        </div>
 	</div>
 
-	<div id="advancedWrapper" class="span6" style="display: none;">
+	<div id="advancedWrapper" class="span6">
 		<h3><?php echo AText::_('DATABASE_HEADER_ADVANCED'); ?></h3>
 
 		<div class="form-horizontal">
