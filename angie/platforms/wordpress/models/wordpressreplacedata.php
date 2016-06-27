@@ -599,6 +599,20 @@ class AngieModelWordpressReplacedata extends AModel
 		$newReplacements = $this->getDefaultReplacementsForDbPrefix($config);
 		$replacements    = array_merge($replacements, $newReplacements);
 
+		// Take into account JSON-encoded data
+		foreach ($replacements as $from => $to)
+		{
+			$jsonFrom = json_encode($from);
+			$jsonTo   = json_encode($to);
+			$jsonFrom = trim($jsonFrom, '"');
+			$jsonTo   = trim($jsonTo, '"');
+
+			if ($jsonFrom != $from)
+			{
+				$replacements[$jsonFrom] = $jsonTo;
+			}
+		}
+
 		// All done
 		return $replacements;
 	}

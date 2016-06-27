@@ -27,6 +27,12 @@ class AngieControllerWordpressReplacedata extends AController
 			return;
 		}
 
+		if ($this->input->getBool('force', false))
+		{
+			$session      = $this->container->session;
+			$session->set('dataReplacements', null);
+		}
+
 		parent::main();
 	}
 
