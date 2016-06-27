@@ -60,7 +60,7 @@ echo $this->loadAnyTemplate('steps/steps');
 	<div class="span4">
 		<select multiple size="10" id="extraTables">
 <?php if (!empty($this->otherTables)) foreach ($this->otherTables as $table): ?>
-			<option value="<?php echo $this->escape($table) ?>"><?php echo $this->escape($table) ?></option>
+			<option value="<?php echo $this->escape($table) ?>" <?php echo (substr($table, 0, 3) == '#__') ? 'selected="selected"' : '' ?>><?php echo $this->escape($table) ?></option>
 <?php endforeach; ?>
 		</select>
 	</div>
