@@ -736,8 +736,8 @@ class AngieModelWordpressReplacedata extends AModel
 
 		if (isset($extra_info['root']) && $extra_info['root'])
 		{
-			$old_path = trim($extra_info['root']['current'], '/');
-			$new_path = trim(APATH_SITE, '/');
+			$old_path = rtrim($extra_info['root']['current'], '/');
+			$new_path = rtrim(APATH_SITE, '/');
 
 			$replacements[$old_path] = $new_path;
 		}
