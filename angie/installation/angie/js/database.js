@@ -8,6 +8,7 @@
 var databaseKey = null;
 var databaseThrottle = 100;
 var databasePasswordMessage = '';
+var databasePrefixMessage = '';
 
 /**
  * Initialisation of the page
@@ -84,6 +85,15 @@ function databaseRunRestoration(key)
 	else if (databaseThrottle >= 60000)
 	{
 		databaseThrottle = 60000;
+	}
+
+	// Check whether the password contains non-ASCII characters and show a warning
+	if (databasePrefixMessage.length && (/[A-Z]{1,}/.test(data.dbinfo.prefix) != false))
+	{
+		if (!window.confirm(databasePrefixMessage))
+		{
+			return;
+		}
 	}
 
 	// Check whether the password contains non-ASCII characters and show a warning

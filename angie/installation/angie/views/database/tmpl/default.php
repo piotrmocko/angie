@@ -19,7 +19,9 @@ $document->addScript('angie/js/database.js');
 
 $url = 'index.php';
 $dbPassMessage = AText::_('DATABASE_ERR_COMPLEXPASSWORD');
-$dbPassMessage = str_replace("\n", '\\n', $dbPassMessage);
+$dbPassMessage = str_replace(array("\n", "'"), array('\\n', '\\\''), $dbPassMessage);
+$dbPrefixMessage = AText::_('DATABASE_ERR_UPPERCASEPREFIX');
+$dbPrefixMessage = str_replace(array("\n", "'"), array('\\n', '\\\''), $dbPrefixMessage);
 
 $document->addScriptDeclaration(<<<JS
 var akeebaAjax = null;
@@ -27,6 +29,7 @@ $(document).ready(function(){
 	akeebaAjax = new akeebaAjaxConnector('$url');
 
 	databasePasswordMessage = '$dbPassMessage';
+	databasePrefixMessage = '$dbPrefixMessage';
 });
 JS
 );
