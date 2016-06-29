@@ -575,6 +575,11 @@ class ADatabaseDriverSqlsrv extends ADatabaseDriver
 		// If an error occurred handle it.
 		if (!$this->cursor)
 		{
+			// Get the error number and message.
+			$errors = sqlsrv_errors();
+			$this->errorNum = $errors[0]['SQLSTATE'];
+			$this->errorMsg = $errors[0]['message'] . 'SQL=' . $sql;
+
 			// Check if the server was disconnected.
 			if (!$this->connected() && !$isReconnecting)
 			{
@@ -611,11 +616,6 @@ class ADatabaseDriverSqlsrv extends ADatabaseDriver
 			// The server was not disconnected.
 			else
 			{
-				// Get the error number and message.
-				$errors = sqlsrv_errors();
-				$this->errorNum = $errors[0]['SQLSTATE'];
-				$this->errorMsg = $errors[0]['message'] . 'SQL=' . $sql;
-
 				// Throw the normal query exception.
 				throw new RuntimeException($this->errorMsg, $this->errorNum);
 			}

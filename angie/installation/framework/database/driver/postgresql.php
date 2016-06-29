@@ -627,11 +627,12 @@ class ADatabaseDriverPostgresql extends ADatabaseDriver
 		// Execute the query. Error suppression is used here to prevent warnings/notices that the connection has been lost.
 		$this->cursor = @pg_query($this->connection, $query);
 
-		unset($query);
-
 		// If an error occurred handle it.
 		if (!$this->cursor)
 		{
+			$this->errorNum = (int) pg_result_error_field($this->cursor, PGSQL_DIAG_SQLSTATE) . ' ';
+			$this->errorMsg = pg_last_error($this->connection) . " SQL=" . $query;
+
 			// Check if the server was disconnected.
 			if (!$this->connected() && !$isReconnecting)
 			{
@@ -663,10 +664,7 @@ class ADatabaseDriverPostgresql extends ADatabaseDriver
 			// The server was not disconnected.
 			else
 			{
-				// Get the error number and message.
-				$this->errorNum = (int) pg_result_error_field($this->cursor, PGSQL_DIAG_SQLSTATE) . ' ';
-				$this->errorMsg = pg_last_error($this->connection) . " SQL=" . $query;
-
+				unset($query);
 				// Throw the normal query exception.
 				throw new RuntimeException($this->errorMsg);
 			}

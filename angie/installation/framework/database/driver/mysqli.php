@@ -579,6 +579,9 @@ class ADatabaseDriverMysqli extends ADatabaseDriver
 		// If an error occurred handle it.
 		if (!$this->cursor)
 		{
+			$this->errorNum = (int)mysqli_errno($this->connection);
+			$this->errorMsg = (string)mysqli_error($this->connection) . "\n SQL=" . $sql;
+
 			// Check if the server was disconnected.
 			if (!$this->connected() && !$isReconnecting)
 			{
@@ -612,11 +615,7 @@ class ADatabaseDriverMysqli extends ADatabaseDriver
 			// The server was not disconnected.
 			else
 			{
-				$this->errorNum = (int)mysqli_errno($this->connection);
-				$this->errorMsg = (string)mysqli_error($this->connection) . ' SQL=' . $sql;
-
 				unset($sql);
-
 				throw new RuntimeException($this->errorMsg, $this->errorNum);
 			}
 		}

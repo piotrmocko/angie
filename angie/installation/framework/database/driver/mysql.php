@@ -297,6 +297,9 @@ class ADatabaseDriverMysql extends ADatabaseDriverMysqli
 		// If an error occurred handle it.
 		if (!$this->cursor)
 		{
+			$this->errorNum = (int) mysql_errno($this->connection);
+			$this->errorMsg = (string) mysql_error($this->connection) . "\nSQL=" . $sql;
+
 			// Check if the server was disconnected.
 			if (!$this->connected() && !$isReconnecting)
 			{
@@ -332,11 +335,7 @@ class ADatabaseDriverMysql extends ADatabaseDriverMysqli
 			else
 			{
 				// Get the error number and message.
-				$this->errorNum = (int) mysql_errno($this->connection);
-				$this->errorMsg = (string) mysql_error($this->connection) . ' SQL=' . $sql;
-
 				unset($sql);
-
 				// Throw the normal query exception.
 				throw new RuntimeException($this->errorMsg, $this->errorNum);
 			}
