@@ -307,6 +307,11 @@ class ADatabaseDriverPdomysql extends ADatabaseDriverMysqli
 	 */
 	public function getVersion()
 	{
+		if (!is_object($this->connection))
+		{
+			$this->connect();
+		}
+
 		return $this->connection->getAttribute(PDO::ATTR_SERVER_VERSION);
 	}
 
