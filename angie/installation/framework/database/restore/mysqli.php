@@ -114,8 +114,6 @@ class ADatabaseRestoreMysqli extends ADatabaseRestore
 	 */
 	protected function processQueryLine($query)
 	{
-		$db = $this->getDatabase();
-
 		$forceutf8     = $this->dbiniValues['utf8tables'];
 		$downgradeUtf8 = $forceutf8 && (
 				!$this->dbiniValues['utf8mb4']
@@ -132,6 +130,7 @@ class ADatabaseRestoreMysqli extends ADatabaseRestore
 			// the table. before attempting to create it.
 			$tableName = $this->getCreateTableName($query);
 			$this->dropOrRenameTable($tableName);
+			$query = $this->replaceEngineType($query);
 			$changeEncoding = $forceutf8;
 		}
 		// CREATE VIEW query pre-processing
@@ -501,5 +500,165 @@ class ADatabaseRestoreMysqli extends ADatabaseRestore
 		{
 			// Do nothing if that fails. Maybe we can continue with the restoration.
 		}
+	}
+
+	/**
+	 * Repalced the engine type in a CREATE TABLE query when restoring from Percona or MariaDB to MySQL. Basically, it
+	 * assumes that any kind of database storage engine it cannot recognize has to be replaced with MyISAM.
+	 *
+	 * @param   string  $query  The CREATE TABLE SQL query that you want modified
+	 *
+	 * @return  string  The modified CREATE TABLE query
+	 */
+	protected function replaceEngineType($query)
+	{
+		static $supportedEngines = null;
+		static $defaultEngine = 'MyISAM';
+
+		if (is_null($supportedEngines))
+		{
+			// Get the supported database engines and convert them to all uppercase
+			$supportedEngines = $this->getSupportedDatabaseEngines();
+			$supportedEngines = array_map('strtoupper', $supportedEngines);
+
+			// The server's default engine is the first one listed (see getSupportedDatabaseEngines)
+			$defaultEngine = reset($supportedEngines);
+
+			// However, InnoDB + UTF8MB4 = lots of pain if the developer hadn't expected it. So we shall always try
+			// to use MyISAM whenever possible. In fact, in most of the cases we're trying to convert Aria tables back
+			// to MyISAM when you transfer between MariaDB and MySQL.
+			if (in_array('MYISAM', $supportedEngines))
+			{
+				$defaultEngine = 'MyISAM';
+			}
+		}
+
+		// Get the engine in the CREATE TABLE command
+		$engine = $this->getCreateTableEngine($query);
+		$engineUppercase = strtoupper($engine);
+
+		// Check if the engine is supported. Otherwise use the default engine instead.
+		if (!in_array($engineUppercase, $supportedEngines))
+		{
+			$replacements = array(
+				'ENGINE=' . $engine,
+				'ENGINE =' . $engine,
+				'ENGINE= ' . $engine,
+				'ENGINE = ' . $engine,
+				'TYPE=' . $engine,
+				'TYPE =' . $engine,
+				'TYPE= ' . $engine,
+				'TYPE = ' . $engine,
+			);
+
+			foreach ($replacements as $find)
+			{
+				$replaceWith = (substr($find, 0, 4) == 'TYPE') ? 'TYPE=' : 'ENGINE=';
+				$query = str_ireplace($find, $replaceWith . $defaultEngine, $query);
+			}
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Ask the database to return a list of the supported database storage engines.
+	 *
+	 * @return  array
+	 */
+	protected function getSupportedDatabaseEngines()
+	{
+		// Default database engines
+		$defaultEngines = array('MyISAM', 'BLACKHOLE', 'MEMORY', 'ARCHIVE', 'InnoDB');
+
+		$db = $this->getDatabase();
+		$sql = 'SHOW ENGINES';
+
+		try
+		{
+			$engineMatrix = $db->setQuery($sql)->loadAssocList();
+		}
+		catch (\Exception $e)
+		{
+			return $defaultEngines;
+		}
+
+		$engines = array();
+
+		foreach ($engineMatrix as $engineItem)
+		{
+			if (!isset($engineItem['Engine']))
+			{
+				continue;
+			}
+
+			if (!isset($engineItem['Support']))
+			{
+				continue;
+			}
+
+			$support = strtoupper($engineItem['Support']);
+
+			if (!in_array($support, array('YES', 'DEFAULT', 'TRUE', '1')))
+			{
+				continue;
+			}
+
+			// The default engine goes on top
+			if ($support == 'DEFAULT')
+			{
+				array_unshift($engines, $engineItem['Engine']);
+
+				continue;
+			}
+
+			// Other engines go to the bottom of the list
+			$engines[] = $engineItem['Engine'];
+		}
+
+		if (empty($engines))
+		{
+			return $defaultEngines;
+		}
+
+		return $engines;
+	}
+
+	protected function getCreateTableEngine($query)
+	{
+		// Fallback...
+		$engine = 'MyISAM';
+
+		// This is what MySQL should be using.
+		$engine_keys = array('ENGINE=', 'TYPE=', 'ENGINE =', 'TYPE =');
+
+		foreach ($engine_keys as $engine_key)
+		{
+			$start_pos = strrpos($query, $engine_key);
+
+			if ($start_pos !== false)
+			{
+				// Advance the start position just after the position of the ENGINE keyword
+				$start_pos += strlen($engine_key);
+				// Try to locate the space after the engine type
+				$end_pos = stripos($query, ' ', $start_pos);
+
+				if ($end_pos === false)
+				{
+					// Uh... maybe it ends with ENGINE=EngineType;
+					$end_pos = stripos($query, ';', $start_pos);
+				}
+
+				if ($end_pos !== false)
+				{
+					// Grab the string
+					$engine = substr($query, $start_pos, $end_pos - $start_pos);
+
+					break;
+				}
+			}
+		}
+
+		return $engine;
 	}
 }
