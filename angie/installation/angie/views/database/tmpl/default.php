@@ -17,19 +17,35 @@ $document->addScript('angie/js/json.js');
 $document->addScript('angie/js/ajax.js');
 $document->addScript('angie/js/database.js');
 
-$url = 'index.php';
-$dbPassMessage = AText::_('DATABASE_ERR_COMPLEXPASSWORD');
-$dbPassMessage = str_replace(array("\n", "'"), array('\\n', '\\\''), $dbPassMessage);
+$url             = 'index.php';
+$dbPassMessage   = AText::_('DATABASE_ERR_COMPLEXPASSWORD');
+$dbPassMessage   = str_replace(array("\n", "'"), array('\\n', '\\\''), $dbPassMessage);
 $dbPrefixMessage = AText::_('DATABASE_ERR_UPPERCASEPREFIX');
 $dbPrefixMessage = str_replace(array("\n", "'"), array('\\n', '\\\''), $dbPrefixMessage);
+$dbuserEscaped   = addcslashes($this->db->dbuser, '\'\\');
+$dbpassEscaped   = addcslashes($this->db->dbpass, '\'\\');
+
 
 $document->addScriptDeclaration(<<<JS
 var akeebaAjax = null;
+
+function angieRestoreDefaultDatabaseOptions()
+{
+	// Before setting to an empty string we have to a non-empty string because Chrome is dumb!
+	$('#dbuser').val('IGNORE ME');
+	$('#dbpass').val('IGNORE ME');
+	// And now the real value, at last
+	$('#dbuser').val('$dbuserEscaped');
+	$('#dbpass').val('$dbpassEscaped');
+}
+
 $(document).ready(function(){
 	akeebaAjax = new akeebaAjaxConnector('$url');
 
 	databasePasswordMessage = '$dbPassMessage';
 	databasePrefixMessage = '$dbPrefixMessage';
+	
+	setTimeout('angieRestoreDefaultDatabaseOptions();', 500);
 });
 JS
 );
