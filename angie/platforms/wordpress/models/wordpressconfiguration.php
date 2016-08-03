@@ -238,7 +238,7 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 			}
 			elseif (strpos($line, 'define(') !== false)
 			{
-				preg_match('#define\(["\'](.*?)["\']\,#', $line, $matches);
+				preg_match('#define\(\s?["\'](.*?)["\']\,#', $line, $matches);
 
 				if (isset($matches[1]))
 				{
