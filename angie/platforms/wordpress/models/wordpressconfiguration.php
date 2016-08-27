@@ -335,6 +335,14 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 							$line    = "define('" . $key . "', '" . $newPath . "');";
 							break;
 
+						case 'WP_HOME':
+							$line      = "define('" . $key . "', '" . $this->get('homeurl') . "');";
+							break;
+
+						case 'WP_SITEURL':
+							$line      = "define('" . $key . "', '" . $this->get('siteurl') . "');";
+							break;
+
 						// I think users shouldn't change the WPLANG define, since they will have
 						// to add several files, it's not automatic
 						default:
