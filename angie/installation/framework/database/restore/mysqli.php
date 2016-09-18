@@ -114,6 +114,14 @@ class ADatabaseRestoreMysqli extends ADatabaseRestore
 	 */
 	protected function processQueryLine($query)
 	{
+		static $MySQL55 = null;
+
+		// Check for old MySQL version. Required to downgrade utf8mb4_unicode_520_ci (MySQL 5.6 only) to utf8mb4_unicode_ci
+		if (is_null($MySQL55))
+		{
+			$MySQL55 = version_compare($this->db->getVersion(), '5.6', 'lt');
+		}
+
 		$forceutf8     = $this->dbiniValues['utf8tables'];
 		$downgradeUtf8 = $forceutf8 && (
 				!$this->dbiniValues['utf8mb4']
@@ -185,6 +193,18 @@ class ADatabaseRestoreMysqli extends ADatabaseRestore
 		if (empty($query))
 		{
 			return true;
+		}
+
+		/**
+		 * If the MySQL version is lower than 5.6.0 switch utf8mb4_unicode_520_ci to utf8mb4_unicode_ci. We need to do
+		 * this regardless of UTF8MB4 support and/or downgrade. The idea is that utf8mb4_unicode_520_ci would be
+		 * downgraded to utf8_unicode_520_ci which is an invalid collation. By converting it to utf8mb4_unicode_ci first
+		 * we let MySQL 5.5 with utf8mb4 support work correctly AND ALSO the downgrade to plain UTF8 to work fine (by
+		 * having the downgradeQueryToUtf8 convert the collation to the valid utf8_unicode_ci value).
+		 */
+		if ($MySQL55)
+		{
+			$query = str_replace('utf8mb4_unicode_520_ci', 'utf8mb4_unicode_ci', $query);
 		}
 
 		// If we have to downgrade UTF8MB4 to plain UTF8 we have to do it before executing the query
@@ -411,7 +431,8 @@ class ADatabaseRestoreMysqli extends ADatabaseRestore
 	{
 		// Replace occurrences of utf8mb4 with utf8
 		$query = str_ireplace('utf8mb4', 'utf8', $query);
-		$query = str_ireplace('utf8mb4_unicode_ci', 'utf8_general_ci', $query);
+		$query = str_ireplace('utf8mb4', 'utf8', $query);
+		$query = str_ireplace('utf8mb4_unicode_520_ci', 'utf8mb4_unicode_ci', $query);
 		$query = str_ireplace('utf8mb4_', 'utf8_', $query);
 
 		// Squash UTF8MB4 characters to "Unicode replacement character" (U+FFFD). Slow and reliable.
