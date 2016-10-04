@@ -27,12 +27,6 @@ source_file = angie/installation/angie/language/en-GB.ini
 source_lang = en-GB
 type = INI
 
-[akeebabackup.angie_mautic]
-file_filter = angie/platforms/mautic/language/<lang>.ini
-source_file = angie/platforms/mautic/language/en-GB.ini
-source_lang = en-GB
-type = INI
-
 [akeebabackup.angie_moodle]
 file_filter = angie/platforms/moodle/language/<lang>.ini
 source_file = angie/platforms/moodle/language/en-GB.ini
