@@ -360,13 +360,8 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		    return;
 	    }
 
-	    // Otherwise I'll get a blank page
-	    if (!defined('FOF_INCLUDED'))
-	    {
-		    define('FOF_INCLUDED', 1);
-	    }
-
-	    include_once APATH_LIBRARIES . '/fof/encrypt/aes.php';
+	    // This will define the FOF_INCLUDED constant and load the autoloader
+	    include_once APATH_LIBRARIES . '/fof/include.php';
 
 	    // Does this host support AES?
 	    if (!FOFEncryptAes::isSupported())
