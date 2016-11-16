@@ -28,10 +28,12 @@ class AngieModelDatabase extends AModel
 	{
 		if (empty($this->dbini))
 		{
-			$this->dbini = $this->container->session->get('databases.dbini', null);
+			$this->dbini = $this->container->session->get('databases.dbini', array());
+
 			if (empty($this->dbini))
 			{
 				$filename = APATH_INSTALLATION . '/sql/databases.ini';
+
 				if (file_exists($filename))
 				{
 					$this->dbini = AngieHelperIni::parse_ini_file($filename, true);
@@ -42,6 +44,7 @@ class AngieModelDatabase extends AModel
 					// Add the custom options
 					$temp    = array();
 					$siteSQL = null;
+
 					foreach ($this->dbini as $key => $data)
 					{
 						if (!array_key_exists('dbtech', $data))
