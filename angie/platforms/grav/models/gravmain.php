@@ -17,15 +17,13 @@ class AngieModelGravMain extends AngieModelBaseMain
 	{
 		$ret = '1.0.0';
 
-		$filename = APATH_ROOT . '/app/system/config.php';
+		$filename = APATH_ROOT . '/system/defines.php';
 
 		if (file_exists($filename))
 		{
-			// Pagekit expects that a variable named $path exists, so let's create a dummy one
-			$path = 'foobar';
-			$config = include $filename;
+			include $filename;
 
-			$ret = $config['application']['version'];
+			$ret = GRAV_VERSION;
 		}
 
 		$this->container->session->set('version', $ret);
@@ -43,7 +41,7 @@ class AngieModelGravMain extends AngieModelBaseMain
 
 		if (empty($phpOptions))
 		{
-			$minPHPVersion = '5.5.10';
+			$minPHPVersion = '5.5.9';
 
 			$phpOptions[] = array (
 				'label'		=> AText::sprintf('MAIN_LBL_REQ_PHP_VERSION', $minPHPVersion),
@@ -51,33 +49,9 @@ class AngieModelGravMain extends AngieModelBaseMain
 				'warning'	=> false,
 			);
 
-			$phpOptions[] = array (
-				'label'		=> AText::_('MAIN_LBL_REQ_ZLIB'),
-				'current'	=> extension_loaded('zlib'),
-				'warning'	=> false,
-			);
-
-			$phpOptions[] = array (
-				'label'		=> AText::_('MAIN_LBL_REQ_DATABASE'),
-				'current'	=> (function_exists('mysql_connect') || function_exists('mysqli_connect') || function_exists('sqlsrv_connect')),
-				'warning'	=> false,
-			);
-
-			$phpOptions[] = array(
-				'label'		=> AText::_('MAIN_LBL_REQ_SIMPLEXML'),
-				'current'	=> extension_loaded('simplexml'),
-				'warning'	=> false,
-			);
-
 			$phpOptions[] = array(
 				'label'		=> AText::_('MAIN_LBL_REQ_MBSTRING'),
 				'current'	=> extension_loaded('mbstring'),
-				'warning'	=> false,
-			);
-
-			$phpOptions[] = array(
-				'label'		=> AText::_('MAIN_LBL_REQ_DOM'),
-				'current'	=> extension_loaded('dom'),
 				'warning'	=> false,
 			);
 
@@ -88,12 +62,36 @@ class AngieModelGravMain extends AngieModelBaseMain
 			);
 
 			$phpOptions[] = array (
-				'label'		=> AText::_('MAIN_LBL_REQ_JSON'),
-				'current'	=> function_exists('json_encode') && function_exists('json_decode'),
+				'label'		=> AText::_('MAIN_REC_XML'),
+				'current'	=> extension_loaded('xml'),
+				'warning'   => false,
+			);
+
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_LBL_REQ_GD'),
+				'current'	=> extension_loaded('gd'),
 				'warning'	=> false,
 			);
 
-			$cW = (@ file_exists('../app/system/config.php') && @is_writable('../app/system/config.php')) || @is_writable('../');
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_LBL_REQ_OPENSSL'),
+				'current'	=> extension_loaded('openssl'),
+				'warning'	=> false,
+			);
+
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_REC_CURL'),
+				'current'	=> function_exists('curl_init'),
+				'warning'	=> false,
+			);
+
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_REC_NATIVEZIP'),
+				'current'	=> function_exists('zip_open') && function_exists('zip_read'),
+				'warning'	=> false,
+			);
+
+			$cW = (@ file_exists('../user/config/site.yaml') && @is_writable('../user/config/site.yaml')) || @is_writable('../');
 			$phpOptions[] = array (
 				'label'		=> AText::_('MAIN_LBL_REQ_CONFIGURATIONPHP'),
 				'current'	=> $cW,
@@ -116,37 +114,6 @@ class AngieModelGravMain extends AngieModelBaseMain
 				'current'		=> (bool) ini_get('display_errors'),
 				'recommended'	=> false,
 			);
-
-			$phpOptions[] = array(
-				'label'			=> AText::_('MAIN_REC_UPLOADS'),
-				'current'		=> (bool) ini_get('file_uploads'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array (
-				'label'		    => AText::_('MAIN_REC_XML'),
-				'current'	    => extension_loaded('xml'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array(
-				'label'		    => AText::_('MAIN_REC_CURL'),
-				'current'	    => function_exists('curl_init'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array(
-				'label'		    => AText::_('MAIN_LBL_REQ_ICONV'),
-				'current'	    => extension_loaded('iconv'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array(
-				'label'			=> AText::_('MAIN_REC_NATIVEZIP'),
-				'current'		=> function_exists('zip_open') && function_exists('zip_read'),
-				'recommended'	=> true,
-			);
-
 		}
 
 		return $phpOptions;
