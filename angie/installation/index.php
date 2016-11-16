@@ -34,6 +34,8 @@ require_once __DIR__ . '/angie/helpers/ini.php';
 
 // Load the framework autoloader
 require_once __DIR__ . '/framework/autoloader.php';
+// Load PSR-4 autoloader
+require_once __DIR__ . '/framework/Autoloader/Autoloader.php';
 require_once __DIR__ . '/defines.php';
 
 // Load Angie autoloader
