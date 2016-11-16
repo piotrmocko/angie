@@ -8,7 +8,7 @@
  */
 defined('_AKEEBA') or die();
 
-class AngieModelPagekitSetup extends AngieModelBaseSetup
+class AngieModelGravSetup extends AngieModelBaseSetup
 {
 	/**
 	 * Gets the basic site parameters

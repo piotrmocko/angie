@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieControllerPagekitSetup extends AngieControllerBaseSetup
+class AngieControllerGravSetup extends AngieControllerBaseSetup
 {
 
 }

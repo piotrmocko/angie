@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieModelPagekitMain extends AngieModelBaseMain
+class AngieModelGravMain extends AngieModelBaseMain
 {
 	/**
 	 * Try to detect the Pagekit version in use

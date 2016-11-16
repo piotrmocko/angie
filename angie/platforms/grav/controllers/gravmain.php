@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieControllerPagekitMain extends AngieControllerBaseMain
+class AngieControllerGravMain extends AngieControllerBaseMain
 {
 	/**
 	 * Try to read app/system/config.php
@@ -17,7 +17,7 @@ class AngieControllerPagekitMain extends AngieControllerBaseMain
 	{
 		// Load the default configuration and save it to the session
 		$data   = $this->input->getData();
-		
+
 		/** @var AngieModelPAgekitConfiguration $model */
         $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
         $this->input->setData($data);
