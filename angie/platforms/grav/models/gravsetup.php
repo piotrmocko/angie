@@ -28,44 +28,50 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 	{
 		$ret = array();
 
-		try
-		{
-            // Connect to the database
-            $db = $this->getDatabase();
-		}
-		catch (Exception $exc)
+		// Each account is stored inside a single the user/accounts directory
+		// However this is an optional module, so we could have no users to update
+
+		if (!is_dir(APATH_ROOT. '/user/accounts'))
 		{
 			return $ret;
 		}
 
-		// Get the user information for the Super Administrator users
-		try
-		{
-			$query = $db->getQuery(true)
-				->select(array(
-					$db->qn('id'),
-					$db->qn('username'),
-					$db->qn('email'),
-					$db->qn('roles')
-				))
-				->from($db->qn('#__system_user'));
-			$users = $db->setQuery($query)->loadObjectList();
+		$iterator = new DirectoryIterator(APATH_ROOT . '/user/accounts');
+		$i = 0;
 
-			// Since the permission is stored inside the "role" field as implded array, let's fetch the whole
-			// list and then analyze every user. PageKit is blog-oriented, so there shouldn't be thousands of users
-			foreach ($users as $user)
+		foreach ($iterator as $file)
+		{
+			if ($file->isDot() || $file->isDir())
 			{
-				$roles = explode(',', $user->roles);
-
-				if (in_array(3, $roles))
-				{
-					$ret['superusers'][] = $user;
-				}
+				continue;
 			}
-		}
-		catch (Exception $exc)
-		{
-			return $ret;
+
+			if ($file->getExtension() != 'yaml')
+			{
+				continue;
+			}
+
+			$user = \Symfony\Component\Yaml\Yaml::parse($file->getPathname());
+
+			// Sanity checks on array structure
+			if (!isset($user['access']) || !isset($user['access']['admin']) || !isset($user['access']['admin']['super']))
+			{
+				continue;
+			}
+
+			// I want only super admins
+			if (!$user['access']['admin']['super'])
+			{
+				continue;
+			}
+
+			$i++;
+
+			$ret['superusers'][] = (object) array(
+				'id' => $i,
+				'username' => $user['fullname'],
+				'email' => $user['email']
+			);
 		}
 
 		return $ret;
