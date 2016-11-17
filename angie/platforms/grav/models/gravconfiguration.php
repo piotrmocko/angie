@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
+class AngieModelGravConfiguration extends AngieModelBaseConfiguration
 {
 	public function __construct($config = array(), AContainer $container = null)
 	{
@@ -25,8 +25,7 @@ class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
 
 			if (empty($this->configvars['sitename']))
 			{
-				$realConfig = $this->loadFromFile(APATH_CONFIGURATION . '/config.php');
-				$this->getOptionsFromDatabase($realConfig);
+				$realConfig = $this->loadFromFile(APATH_CONFIGURATION . '/user/config/site.yaml');
 			}
 
 			$this->configvars = array_merge($this->configvars, $realConfig);
@@ -45,13 +44,6 @@ class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
      */
     public function getDefaultConfig()
     {
-        // MySQL settings
-        $config['dbname']       = '';
-        $config['dbuser']       = '';
-        $config['dbpass']       = '';
-        $config['dbhost']       = '';
-        $config['dbprefix']     = '';
-
         // Other
         $config['sitename'] = '';
 
@@ -69,25 +61,14 @@ class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
     {
         $config = array();
 
-	    if (file_exists($file))
+	    if (!file_exists($file))
 	    {
-		    $pageKitConfig = include_once $file;
-
-		    $config['driver'] = $pageKitConfig['database']['default'];
-
-		    $connection = $pageKitConfig['database']['connections'][$config['driver']];
-
-		    $config['dbprefix'] = $connection['prefix'];
-
-		    // We have such info only if we're using MySQL
-		    if($config['driver'] != 'sqlite')
-		    {
-			    $config['dbhost']   = $connection['host'];
-			    $config['dbuser']   = $connection['user'];
-			    $config['dbpass']   = $connection['password'];
-			    $config['dbname']   = $connection['dbname'];
-		    }
+		    return $config;
 	    }
+
+	    $yaml = \Symfony\Component\Yaml\Yaml::parse($file);
+
+	    $config['sitename'] = $yaml['title'];
 
 		return $config;
     }
@@ -99,27 +80,11 @@ class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
      */
     public function getFileContents($file = null)
     {
-	    // Ok, first of all let's include the current file
-	    $config = include $file;
+	    $yaml = \Symfony\Component\Yaml\Yaml::parse($file);
 
-	    // Then let's change the connection params
-	    $driver = $this->get('dbtype');
-	    $config['database']['default'] = $driver;
+	    // TODO Update configuration values
 
-	    // Let's unset the whole "connections" index, so I can rewrite it again
-	    unset($config['database']['connections']);
-
-	    $config['database']['connections'][$driver]['prefix'] = $this->get('dbprefix');
-
-	    if ($driver != 'sqlite')
-	    {
-		    $config['database']['connections'][$driver]['host']     = $this->get('dbhost');
-		    $config['database']['connections'][$driver]['user']     = $this->get('dbuser');
-		    $config['database']['connections'][$driver]['password'] = $this->get('dbpass');
-		    $config['database']['connections'][$driver]['dbname']   = $this->get('dbname');
-	    }
-
-	    $new_config = "<?php return ".var_export($config, true).';';
+	    $new_config = \Symfony\Component\Yaml\Yaml::dump($yaml);
 
         return $new_config;
     }
@@ -133,40 +98,6 @@ class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
      */
     public function writeConfig($file)
     {
-	    // First of all I'll save the options stored inside the db. In this way, even if
-	    // the configuration file write fails, the user has only to manually update the
-	    // config file and he's ready to go.
-
-	    $name = $this->get('dbtype');
-	    $options = array(
-		    'database'	 => $this->get('dbname'),
-		    'select'	 => 1,
-		    'host'		 => $this->get('dbhost'),
-		    'user'		 => $this->get('dbuser'),
-		    'password'	 => $this->get('dbpass'),
-		    'prefix'	 => $this->get('dbprefix')
-	    );
-
-	    $db = ADatabaseFactory::getInstance()->getDriver($name, $options);
-
-	    // Update the site name
-	    $query = $db->getQuery(true)
-				    ->select($db->qn('value'))
-				    ->from('#__system_config')
-				    ->where($db->qn('name') . ' = ' . $db->q('system/site'));
-	    $pk_options = $db->setQuery($query)->loadResult();
-
-	    $pk_options = json_decode($pk_options, true);
-	    $pk_options['title'] = $this->get('sitename', '');
-
-	    $pk_options = json_encode($pk_options);
-
-	    $query = $db->getQuery(true)
-		            ->update($db->qn('#__system_config'))
-		            ->set($db->qn('value') . ' = ' . $db->q($pk_options))
-		            ->where($db->qn('name') . ' = ' . $db->q('system/site'));
-	    $db->setQuery($query)->execute();
-
 	    $new_config = $this->getFileContents($file);
 
 	    if(!file_put_contents($file, $new_config))
@@ -176,49 +107,4 @@ class AngieModelGravwConfiguration extends AngieModelBaseConfiguration
 
         return true;
     }
-
-	/**
-	 * @param $config
-	 */
-	protected function getOptionsFromDatabase(&$config)
-	{
-		// PageKit has some options set inside the db, too
-		/** @var AngieModelDatabase $model */
-		$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
-		$keys       = $model->getDatabaseNames();
-		$firstDbKey = array_shift($keys);
-
-		$connectionVars = $model->getDatabaseInfo($firstDbKey);
-
-		try
-		{
-			$name    = $connectionVars->dbtype;
-			$options = array(
-				'database' => $connectionVars->dbname,
-				'select'   => 1,
-				'host'     => $connectionVars->dbhost,
-				'user'     => $connectionVars->dbuser,
-				'password' => $connectionVars->dbpass,
-				'prefix'   => $connectionVars->prefix
-			);
-
-			$db = ADatabaseFactory::getInstance()->getDriver($name, $options);
-
-			$query = $db->getQuery(true)
-						->select($db->qn('value'))
-						->from('#__system_config')
-						->where($db->qn('name') . ' = ' . $db->q('system/site'));
-			$pk_options = $db->setQuery($query)->loadResult();
-
-			$pk_options = json_decode($pk_options, true);
-
-			if ($pk_options && isset($pk_options['title']))
-			{
-				$config['sitename'] = $pk_options['title'];
-			}
-		}
-		catch (Exception $exc)
-		{
-		}
-	}
 }

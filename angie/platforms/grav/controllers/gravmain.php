@@ -18,13 +18,14 @@ class AngieControllerGravMain extends AngieControllerBaseMain
 		// Load the default configuration and save it to the session
 		$data   = $this->input->getData();
 
-		/** @var AngieModelPAgekitConfiguration $model */
+		/** @var AngieModelGravConfiguration $model */
         $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
         $this->input->setData($data);
         $this->container->session->saveData();
 
 		// Try to load the configuration from the site's configuration.php
-		$filename = APATH_ROOT . '/config.php';
+		$filename = APATH_ROOT . '/user/config/site.yaml';
+
 		if (file_exists($filename))
 		{
 			$vars = $model->loadFromFile($filename);
@@ -42,7 +43,5 @@ class AngieControllerGravMain extends AngieControllerBaseMain
 		{
 			echo json_encode(false);
 		}
-
-		echo json_encode(true);
 	}
 }

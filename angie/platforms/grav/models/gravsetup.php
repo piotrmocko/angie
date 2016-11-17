@@ -82,22 +82,13 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 		// -- General settings
 		$this->configModel->set('sitename', $stateVars->sitename);
 
-		// -- Database settings
-		$connectionVars = $this->getDbConnectionVars();
-		$this->configModel->set('dbtype', $connectionVars->dbtype);
-		$this->configModel->set('dbhost', $connectionVars->dbhost);
-		$this->configModel->set('dbuser', $connectionVars->dbuser);
-		$this->configModel->set('dbpass', $connectionVars->dbpass);
-		$this->configModel->set('dbname', $connectionVars->dbname);
-		$this->configModel->set('dbprefix', $connectionVars->prefix);
-
 		$this->configModel->saveToSession();
 
 		// Apply the Super Administrator changes
 		$this->applySuperAdminChanges();
 
 		// Get the wp-config.php file and try to save it
-		if (!$this->configModel->writeConfig(APATH_SITE . '/config.php'))
+		if (!$this->configModel->writeConfig(APATH_SITE . '/user/config/site.yaml'))
 		{
 			return false;
 		}
