@@ -17,7 +17,7 @@ class AngieControllerPagekitMain extends AngieControllerBaseMain
 	{
 		// Load the default configuration and save it to the session
 		$data   = $this->input->getData();
-		
+
 		/** @var AngieModelPAgekitConfiguration $model */
         $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
         $this->input->setData($data);
@@ -42,7 +42,5 @@ class AngieControllerPagekitMain extends AngieControllerBaseMain
 		{
 			echo json_encode(false);
 		}
-
-		echo json_encode(true);
 	}
 }
