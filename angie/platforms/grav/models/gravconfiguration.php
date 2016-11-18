@@ -82,7 +82,7 @@ class AngieModelGravConfiguration extends AngieModelBaseConfiguration
     {
 	    $yaml = \Symfony\Component\Yaml\Yaml::parse($file);
 
-	    // TODO Update configuration values
+	    $yaml['title'] = $this->get('sitename');
 
 	    $new_config = \Symfony\Component\Yaml\Yaml::dump($yaml);
 

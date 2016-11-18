@@ -6,6 +6,8 @@
  * @author    Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
  * @license   http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
  */
+use Symfony\Component\Yaml\Yaml;
+
 defined('_AKEEBA') or die();
 
 class AngieModelGravSetup extends AngieModelBaseSetup
@@ -37,7 +39,6 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 		}
 
 		$iterator = new DirectoryIterator(APATH_ROOT . '/user/accounts');
-		$i = 0;
 
 		foreach ($iterator as $file)
 		{
@@ -51,7 +52,7 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 				continue;
 			}
 
-			$user = \Symfony\Component\Yaml\Yaml::parse($file->getPathname());
+			$user = Yaml::parse($file->getPathname());
 
 			// Sanity checks on array structure
 			if (!isset($user['access']) || !isset($user['access']['admin']) || !isset($user['access']['admin']['super']))
@@ -65,11 +66,9 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 				continue;
 			}
 
-			$i++;
-
 			$ret['superusers'][] = (object) array(
-				'id' => $i,
-				'username' => $user['fullname'],
+				'id' => $file->getBasename('.yaml'),
+				'username' => $file->getBasename('.yaml'),
 				'email' => $user['email']
 			);
 		}
@@ -104,10 +103,11 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 
 	private function applySuperAdminChanges()
 	{
-		// Get the Super User ID. If it's empty, skip.
-		$id = $this->getState('superuserid', 0);
+		// Get the Username. If it's empty or it doesn't exist, skip.
+		$username = $this->getState('superuserid', '', 'cmd');
+		$user_file = APATH_ROOT.'/user/accounts/'.$username.'.yaml';
 
-		if (!$id)
+		if (!$username || !is_file($user_file))
 		{
 			return false;
 		}
@@ -145,19 +145,13 @@ class AngieModelGravSetup extends AngieModelBaseSetup
 		// Let's load the password compatibility file
 		require_once APATH_ROOT.'/installation/framework/utils/password.php';
 
-		// Create a new bCrypt-bashed password. At the time of this writing (July 2015) PageKit is using a cost of 10
+		// Create a new bCrypt-bashed password. At the time of this writing (November 2016) Grav is using a cost of 10
 		$cryptpass = password_hash($password1, PASSWORD_BCRYPT, array('cost' => 10));
 
-		// Update the database record
-		$db = $this->getDatabase();
+		$account = Yaml::parse($user_file);
+		$account['hashed_password'] = $cryptpass;
+		$account['email'] = $email;
 
-		$query = $db->getQuery(true)
-			->update($db->qn('#__system_user'))
-			->set($db->qn('password') . ' = ' . $db->q($cryptpass))
-			->set($db->qn('email') . ' = ' . $db->q($email))
-			->where($db->qn('id') . ' = ' . $db->q($id));
-		$db->setQuery($query)->execute();
-
-		return true;
+		return file_put_contents($user_file, Yaml::dump($account));
 	}
 }
