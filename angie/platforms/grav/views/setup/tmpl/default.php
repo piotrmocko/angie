@@ -23,7 +23,7 @@ $url = 'index.php';
 $this->loadHelper('select');
 
 echo $this->loadAnyTemplate('steps/buttons');
-echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-pagekit-setup.html'));
+echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeebabackup.com/documentation/solo/angie-grav-setup.html'));
 ?>
 <form name="setupForm" action="index.php" method="post">
 	<input type="hidden" name="view" value="setup" />

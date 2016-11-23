@@ -11,7 +11,7 @@ defined('_AKEEBA') or die();
 class AngieModelGravMain extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the Pagekit version in use
+	 * Try to detect the Grav version in use
 	 */
 	public function detectVersion()
 	{

@@ -21,7 +21,7 @@ class AngieViewFinalise extends AView
 
 		if ($this->showconfig)
 		{
-			/** @var AngieModelPagekitConfiguration $configModel */
+			/** @var AngieModelGravConfiguration $configModel */
 			$configModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 
 			$this->configuration = $configModel->getFileContents();
