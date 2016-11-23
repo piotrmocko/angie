@@ -34,6 +34,11 @@ require_once __DIR__ . '/angie/helpers/ini.php';
 
 // Load the framework autoloader
 require_once __DIR__ . '/framework/autoloader.php';
+// Load PSR-4 autoloader
+require_once __DIR__ . '/framework/Autoloader/Autoloader.php';
+
+\Angie\Autoloader\Autoloader::getInstance()->addMap('Symfony\\', array(realpath(__DIR__ . '/framework/Symfony')));
+
 require_once __DIR__ . '/defines.php';
 
 // Load Angie autoloader

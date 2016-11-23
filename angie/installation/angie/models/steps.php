@@ -70,7 +70,7 @@ class AngieModelSteps extends AModel
 		$this->steps = $this->defaultSteps;
 
 		$data = $this->input->getData();
-        
+
         /** @var AngieModelDatabase $dbModel */
         $dbModel = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
 		$this->steps['database'] = $dbModel->getDatabaseNames();
@@ -93,6 +93,12 @@ class AngieModelSteps extends AModel
             $this->steps['setup']       = $savedSteps['setup'];
             $this->steps['finalise']    = $savedSteps['finalise'];
         }
+
+        // If there's no database, let's unset the step
+		if (!$this->steps['database'])
+		{
+			unset($this->steps['database']);
+		}
 
 		// Do I have a site setup step?
 		$fileNameMain = APATH_INSTALLATION . '/angie/controllers/setup.php';
