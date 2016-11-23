@@ -200,18 +200,18 @@ class AUtilsSerialised
 	 * Recursive function to decode serialised / partial serialised strings
 	 *
 	 * @param string $string
-	 * @param int $characterCount
+	 * @param int $scopeFrom Initialize with zero
 	 *
 	 * @return array
 	 *
 	 * @throws AUtilsSerialisedDecodingException
 	 */
-	protected function decodeString(&$string, &$characterCount = 0)
+	protected function decodeString(&$string, &$scopeFrom)
 	{
 		$ret = array();
+		$strlen = strlen($string);
 
-		// Repeat while we have string data to process
-		while (strlen($string))
+		while ($scopeFrom < $strlen)
 		{
 			$element = array(
 				'type'   => 'N',
@@ -220,16 +220,16 @@ class AUtilsSerialised
 				'value'  => null,
 			);
 
-			$type = substr($string, 0, 1);
+			$type = $string[$scopeFrom];
 
 			// If we have an end of structure (}) break the loop
 			if ($type == '}')
 			{
-				$string = substr($string, 1);
+				$scopeFrom += 1;
 				break;
 			}
 
-			$colon = substr($string, 1, 1);
+			$colon = $string[$scopeFrom + 1];
 
 			// Parse null values
 			if ($type == 'N')
@@ -237,11 +237,10 @@ class AUtilsSerialised
 				// A null value type MUST end with a semicolon
 				if ($colon != ';')
 				{
-					throw new AUtilsSerialisedDecodingException("Invalid token {$type}{$colon} at $characterCount");
+					throw new AUtilsSerialisedDecodingException("Invalid token {$type}{$colon} at $scopeFrom");
 				}
 
-				$string = substr($string, 2);
-				$characterCount += 2;
+				$scopeFrom += 2;
 
 				$ret[] = $element;
 
@@ -251,56 +250,51 @@ class AUtilsSerialised
 			// All other types MUST be followed by a colon
 			if ($colon != ':')
 			{
-				throw new AUtilsSerialisedDecodingException("Invalid token {$type}{$colon} at $characterCount");
+				throw new AUtilsSerialisedDecodingException("Invalid token {$type}{$colon} at $scopeFrom");
 			}
 
 			// Set the element type
 			$element['type'] = $type;
 
-			$characterCount += 2;
-			$string = substr($string, 2);
+			$scopeFrom += 2;
 
 			// Objects are followed by class length and class name
 			if ($type == 'O')
 			{
-				$colonPos = strpos($string, ':');
+				$colonPos = strpos($string, ':', $scopeFrom);
 
 				if ($colonPos === false)
 				{
-					throw new AUtilsSerialisedDecodingException("Expected colon at $characterCount");
+					throw new AUtilsSerialisedDecodingException("Expected colon at $scopeFrom");
 				}
 
-				$classLength = (int)substr($string, 0, $colonPos + 1);
+				$classLength = (int)substr($string, $scopeFrom, ($colonPos - $scopeFrom) + 1);
 
-				$characterCount += $colonPos + 1;
-				$string = substr($string, $colonPos + 1);
+				$scopeFrom = $colonPos + 1;
+				$className = substr($string, $scopeFrom, $classLength + 3);
 
-				$className = substr($string, 0, $classLength + 3);
-
-				if ((substr($className, 0, 1) != '"') || (substr($className, -2) != '":'))
+				if (($className[0] != '"') || (substr($className, -2) != '":'))
 				{
-					throw new AUtilsSerialisedDecodingException("Expected class name in double quotes at $characterCount");
+					throw new AUtilsSerialisedDecodingException("Expected class name in double quotes at $scopeFrom");
 				}
 
 				$element['class'] = substr($className, 1, -2);
-				$characterCount += $classLength + 3;
-				$string = substr($string, $classLength + 3);
+				$scopeFrom += $classLength + 3;
 			}
 
 			// Types s, O, a are followed by a length
 			if (in_array($type, array('s', 'O', 'a')))
 			{
-				$colonPos = strpos($string, ':');
+				$colonPos = strpos($string, ':', $scopeFrom);
 
 				if ($colonPos === false)
 				{
-					throw new AUtilsSerialisedDecodingException("Expected colon at $characterCount");
+					throw new AUtilsSerialisedDecodingException("Expected colon at $scopeFrom");
 				}
 
-				$element['length'] = (int)substr($string, 0, $colonPos);
+				$element['length'] = (int)substr($string, $scopeFrom, $colonPos - $scopeFrom);
 
-				$characterCount += $colonPos + 1;
-				$string = substr($string, $colonPos + 1);
+				$scopeFrom = $colonPos + 1;
 			}
 
 			switch ($type)
@@ -309,16 +303,15 @@ class AUtilsSerialised
 				case 'i':
 				case 'b':
 				case 'd':
-					$endOfData = strpos($string, ';');
+					$endOfData = strpos($string, ';', $scopeFrom);
 
 					if ($endOfData === false)
 					{
-						throw new AUtilsSerialisedDecodingException("End-of-data not found for {$type} at $characterCount");
+						throw new AUtilsSerialisedDecodingException("End-of-data not found for {$type} at $scopeFrom");
 					}
 
-					$element['value'] = substr($string, 0, $endOfData);
-					$characterCount += $endOfData + 1;
-					$string = substr($string, $endOfData + 1);
+					$element['value'] = substr($string, $scopeFrom, $endOfData - $scopeFrom);
+					$scopeFrom = $endOfData + 1;
 
 					$ret[] = $element;
 					continue;
@@ -327,17 +320,16 @@ class AUtilsSerialised
 
 				// Strings. We expect "string"; where string is $element['length'] characters long
 				case 's':
-					$rawString = substr($string, 0, $element['length'] + 3);
+					$rawString = substr($string, $scopeFrom, $element['length'] + 3);
 
-					if ((substr($rawString, 0, 1) != '"') || substr($rawString, -2) != '";')
+					if (($rawString[0] != '"') || substr($rawString, -2) != '";')
 					{
-						throw new AUtilsSerialisedDecodingException("Invalid string data at $characterCount");
+						throw new AUtilsSerialisedDecodingException("Invalid string data at $scopeFrom");
 					}
 
 					$element['value'] = substr($rawString, 1, -2);
 
-					$characterCount += $element['length'] + 3;
-					$string = substr($string, $element['length'] + 3);
+					$scopeFrom += $element['length'] + 3;
 
 					$ret[] = $element;
 					continue;
@@ -347,24 +339,23 @@ class AUtilsSerialised
 				// Structures. We have a start-of-structure ({) followed by serialised data. Recurse.
 				case 'a':
 				case 'O':
-					$startOfStructure = substr($string, 0, 1);
+					$startOfStructure = $string[$scopeFrom];
 
 					if ($startOfStructure != '{')
 					{
-						throw new AUtilsSerialisedDecodingException("Invalid start of structured data at $characterCount");
+						throw new AUtilsSerialisedDecodingException("Invalid start of structured data at $scopeFrom");
 					}
 
-					$characterCount++;
-					$string = substr($string, 1);
+					$scopeFrom += 1;
 
-					$element['value'] = $this->decodeString($string, $characterCount);
+					$element['value'] = $this->decodeString($string, $scopeFrom);
 
 					$num = count($element['value']);
 					$exp = 2 * $element['length'];
 
 					if ($num != $exp)
 					{
-						throw new AUtilsSerialisedDecodingException("Invalid number of structured data at $characterCount. Got $num, expected $exp");
+						throw new AUtilsSerialisedDecodingException("Invalid number of structured data at $scopeFrom. Got $num, expected $exp");
 					}
 
 					$ret[] = $element;
@@ -373,7 +364,7 @@ class AUtilsSerialised
 					break;
 
 				default:
-					throw new AUtilsSerialisedDecodingException("Unknown data type $type at $characterCount");
+					throw new AUtilsSerialisedDecodingException("Unknown data type $type at $scopeFrom");
 					break;
 			}
 		}
