@@ -52,6 +52,12 @@ class AngieModelDatabase extends AModel
 							$data['dbtech'] = null;
 						}
 
+						// Skip section that have the db tech set to none (flat-file CMS)
+						if (strtolower($data['dbtech']) == 'none')
+						{
+							continue;
+						}
+
 						if (!array_key_exists('existing', $data))
 						{
 							$data['existing'] = 'drop';
@@ -118,7 +124,11 @@ class AngieModelDatabase extends AModel
 						}
 					}
 
-					$temp = array_merge(array('site.sql' => $siteSQL), $temp);
+					// Add the site db definition only if it was defined
+					if ($siteSQL)
+					{
+						$temp = array_merge(array('site.sql' => $siteSQL), $temp);
+					}
 
 					$this->dbini = $temp;
 				}
