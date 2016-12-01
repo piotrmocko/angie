@@ -11,22 +11,13 @@ defined('_AKEEBA') or die();
 class AngieModelOctobercmsMain extends AngieModelBaseMain
 {
 	/**
-	 * Try to detect the Pagekit version in use
+	 * Try to detect the October CMS version in use
 	 */
 	public function detectVersion()
 	{
-		$ret = '1.0.0';
-
-		$filename = APATH_ROOT . '/app/system/config.php';
-
-		if (file_exists($filename))
-		{
-			// Pagekit expects that a variable named $path exists, so let's create a dummy one
-			$path = 'foobar';
-			$config = include $filename;
-
-			$ret = $config['application']['version'];
-		}
+		// The version is stored inside the database. This means that we have to restore the
+		// database in order to see it, and that's something we can't do at this stage
+		$ret = '0.0.0';
 
 		$this->container->session->set('version', $ret);
 		$this->container->session->saveData();

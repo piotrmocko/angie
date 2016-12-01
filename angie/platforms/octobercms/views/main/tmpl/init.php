@@ -138,12 +138,6 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 			<tbody>
 				<tr>
 					<td>
-						<label><?php echo AText::_('MAIN_LBL_SITE_JOOMLA') ?></label>
-					</td>
-					<td><?php echo $this->version ?></td>
-				</tr>
-				<tr>
-					<td>
 						<label><?php echo AText::_('MAIN_LBL_SITE_PHP') ?></label>
 					</td>
 					<td><?php echo PHP_VERSION ?></td>

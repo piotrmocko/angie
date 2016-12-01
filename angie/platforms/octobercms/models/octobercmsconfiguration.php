@@ -18,23 +18,11 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
 		$this->configvars = $this->container->session->get('configuration.variables');
 
-		if (empty($this->configvars) || empty($this->configvars['sitename']))
+		if (empty($this->configvars))
 		{
-			$this->configvars = $this->getDefaultConfig();
-			$realConfig       = array();
+			$this->configvars = array_merge($this->getDefaultConfig(), $this->loadFromFile());
 
-			if (empty($this->configvars['sitename']))
-			{
-				$realConfig = $this->loadFromFile(APATH_CONFIGURATION . '/config.php');
-				$this->getOptionsFromDatabase($realConfig);
-			}
-
-			$this->configvars = array_merge($this->configvars, $realConfig);
-
-			if ( !empty($this->configvars))
-			{
-				$this->saveToSession();
-			}
+			$this->saveToSession();
 		}
 	}
 
@@ -53,7 +41,6 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
         $config['dbprefix']     = '';
 
         // Other
-        $config['sitename'] = '';
 
         return $config;
     }
@@ -61,31 +48,33 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
     /**
      * Loads the configuration information from a PHP file
      *
-     * @param   string $file The full path to the file
-     *
      * @return array
      */
-    public function loadFromFile($file)
+    public function loadFromFile()
     {
         $config = array();
 
+        $file = APATH_ROOT.'/config/database.php';
+
+        // TODO Do I really need to get these info?
 	    if (file_exists($file))
 	    {
-		    $pageKitConfig = include_once $file;
+		    $appConfig = include_once $file;
 
-		    $config['driver'] = $pageKitConfig['database']['default'];
+		    $dbType = $appConfig['default'];
 
-		    $connection = $pageKitConfig['database']['connections'][$config['driver']];
+		    $connection = $appConfig['connections'][$dbType];
 
+		    $config['driver']   = $connection['driver'];
 		    $config['dbprefix'] = $connection['prefix'];
 
 		    // We have such info only if we're using MySQL
 		    if($config['driver'] != 'sqlite')
 		    {
 			    $config['dbhost']   = $connection['host'];
-			    $config['dbuser']   = $connection['user'];
+			    $config['dbuser']   = $connection['username'];
 			    $config['dbpass']   = $connection['password'];
-			    $config['dbname']   = $connection['dbname'];
+			    $config['dbname']   = $connection['database'];
 		    }
 	    }
 
@@ -176,49 +165,4 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
 
         return true;
     }
-
-	/**
-	 * @param $config
-	 */
-	protected function getOptionsFromDatabase(&$config)
-	{
-		// PageKit has some options set inside the db, too
-		/** @var AngieModelDatabase $model */
-		$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
-		$keys       = $model->getDatabaseNames();
-		$firstDbKey = array_shift($keys);
-
-		$connectionVars = $model->getDatabaseInfo($firstDbKey);
-
-		try
-		{
-			$name    = $connectionVars->dbtype;
-			$options = array(
-				'database' => $connectionVars->dbname,
-				'select'   => 1,
-				'host'     => $connectionVars->dbhost,
-				'user'     => $connectionVars->dbuser,
-				'password' => $connectionVars->dbpass,
-				'prefix'   => $connectionVars->prefix
-			);
-
-			$db = ADatabaseFactory::getInstance()->getDriver($name, $options);
-
-			$query = $db->getQuery(true)
-						->select($db->qn('value'))
-						->from('#__system_config')
-						->where($db->qn('name') . ' = ' . $db->q('system/site'));
-			$pk_options = $db->setQuery($query)->loadResult();
-
-			$pk_options = json_decode($pk_options, true);
-
-			if ($pk_options && isset($pk_options['title']))
-			{
-				$config['sitename'] = $pk_options['title'];
-			}
-		}
-		catch (Exception $exc)
-		{
-		}
-	}
 }
