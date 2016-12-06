@@ -60,7 +60,7 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
         // TODO Do I really need to get these info?
 	    if (file_exists($db_file))
 	    {
-		    $db_config = include_once $db_file;
+		    $db_config = include $db_file;
 
 		    $dbType = $db_config['default'];
 
@@ -83,7 +83,7 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
 
 	    if (file_exists($cms_file))
 	    {
-		    $cms_config = include_once $cms_file;
+		    $cms_config = include $cms_file;
 
 		    $config['backendUri'] = $cms_config['backendUri'];
 	    }
