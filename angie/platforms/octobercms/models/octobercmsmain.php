@@ -34,11 +34,17 @@ class AngieModelOctobercmsMain extends AngieModelBaseMain
 
 		if (empty($phpOptions))
 		{
-			$minPHPVersion = '5.5.10';
+			$minPHPVersion = '5.5.9';
 
 			$phpOptions[] = array (
 				'label'		=> AText::sprintf('MAIN_LBL_REQ_PHP_VERSION', $minPHPVersion),
 				'current'	=> version_compare(phpversion(), $minPHPVersion, 'ge'),
+				'warning'	=> false,
+			);
+
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_REC_CURL'),
+				'current'	=> function_exists('curl_init'),
 				'warning'	=> false,
 			);
 
@@ -50,13 +56,19 @@ class AngieModelOctobercmsMain extends AngieModelBaseMain
 
 			$phpOptions[] = array (
 				'label'		=> AText::_('MAIN_LBL_REQ_DATABASE'),
-				'current'	=> (function_exists('mysql_connect') || function_exists('mysqli_connect') || function_exists('sqlsrv_connect')),
+				'current'	=> defined('PDO::ATTR_DRIVER_NAME'),
 				'warning'	=> false,
 			);
 
 			$phpOptions[] = array(
-				'label'		=> AText::_('MAIN_LBL_REQ_SIMPLEXML'),
-				'current'	=> extension_loaded('simplexml'),
+				'label'		=> AText::_('MAIN_LBL_REQ_GD'),
+				'current'	=> extension_loaded('gd'),
+				'warning'	=> false,
+			);
+
+			$phpOptions[] = array(
+				'label'		=> AText::_('MAIN_LBL_REQ_MCRYPT'),
+				'current'	=> extension_loaded('mcrypt'),
 				'warning'	=> false,
 			);
 
@@ -111,24 +123,6 @@ class AngieModelOctobercmsMain extends AngieModelBaseMain
 			$phpOptions[] = array(
 				'label'			=> AText::_('MAIN_REC_UPLOADS'),
 				'current'		=> (bool) ini_get('file_uploads'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array (
-				'label'		    => AText::_('MAIN_REC_XML'),
-				'current'	    => extension_loaded('xml'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array(
-				'label'		    => AText::_('MAIN_REC_CURL'),
-				'current'	    => function_exists('curl_init'),
-				'recommended'	=> true,
-			);
-
-			$phpOptions[] = array(
-				'label'		    => AText::_('MAIN_LBL_REQ_ICONV'),
-				'current'	    => extension_loaded('iconv'),
 				'recommended'	=> true,
 			);
 
