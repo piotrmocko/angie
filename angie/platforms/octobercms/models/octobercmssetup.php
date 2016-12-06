@@ -17,8 +17,12 @@ class AngieModelOctobercmsSetup extends AngieModelBaseSetup
 	 */
 	protected function getSiteParamsVars()
 	{
+		$wwwroot = $this->input->get('livesite', AUri::root());
+		$wwwroot = str_replace('/installation/', '', $wwwroot);
+
 		$ret = array(
-			'sitename' => $this->getState('sitename', $this->configModel->get('sitename', 'Restored website')),
+			'appurl'    => $this->getState('appurl', $this->configModel->get('appurl', $wwwroot)),
+			'backendUri' => $this->getState('backendUri', $this->configModel->get('backendUri', '/backend')),
 		);
 
 		return $ret;
@@ -44,24 +48,13 @@ class AngieModelOctobercmsSetup extends AngieModelBaseSetup
 			$query = $db->getQuery(true)
 				->select(array(
 					$db->qn('id'),
-					$db->qn('username'),
-					$db->qn('email'),
-					$db->qn('roles')
+					$db->qn('login', 'username'),
+					$db->qn('email')
 				))
-				->from($db->qn('#__system_user'));
-			$users = $db->setQuery($query)->loadObjectList();
+				->from($db->qn('#__backend_users'))
+				->where($db->qn('is_superuser').' = '.$db->q(1));
 
-			// Since the permission is stored inside the "role" field as implded array, let's fetch the whole
-			// list and then analyze every user. PageKit is blog-oriented, so there shouldn't be thousands of users
-			foreach ($users as $user)
-			{
-				$roles = explode(',', $user->roles);
-
-				if (in_array(3, $roles))
-				{
-					$ret['superusers'][] = $user;
-				}
-			}
+			$ret['superusers'] = $db->setQuery($query)->loadObjectList();
 		}
 		catch (Exception $exc)
 		{

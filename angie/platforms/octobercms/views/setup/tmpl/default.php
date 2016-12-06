@@ -35,15 +35,26 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 			<h3><?php echo AText::_('SETUP_HEADER_SITEPARAMS') ?></h3>
 			<div class="form-horizontal">
 				<div class="control-group">
-					<label class="control-label" for="sitename">
-						<?php echo AText::_('SETUP_LBL_SITENAME'); ?>
+					<label class="control-label" for="baseurl">
+						<?php echo AText::_('SETUP_LBL_APPURL'); ?>
 					</label>
 					<div class="controls">
-						<input type="text" id="sitename" name="sitename" value="<?php echo $this->stateVars->sitename ?>" />
+						<input type="text" id="appurl" name="appurl" value="<?php echo $this->stateVars->appurl ?>" />
 						<span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-						      title="<?php echo AText::_('SETUP_LBL_SITENAME_HELP') ?>"></span>
+						      title="<?php echo AText::_('SETUP_LBL_APPURL_HELP') ?>"></span>
 					</div>
 				</div>
+
+                <div class="control-group">
+                    <label class="control-label" for="backendUri">
+						<?php echo AText::_('SETUP_LBL_BACKENDURI'); ?>
+                    </label>
+                    <div class="controls">
+                        <input type="text" id="backendUri" name="backendUri" value="<?php echo $this->stateVars->backendUri ?>" />
+                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
+                              title="<?php echo AText::_('SETUP_LBL_BACKENDURI_HELP') ?>"></span>
+                    </div>
+                </div>
             </div>
 		</div>
 
