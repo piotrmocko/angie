@@ -41,6 +41,7 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
         $config['dbprefix']     = '';
 
         // Other
+	    $config['backendUri']   = '';
 
         return $config;
     }
@@ -54,16 +55,16 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
     {
         $config = array();
 
-        $file = APATH_ROOT.'/config/database.php';
+        $db_file = APATH_ROOT.'/config/database.php';
 
         // TODO Do I really need to get these info?
-	    if (file_exists($file))
+	    if (file_exists($db_file))
 	    {
-		    $appConfig = include_once $file;
+		    $db_config = include_once $db_file;
 
-		    $dbType = $appConfig['default'];
+		    $dbType = $db_config['default'];
 
-		    $connection = $appConfig['connections'][$dbType];
+		    $connection = $db_config['connections'][$dbType];
 
 		    $config['driver']   = $connection['driver'];
 		    $config['dbprefix'] = $connection['prefix'];
@@ -76,6 +77,15 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
 			    $config['dbpass']   = $connection['password'];
 			    $config['dbname']   = $connection['database'];
 		    }
+	    }
+
+	    $cms_file = APATH_ROOT.'/config/cms.php';
+
+	    if (file_exists($cms_file))
+	    {
+		    $cms_config = include_once $cms_file;
+
+		    $config['backendUri'] = $cms_config['backendUri'];
 	    }
 
 		return $config;
