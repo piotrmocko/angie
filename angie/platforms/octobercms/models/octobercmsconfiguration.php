@@ -92,83 +92,53 @@ class AngieModelOctobercmsConfiguration extends AngieModelBaseConfiguration
     }
 
     /**
-     * Creates the string that will be put inside the new configuration file.
-     * This is a separate function so we can show the content if we're unable to write to the filesystem
-     * and ask the user to manually do that.
-     */
-    public function getFileContents($file = null)
-    {
-	    // Ok, first of all let's include the current file
-	    $config = include $file;
-
-	    // Then let's change the connection params
-	    $driver = $this->get('dbtype');
-	    $config['database']['default'] = $driver;
-
-	    // Let's unset the whole "connections" index, so I can rewrite it again
-	    unset($config['database']['connections']);
-
-	    $config['database']['connections'][$driver]['prefix'] = $this->get('dbprefix');
-
-	    if ($driver != 'sqlite')
-	    {
-		    $config['database']['connections'][$driver]['host']     = $this->get('dbhost');
-		    $config['database']['connections'][$driver]['user']     = $this->get('dbuser');
-		    $config['database']['connections'][$driver]['password'] = $this->get('dbpass');
-		    $config['database']['connections'][$driver]['dbname']   = $this->get('dbname');
-	    }
-
-	    $new_config = "<?php return ".var_export($config, true).';';
-
-        return $new_config;
-    }
-
-    /**
      * Writes the new config params inside the config file and the database.
-     *
-     * @param   string  $file
      *
      * @return bool
      */
-    public function writeConfig($file)
+    public function writeConfig()
     {
-	    // First of all I'll save the options stored inside the db. In this way, even if
-	    // the configuration file write fails, the user has only to manually update the
-	    // config file and he's ready to go.
+    	// CMS configuration details are spread across multiple files, so I have to do everything in one shot
+    	$cms_file = APATH_ROOT.'/config/cms.php';
+	    $cms_config = include $cms_file;
 
-	    $name = $this->get('dbtype');
-	    $options = array(
-		    'database'	 => $this->get('dbname'),
-		    'select'	 => 1,
-		    'host'		 => $this->get('dbhost'),
-		    'user'		 => $this->get('dbuser'),
-		    'password'	 => $this->get('dbpass'),
-		    'prefix'	 => $this->get('dbprefix')
-	    );
+	    $cms_config['backendUri'] = $this->get('backendUri');
 
-	    $db = ADatabaseFactory::getInstance()->getDriver($name, $options);
+	    $new_config = "<?php return ".var_export($cms_config, true).';';
 
-	    // Update the site name
-	    $query = $db->getQuery(true)
-				    ->select($db->qn('value'))
-				    ->from('#__system_config')
-				    ->where($db->qn('name') . ' = ' . $db->q('system/site'));
-	    $pk_options = $db->setQuery($query)->loadResult();
+	    if(!file_put_contents($cms_file, $new_config))
+	    {
+		    return false;
+	    }
 
-	    $pk_options = json_decode($pk_options, true);
-	    $pk_options['title'] = $this->get('sitename', '');
+	    $app_file = APATH_ROOT.'/config/app.php';
+	    $contents = file_get_contents($app_file);
 
-	    $pk_options = json_encode($pk_options);
+	    $new_config = preg_replace('#["-\']url["-\']\s?=>\s?(.*?)\s?,#', "'url' => '".$this->get('appurl')."',", $contents);
 
-	    $query = $db->getQuery(true)
-		            ->update($db->qn('#__system_config'))
-		            ->set($db->qn('value') . ' = ' . $db->q($pk_options))
-		            ->where($db->qn('name') . ' = ' . $db->q('system/site'));
-	    $db->setQuery($query)->execute();
+	    if(!file_put_contents($app_file, $new_config))
+	    {
+		    return false;
+	    }
 
-	    $new_config = $this->getFileContents($file);
+	    $db_file = APATH_ROOT.'/config/database.php';
 
-	    if(!file_put_contents($file, $new_config))
+	    $db_config = include $db_file;
+	    $dbType = $db_config['default'];
+
+	    $db_config['connections'][$dbType]['prefix'] = $this->get('dbprefix');
+
+	    if ($dbType != 'sqlite')
+	    {
+		    $db_config['connections'][$dbType]['host']     = $this->get('dbhost');
+		    $db_config['connections'][$dbType]['username'] = $this->get('dbuser');
+		    $db_config['connections'][$dbType]['password'] = $this->get('dbpass');
+		    $db_config['connections'][$dbType]['database'] = $this->get('dbname');
+	    }
+
+	    $new_config = "<?php return ".var_export($db_config, true).';';
+
+	    if(!file_put_contents($db_file, $new_config))
 	    {
 		    return false;
 	    }

@@ -73,7 +73,8 @@ class AngieModelOctobercmsSetup extends AngieModelBaseSetup
 		$stateVars = $this->getStateVariables();
 
 		// -- General settings
-		$this->configModel->set('sitename', $stateVars->sitename);
+		$this->configModel->set('appurl', $stateVars->appurl);
+		$this->configModel->set('backendUri', $stateVars->backendUri);
 
 		// -- Database settings
 		$connectionVars = $this->getDbConnectionVars();
@@ -90,7 +91,7 @@ class AngieModelOctobercmsSetup extends AngieModelBaseSetup
 		$this->applySuperAdminChanges();
 
 		// Get the wp-config.php file and try to save it
-		if (!$this->configModel->writeConfig(APATH_SITE . '/config.php'))
+		if (!$this->configModel->writeConfig())
 		{
 			return false;
 		}
@@ -141,14 +142,14 @@ class AngieModelOctobercmsSetup extends AngieModelBaseSetup
 		// Let's load the password compatibility file
 		require_once APATH_ROOT.'/installation/framework/utils/password.php';
 
-		// Create a new bCrypt-bashed password. At the time of this writing (July 2015) PageKit is using a cost of 10
+		// Create a new bCrypt-bashed password. At the time of this writing (December 2016) October CMS is using a cost of 10
 		$cryptpass = password_hash($password1, PASSWORD_BCRYPT, array('cost' => 10));
 
 		// Update the database record
 		$db = $this->getDatabase();
 
 		$query = $db->getQuery(true)
-			->update($db->qn('#__system_user'))
+			->update($db->qn('#__backend_users'))
 			->set($db->qn('password') . ' = ' . $db->q($cryptpass))
 			->set($db->qn('email') . ' = ' . $db->q($email))
 			->where($db->qn('id') . ' = ' . $db->q($id));

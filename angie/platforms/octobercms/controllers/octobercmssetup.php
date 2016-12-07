@@ -8,7 +8,7 @@
 
 defined('_AKEEBA') or die();
 
-class AngieControllerOctobercmsetup extends AngieControllerBaseSetup
+class AngieControllerOctobercmsSetup extends AngieControllerBaseSetup
 {
 
 }
