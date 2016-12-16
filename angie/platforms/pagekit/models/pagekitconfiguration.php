@@ -71,7 +71,7 @@ class AngieModelPagekitConfiguration extends AngieModelBaseConfiguration
 
 	    if (file_exists($file))
 	    {
-		    $pageKitConfig = include_once $file;
+		    $pageKitConfig = include $file;
 
 		    $config['driver'] = $pageKitConfig['database']['default'];
 
