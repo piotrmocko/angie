@@ -363,7 +363,7 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 	}
 
 	/**
-	 * Writes the new config params inside the wp-config file and the database.
+	 * Writes the new config params inside the wp-config.php file and the database.
 	 *
 	 * @param   string $file
 	 *
@@ -371,94 +371,6 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 	 */
 	public function writeConfig($file)
 	{
-		// First of all I'll save the options stored inside the db. In this way, even if
-		// the configuration file write fails, the user has only to manually update the
-		// config file and he's ready to go.
-
-		$name    = $this->get('dbtype');
-		$options = array(
-			'database' => $this->get('dbname'),
-			'select'   => 1,
-			'host'     => $this->get('dbhost'),
-			'user'     => $this->get('dbuser'),
-			'password' => $this->get('dbpass'),
-			'prefix'   => $this->get('dbprefix')
-		);
-
-		$db = ADatabaseFactory::getInstance()->getDriver($name, $options);
-
-		$query = $db->getQuery(true)
-					->update($db->qn('#__options'))
-					->set($db->qn('option_value') . ' = ' . $db->q($this->get('siteurl')))
-					->where($db->qn('option_name') . ' = ' . $db->q('siteurl'));
-		$db->setQuery($query)->execute();
-
-		$query = $db->getQuery(true)
-					->update($db->qn('#__options'))
-					->set($db->qn('option_value') . ' = ' . $db->q($this->get('homeurl')))
-					->where($db->qn('option_name') . ' = ' . $db->q('home'));
-		$db->setQuery($query)->execute();
-
-		$query = $db->getQuery(true)
-					->update($db->qn('#__options'))
-					->set($db->qn('option_value') . ' = ' . $db->q($this->get('blogname')))
-					->where($db->qn('option_name') . ' = ' . $db->q('blogname'));
-		$db->setQuery($query)->execute();
-
-		// WordPress stores several values in tokens starting with the table prefix
-		// this means that we have to update them, too
-		// reference: http://stackoverflow.com/a/13815934/485241
-		$oldprefix = $this->get('olddbprefix');
-		$newprefix = $this->get('dbprefix');
-
-		// Website options
-		$query = $db->getQuery(true)
-					->select('*')
-					->from($db->qn('#__options'))
-					->where($db->qn('option_name') . ' LIKE ' . $db->q($oldprefix . '%'));
-		$rows  = $db->setQuery($query)->loadObjectList();
-
-		foreach ($rows as $row)
-		{
-			// Double check to avoid changing too much
-			if (strpos($row->option_name, $oldprefix) === 0)
-			{
-				// Can't use simple str_replace since the same prefix (ie wp_) could be used inside the string
-				// ie _wp_other_option
-				$new_option = $newprefix . substr($row->option_name, strlen($oldprefix));
-
-				$query = $db->getQuery(true)
-							->update($db->qn('#__options'))
-							->set($db->qn('option_name') . ' = ' . $db->q($new_option))
-							->where($db->qn('option_id') . ' = ' . $db->q($row->option_id));
-				$db->setQuery($query)->execute();
-			}
-		}
-
-		// User options
-		$query = $db->getQuery(true)
-					->select('*')
-					->from($db->qn('#__usermeta'))
-					->where($db->qn('meta_key') . ' LIKE ' . $db->q($oldprefix . '%'));
-		$rows  = $db->setQuery($query)->loadObjectList();
-
-		foreach ($rows as $row)
-		{
-			// Double check to avoid changing too much
-			if (strpos($row->meta_key, $oldprefix) === 0)
-			{
-				// Can't use simple str_replace since the same prefix (ie wp_) could be used inside the string
-				// ie _wp_other_option
-				$new_option = $newprefix . substr($row->meta_key, strlen($oldprefix));
-
-				$query = $db->getQuery(true)
-							->update($db->qn('#__usermeta'))
-							->set($db->qn('meta_key') . ' = ' . $db->q($new_option))
-							->where($db->qn('umeta_id') . ' = ' . $db->q($row->umeta_id));
-				$db->setQuery($query)->execute();
-			}
-		}
-
 		$new_config = $this->getFileContents($file);
 
 		if ( !file_put_contents($file, $new_config))

@@ -340,7 +340,8 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->batchSize	= $this->input->getInt('batchSize', 100);
 		$this->max_exec		= $this->input->getInt('max_exec', 3);
 
-		// Replace keys in #__options which depend on the database table prefix, if the prefix has been changed
+		// Replace keys in #__options and #__usermeta which depend on the database table prefix, if the prefix has been changed
+		// reference: http://stackoverflow.com/a/13815934/485241
 		$this->timer = new ATimer($this->max_exec, 75);
 
 		/** @var AngieModelWordpressConfiguration $config */
@@ -350,7 +351,8 @@ class AngieModelWordpressReplacedata extends AModel
 
 		if ($oldPrefix != $newPrefix)
 		{
-			$optionsTables = array('#__options');
+			$optionsTables  = array('#__options');
+			$usermetaTables = array('#__usermeta');
 
 			if ($this->isMultisite())
 			{
@@ -368,7 +370,8 @@ class AngieModelWordpressReplacedata extends AModel
 						continue;
 					}
 
-					$optionsTables[] = '#__' . $id . '_options';
+					$optionsTables[]  = '#__' . $id . '_options';
+					$usermetaTables[] = '#__' . $id . '_usermeta';
 				}
 			}
 
@@ -385,6 +388,30 @@ class AngieModelWordpressReplacedata extends AModel
 							->where(
 								$db->qn('option_name') . ' != REPLACE(' . $db->qn('option_name') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
 							);
+
+				try
+				{
+					$db->setQuery($query)->execute();
+				}
+				catch (Exception $e)
+				{
+					// Do nothing if the replacement fails
+				}
+			}
+
+			foreach ($usermetaTables as $table)
+			{
+				$query = $db->getQuery(true)
+					->update($db->qn($table))
+					->set(
+						$db->qn('meta_key') . ' = REPLACE(' . $db->qn('meta_key') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
+					)
+					->where(
+						$db->qn('meta_key') . ' LIKE ' . $db->q($oldPrefix . '%')
+					)
+					->where(
+						$db->qn('meta_key') . ' != REPLACE(' . $db->qn('meta_key') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
+					);
 
 				try
 				{
@@ -739,24 +766,36 @@ class AngieModelWordpressReplacedata extends AModel
 			$old_path = rtrim($extra_info['root']['current'], '/');
 			$new_path = rtrim(APATH_SITE, '/');
 
-			$replacements[$old_path] = $new_path;
+			// Replace only if they are different
+			if ($old_path != $new_path)
+			{
+				$replacements[$old_path] = $new_path;
+			}
 		}
 
-		// Replace the absolute URL to the site
-		$replacements[$old_url] = $new_url;
-
-		// If the relative path to the site is different, replace it too.
 		$oldUri = new AUri($old_url);
 		$newUri = new AUri($new_url);
 
-		$oldPath = $oldUri->getPath();
-		$newPath = $newUri->getPath();
-
-		if ($oldPath != $newPath)
+		// Replace domain site only if the protocol, the port or the domain are different
+		if (
+			($oldUri->getHost()   != $newUri->getHost()) ||
+			($oldUri->getPort()   != $newUri->getPort()) ||
+			($oldUri->getScheme() != $newUri->getScheme())
+		)
 		{
-			$replacements[$oldPath] = $newPath;
+			$old = $oldUri->toString(array('scheme', 'host', 'port'));
+			$new = $newUri->toString(array('scheme', 'host', 'port'));
 
-			return $replacements;
+			$replacements[$old] = $new;
+		}
+
+		// If the relative path to the site is different, replace it too.
+		$oldDirectory = $oldUri->getPath();
+		$newDirectory = $newUri->getPath();
+
+		if ($oldDirectory != $newDirectory)
+		{
+			$replacements[$oldDirectory] = $newDirectory;
 		}
 
 		return $replacements;
