@@ -766,24 +766,36 @@ class AngieModelWordpressReplacedata extends AModel
 			$old_path = rtrim($extra_info['root']['current'], '/');
 			$new_path = rtrim(APATH_SITE, '/');
 
-			$replacements[$old_path] = $new_path;
+			// Replace only if they are different
+			if ($old_path != $new_path)
+			{
+				$replacements[$old_path] = $new_path;
+			}
 		}
 
-		// Replace the absolute URL to the site
-		$replacements[$old_url] = $new_url;
-
-		// If the relative path to the site is different, replace it too.
 		$oldUri = new AUri($old_url);
 		$newUri = new AUri($new_url);
 
-		$oldPath = $oldUri->getPath();
-		$newPath = $newUri->getPath();
-
-		if ($oldPath != $newPath)
+		// Replace domain site only if the protocol, the port or the domain are different
+		if (
+			($oldUri->getHost()   != $newUri->getHost()) ||
+			($oldUri->getPort()   != $newUri->getPort()) ||
+			($oldUri->getScheme() != $newUri->getScheme())
+		)
 		{
-			$replacements[$oldPath] = $newPath;
+			$old = $oldUri->toString(array('scheme', 'host', 'port'));
+			$new = $newUri->toString(array('scheme', 'host', 'port'));
 
-			return $replacements;
+			$replacements[$old] = $new;
+		}
+
+		// If the relative path to the site is different, replace it too.
+		$oldDirectory = $oldUri->getPath();
+		$newDirectory = $newUri->getPath();
+
+		if ($oldDirectory != $newDirectory)
+		{
+			$replacements[$oldDirectory] = $newDirectory;
 		}
 
 		return $replacements;
