@@ -150,7 +150,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 		</div>
 		<div class="span6">
             <h3><?php echo AText::_('SETUP_HEADER_SERVERCONFIG')?></h3>
-
+            <p class="well well-small"><?php echo AText::_('SETUP_SERVERCONFIG_DESCR') ?></p>
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">

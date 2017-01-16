@@ -221,6 +221,9 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		// Apply the Super Administrator changes
 		$this->applySuperAdminChanges();
 
+		// Apply server config changes
+		$this->applyServerconfigchanges();
+
 		// Get the state variables and update the global configuration
 		$stateVars = $this->getStateVariables();
 		// -- General settings
@@ -496,6 +499,11 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		$db->execute();
 
 		return true;
+	}
+
+	private function applyServerconfigchanges()
+	{
+
 	}
 
 	private function genRandomPassword($length = 8)
