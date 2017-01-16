@@ -501,11 +501,6 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		return true;
 	}
 
-	private function applyServerconfigchanges()
-	{
-
-	}
-
 	private function genRandomPassword($length = 8)
 	{
 		$salt     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -601,6 +596,107 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		$aes = new FOFEncryptAes($secret, 256, 'cbc');
 
 		return $aes->encryptString($data);
+	}
+
+	private function applyServerconfigchanges()
+	{
+		if ($this->input->get('removephpini'))
+		{
+			$this->removePhpini();
+		}
+
+		if ($this->input->get('replacehtaccess'))
+		{
+			$this->replaceHtaccess();
+		}
+
+		if ($this->input->get('replacewebconfig'))
+		{
+			$this->replaceWebconfig();
+		}
+
+		if ($this->input->get('removehtpasswd'))
+		{
+			$this->removeHtpasswd();
+		}
+	}
+
+	private function removePhpini()
+	{
+		// First of all let's remove any .bak file
+		$files = array(
+			'.user.ini.bak',
+			'php.ini.bak',
+			'administrator/.user.ini.bak',
+			'administrator/php.ini.bak'
+		);
+
+		foreach ($files as $file)
+		{
+			if (file_exists(APATH_ROOT.'/'.$file))
+			{
+				// If I get any error during the delete, let's stop here
+				if (!@unlink(APATH_ROOT.'/'.$file))
+				{
+					return;
+				}
+			}
+		}
+
+		$renameFiles = array(
+			'.user.ini',
+			'php.ini',
+			'administrator/.user.ini',
+			'administrator/php.ini'
+		);
+
+		// Let's use the copy-on-write approach to rename those files.
+		// Read the contents, create a new file, delete the old one
+		foreach ($renameFiles as $file)
+		{
+			$origPath = APATH_ROOT.'/'.$file;
+
+			if (!file_exists($origPath))
+			{
+				continue;
+			}
+
+			$contents = file_get_contents($origPath);
+
+			// If I can't create the file let's continue with the next one
+			if (!file_put_contents($origPath.'.bak', $contents))
+			{
+				continue;
+			}
+
+			unlink($origPath);
+		}
+	}
+
+	private function replaceHtaccess()
+	{
+
+	}
+
+	private function replaceWebconfig()
+	{
+
+	}
+
+	private function removeHtpasswd()
+	{
+		$files = array(
+			'.htaccess',
+			'.htpasswd'
+		);
+
+		foreach ($files as $file)
+		{
+			if (file_exists(APATH_ROOT.'/administrator/'.$file))
+			{
+				@unlink(APATH_ROOT.'/administrator/'.$file);
+			}
+		}
 	}
 
 	/**
