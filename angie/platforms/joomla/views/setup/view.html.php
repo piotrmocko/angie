@@ -53,25 +53,25 @@ class AngieViewSetup extends AView
 		// Prime the options array with some default info
 		$this->removePhpiniOptions = array(
 			'checked'  => '',
-			'disabeld' => '',
+			'disabled' => '',
 			'help'     => 'SETUP_LBL_SERVERCONFIG_REMOVEPHPINI_HELP'
 		);
 
 		$this->replaceHtaccessOptions = array(
 			'checked'  => '',
-			'disabeld' => '',
+			'disabled' => '',
 			'help'     => 'SETUP_LBL_SERVERCONFIG_REPLACEHTACCESS_HELP'
 		);
 
 		$this->replaceWeconfigOptions = array(
 			'checked'  => '',
-			'disabeld' => '',
+			'disabled' => '',
 			'help'     => 'SETUP_LBL_SERVERCONFIG_REPLACEWEBCONFIG_HELP'
 		);
 
 		$this->removeHtpasswdOptions = array(
 			'checked'  => '',
-			'disabeld' => '',
+			'disabled' => '',
 			'help'     => 'SETUP_LBL_SERVERCONFIG_REMOVEHTPASSWD_HELP'
 		);
 

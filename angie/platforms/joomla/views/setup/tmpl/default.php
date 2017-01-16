@@ -154,7 +154,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="removephpini" name="removephpini" <?php echo $this->removePhpiniOptions['disabeld'] ?> <?php echo $this->removePhpiniOptions['checked'] ?> />
+                        <input type="checkbox" id="removephpini" name="removephpini" <?php echo $this->removePhpiniOptions['disabled'] ?> <?php echo $this->removePhpiniOptions['checked'] ?> />
                         <?php echo AText::_('SETUP_LBL_SERVERCONFIG_REMOVEPHPINI'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
                               title="<?php echo AText::_($this->removePhpiniOptions['help']) ?>"></span>
@@ -165,7 +165,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="replacehtaccess" name="replacehtaccess" <?php echo $this->replaceHtaccessOptions['disabeld'] ?> <?php echo $this->replaceHtaccessOptions['checked'] ?> />
+                        <input type="checkbox" id="replacehtaccess" name="replacehtaccess" <?php echo $this->replaceHtaccessOptions['disabled'] ?> <?php echo $this->replaceHtaccessOptions['checked'] ?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REPLACEHTACCESS'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
                               title="<?php echo AText::_($this->replaceHtaccessOptions['help']) ?>"></span>
@@ -177,7 +177,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="replacewebconfig" name="replacewebconfig" <?php echo $this->replaceWeconfigOptions['disabeld']?> <?php echo $this->replaceWeconfigOptions['checked']?> />
+                        <input type="checkbox" id="replacewebconfig" name="replacewebconfig" <?php echo $this->replaceWeconfigOptions['disabled']?> <?php echo $this->replaceWeconfigOptions['checked']?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REPLACEWEBCONFIG'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
                               title="<?php echo AText::_($this->replaceWeconfigOptions['help']) ?>"></span>
@@ -189,7 +189,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="removehtpasswd" name="removehtpasswd" <?php echo $this->removeHtpasswdOptions['disabeld']?> <?php echo $this->removeHtpasswdOptions['checked'] ?> />
+                        <input type="checkbox" id="removehtpasswd" name="removehtpasswd" <?php echo $this->removeHtpasswdOptions['disabled']?> <?php echo $this->removeHtpasswdOptions['checked'] ?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REMOVEHTPASSWD'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
                               title="<?php echo AText::_($this->removeHtpasswdOptions['help']) ?>"></span>
