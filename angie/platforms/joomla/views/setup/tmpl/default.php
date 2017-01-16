@@ -10,7 +10,7 @@
 
 defined('_AKEEBA') or die();
 
-/** @var $this AView */
+/** @var $this AngieViewSetup */
 
 $document = $this->container->application->getDocument();
 
@@ -154,43 +154,49 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="removephpini" name="removephpini" />
+                        <input type="checkbox" id="removephpini" name="removephpini" <?php echo $this->removePhpiniOptions['disabeld'] ?> <?php echo $this->removePhpiniOptions['checked'] ?> />
                         <?php echo AText::_('SETUP_LBL_SERVERCONFIG_REMOVEPHPINI'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REMOVEPHPINI_HELP') ?>"></span>
+                              title="<?php echo AText::_($this->removePhpiniOptions['help']) ?>"></span>
                     </label>
                 </div>
             </div>
+            <?php if ($this->htaccessSupported):?>
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="replacehtaccess" name="replacehtaccess" />
+                        <input type="checkbox" id="replacehtaccess" name="replacehtaccess" <?php echo $this->replaceHtaccessOptions['disabeld'] ?> <?php echo $this->replaceHtaccessOptions['checked'] ?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REPLACEHTACCESS'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REPLACEHTACCESS_HELP') ?>"></span>
+                              title="<?php echo AText::_($this->replaceHtaccessOptions['help']) ?>"></span>
                     </label>
                 </div>
             </div>
+            <?php endif; ?>
+            <?php if ($this->webConfSupported):?>
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="replacewebconfig" name="replacewebconfig" />
+                        <input type="checkbox" id="replacewebconfig" name="replacewebconfig" <?php echo $this->replaceWeconfigOptions['disabeld']?> <?php echo $this->replaceWeconfigOptions['checked']?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REPLACEWEBCONFIG'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REPLACEWEBCONFIG_HELP') ?>"></span>
+                              title="<?php echo AText::_($this->replaceWeconfigOptions['help']) ?>"></span>
                     </label>
                 </div>
             </div>
+            <?php endif; ?>
+            <?php if ($this->htaccessSupported):?>
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" id="removehtpasswd" name="removehtpasswd" />
+                        <input type="checkbox" id="removehtpasswd" name="removehtpasswd" <?php echo $this->removeHtpasswdOptions['disabeld']?> <?php echo $this->removeHtpasswdOptions['checked'] ?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REMOVEHTPASSWD'); ?>
                         <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_('SETUP_LBL_SERVERCONFIG_REMOVEHTPASSWD_HELP') ?>"></span>
+                              title="<?php echo AText::_($this->removeHtpasswdOptions['help']) ?>"></span>
                     </label>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
 	</div>
 	<div class="row-fluid">

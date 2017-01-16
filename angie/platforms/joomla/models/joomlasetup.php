@@ -595,4 +595,107 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		return $aes->encryptString($data);
 	}
 
+	/**
+	 * Are we restoring to a new host?
+	 *
+	 * @return bool
+	 */
+	public function isNewhost()
+	{
+		return true;
+	}
+
+	/**
+	 * Checks if the current site has user-defined configuration files (ie php.ini or .user.ini etc etc)
+	 *
+	 * @return bool
+	 */
+	public function hasPhpIni()
+	{
+		$files = array(
+			'.user.ini',
+			'.user.ini.bak',
+			'php.ini',
+			'php.ini.bak',
+			'administrator/.user.ini',
+			'administrator/.user.ini.bak',
+			'administrator/php.ini',
+			'administrator/php.ini.bak');
+
+		foreach ($files as $file)
+		{
+			if (file_exists(APATH_ROOT.'/'.$file))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if the current site has .htaccess files
+	 *
+	 * @return bool
+	 */
+	public function hasHtaccess()
+	{
+		$files = array(
+			'.htaccess',
+			'.htaccess.bak');
+
+		foreach ($files as $file)
+		{
+			if (file_exists(APATH_ROOT.'/'.$file))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if the current site has webconfig files
+	 *
+	 * @return bool
+	 */
+	public function hasWebconfig()
+	{
+		$files = array(
+			'web.config',
+			'web.config.bak');
+
+		foreach ($files as $file)
+		{
+			if (file_exists(APATH_ROOT.'/'.$file))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if the current site has htpasswd files
+	 *
+	 * @return bool
+	 */
+	public function hasHtpasswd()
+	{
+		$files = array(
+			'administrator/.htaccess',
+			'administrator/.htpasswd');
+
+		foreach ($files as $file)
+		{
+			if (file_exists(APATH_ROOT.'/'.$file))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
