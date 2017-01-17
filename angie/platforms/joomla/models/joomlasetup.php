@@ -853,13 +853,13 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	{
 		$files = array(
 			'.user.ini',
-			'.user.ini.bak',
+		//  '.user.ini.bak',
 			'php.ini',
-			'php.ini.bak',
+		//	'php.ini.bak',
 			'administrator/.user.ini',
-			'administrator/.user.ini.bak',
+		//	'administrator/.user.ini.bak',
 			'administrator/php.ini',
-			'administrator/php.ini.bak');
+		//	'administrator/php.ini.bak');
 
 		foreach ($files as $file)
 		{
@@ -881,7 +881,8 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	{
 		$files = array(
 			'.htaccess',
-			'htaccess.bak');
+		//	'htaccess.bak'
+		);
 
 		foreach ($files as $file)
 		{
@@ -903,7 +904,8 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	{
 		$files = array(
 			'web.config',
-			'web.config.bak');
+		//	'web.config.bak'
+		);
 
 		foreach ($files as $file)
 		{
