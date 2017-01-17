@@ -881,7 +881,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	{
 		$files = array(
 			'.htaccess',
-			'.htaccess.bak');
+			'htaccess.bak');
 
 		foreach ($files as $file)
 		{
