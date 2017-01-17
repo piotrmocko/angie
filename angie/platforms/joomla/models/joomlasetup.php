@@ -598,6 +598,9 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		return $aes->encryptString($data);
 	}
 
+	/**
+	 * Applies server configuration changes (removing/renaming server configuration files)
+	 */
 	private function applyServerconfigchanges()
 	{
 		if ($this->input->get('removephpini'))
@@ -621,6 +624,11 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		}
 	}
 
+	/**
+	 * Removes any user-defined PHP configuration files (.user.ini or php.ini)
+	 *
+	 * @return bool
+	 */
 	private function removePhpini()
 	{
 		if (!$this->hasPhpIni())
@@ -784,6 +792,11 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		return true;
 	}
 
+	/**
+	 * Removes password protection from /administrator folder
+	 *
+	 * @return bool
+	 */
 	private function removeHtpasswd()
 	{
 		if ($this->hasHtpasswd())
