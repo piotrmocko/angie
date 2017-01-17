@@ -623,6 +623,11 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
 	private function removePhpini()
 	{
+		if (!$this->hasPhpIni())
+		{
+			return true;
+		}
+
 		// First of all let's remove any .bak file
 		$files = array(
 			'.user.ini.bak',
@@ -638,7 +643,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 				// If I get any error during the delete, let's stop here
 				if (!@unlink(APATH_ROOT.'/'.$file))
 				{
-					return;
+					return false;
 				}
 			}
 		}
@@ -671,20 +676,121 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
 			unlink($origPath);
 		}
+
+		return true;
 	}
 
+	/**
+	 * Replaces the current version of the .htaccess file with the default one provided by Joomla.
+	 * The original contents are saved in a backup file named htaccess.bak
+	 *
+	 * @return bool
+	 */
 	private function replaceHtaccess()
 	{
+		// If I don't have any .htaccess file there's no point on continuing
+		if (!$this->hasHtaccess())
+		{
+			return true;
+		}
 
+		// Fetch the latest version from Github
+		$downloader = new ADownloadDownload();
+		$contents   = $downloader->getFromURL('https://raw.githubusercontent.com/joomla/joomla-cms/staging/htaccess.txt');
+
+		// If a connection error happens, let's use the local version of such file
+		if ($contents === false)
+		{
+			$contents = file_get_contents(__DIR__.'/serverconfig/htaccess.txt');
+		}
+
+		// First of all let's remove any backup file. Then copy the current contents of the .htaccess file in a
+		// backup file. Finally delete the .htaccess file and write a new one with the default contents
+		// If any of those steps fails we simply stop
+		if (!@unlink(APATH_ROOT.'/htaccess.bak'))
+		{
+			return false;
+		}
+
+		$orig = file_get_contents(APATH_ROOT.'/.htaccess');
+
+		if (!file_put_contents(APATH_ROOT.'/htaccess.bak', $orig))
+		{
+			return false;
+		}
+
+		if (!@unlink(APATH_ROOT.'/.htaccess'))
+		{
+			return false;
+		}
+
+		if (!file_put_contents(APATH_ROOT.'/.htaccess', $contents))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
+	/**
+	 * Replaces the current version of the web.config file with the default one provided by Joomla.
+	 * The original contents are saved in a backup file named web.config.bak
+	 *
+	 * @return bool
+	 */
 	private function replaceWebconfig()
 	{
+		// If I don't have any web.config file there's no point on continuing
+		if (!$this->hasWebconfig())
+		{
+			return true;
+		}
 
+		// Fetch the latest version from Github
+		$downloader = new ADownloadDownload();
+		$contents   = $downloader->getFromURL('https://raw.githubusercontent.com/joomla/joomla-cms/staging/web.config.txt');
+
+		// If a connection error happens, let's use the local version of such file
+		if ($contents === false)
+		{
+			$contents = file_get_contents(__DIR__.'/serverconfig/web.config.txt');
+		}
+
+		// First of all let's remove any backup file. Then copy the current contents of the web.config file in a
+		// backup file. Finally delete the web.config file and write a new one with the default contents
+		// If any of those steps fails we simply stop
+		if (!@unlink(APATH_ROOT.'/web.config.bak'))
+		{
+			return false;
+		}
+
+		$orig = file_get_contents(APATH_ROOT.'/web.config');
+
+		if (!file_put_contents(APATH_ROOT.'/web.config.bak', $orig))
+		{
+			return false;
+		}
+
+		if (!@unlink(APATH_ROOT.'/web.config'))
+		{
+			return false;
+		}
+
+		if (!file_put_contents(APATH_ROOT.'/web.config', $contents))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	private function removeHtpasswd()
 	{
+		if ($this->hasHtpasswd())
+		{
+			return true;
+		}
+
 		$files = array(
 			'.htaccess',
 			'.htpasswd'
@@ -697,6 +803,8 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 				@unlink(APATH_ROOT.'/administrator/'.$file);
 			}
 		}
+
+		return true;
 	}
 
 	/**
