@@ -115,7 +115,7 @@ class Fopen extends ADownloadAdapterAbstract implements ADownloadInterface
 
 		if (!isset($http_response_header) && empty($http_response_header_test))
 		{
-			$error = AText::_('LIB_FOF_DOWNLOAD_ERR_FOPEN_ERROR');
+			$error = AText::_('DOWNLOAD_ERR_FOPEN_ERROR');
 			throw new AExceptionDownload($error, 404);
 		}
 		else
@@ -142,14 +142,14 @@ class Fopen extends ADownloadAdapterAbstract implements ADownloadInterface
 
 			if ($http_code >= 299)
 			{
-				$error = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_HTTPERROR', $http_code);
+				$error = AText::sprintf('DOWNLOAD_ERR_HTTPERROR', $http_code);
 				throw new AExceptionDownload($error, $http_code);
 			}
 		}
 
 		if ($result === false)
 		{
-			$error = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_FOPEN_ERROR');
+			$error = AText::sprintf('DOWNLOAD_ERR_FOPEN_ERROR');
 			throw new AExceptionDownload($error, 1);
 		}
 		else

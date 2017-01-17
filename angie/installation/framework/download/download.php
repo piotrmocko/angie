@@ -311,7 +311,7 @@ class ADownloadDownload
 					{
 						// Can't open the file for writing
 						$retArray['status'] = false;
-						$retArray['error'] = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_COULDNOTWRITELOCALFILE', $localFilename);
+						$retArray['error'] = AText::sprintf('DOWNLOAD_ERR_COULDNOTWRITELOCALFILE', $localFilename);
 
 						return $retArray;
 					}
