@@ -13,7 +13,7 @@ defined('_AKEEBA') or die();
 /**
  * A download adapter using the cURL PHP integration
  */
-class Curl extends ADownloadAdapterAbstract implements ADownloadInterface
+class ADownloadAdapterCurl extends ADownloadAdapterAbstract implements ADownloadInterface
 {
 	protected $headers = array();
 

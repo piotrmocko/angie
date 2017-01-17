@@ -13,7 +13,7 @@ defined('_AKEEBA') or die();
 /**
  * A download adapter using URL fopen() wrappers
  */
-class Fopen extends ADownloadAdapterAbstract implements ADownloadInterface
+class ADownloadAdapterFopen extends ADownloadAdapterAbstract implements ADownloadInterface
 {
 	public function __construct()
 	{
