@@ -1,28 +1,17 @@
 <?php
 /**
- * @package     FOF
- * @copyright   2010-2017 Nicholas K. Dionysopoulos / Akeeba Ltd
- * @license     GNU GPL version 2 or later
+ * @package angifw
+ * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
+ * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ *
+ * Akeeba Next Generation Installer Framework
  */
 
-namespace FOF30\Download;
+defined('_AKEEBA') or die();
 
-use FOF30\Container\Container;
-use FOF30\Download\Exception\DownloadError;
-use JText;
-use FOF30\Timer\Timer;
-
-defined('_JEXEC') or die;
-
-class Download
+class ADownloadDownload
 {
-	/**
-	 * The component container object
-	 *
-	 * @var  Container
-	 */
-	protected $container = null;
-
 	/**
 	 * Parameters passed from the GUI when importing from URL
 	 *
@@ -33,7 +22,7 @@ class Download
 	/**
 	 * The download adapter which will be used by this class
 	 *
-	 * @var  DownloadInterface
+	 * @var  ADownloadInterface
 	 */
 	private $adapter = null;
 
@@ -46,20 +35,16 @@ class Download
 
 	/**
 	 * Public constructor
-	 *
-	 * @param   \FOF30\Container\Container   $c  The component container
 	 */
-	public function __construct(Container $c)
+	public function __construct()
 	{
-		$this->container = $c;
-
 		// Find the best fitting adapter
-		$allAdapters = self::getFiles(__DIR__ . '/Adapter', array(), array('AbstractAdapter.php', 'cacert.pem'));
+		$allAdapters = self::getFiles(__DIR__ . '/Adapter', array(), array('abstract.php', 'cacert.pem'));
 		$priority = 0;
 
 		foreach ($allAdapters as $adapterInfo)
 		{
-			/** @var Adapter\AbstractAdapter $adapter */
+			/** @var ADownloadAdapterAbstract $adapter */
 			$adapter = new $adapterInfo['classname'];
 
 			if (!$adapter->isSupported())
@@ -73,9 +58,6 @@ class Download
 				$priority = $adapter->priority;
 			}
 		}
-
-		// Load the language strings
-		$c->platform->loadTranslations('lib_fof30');
 	}
 
 	/**
@@ -91,13 +73,13 @@ class Download
 		{
 			$adapter = new $className;
 		}
-		elseif (class_exists('\\FOF30\\Download\\Adapter\\' . ucfirst($className)))
+		elseif (class_exists('ADownloadAdapter' . ucfirst($className)))
 		{
-			$className = '\\FOF30\\Download\\Adapter\\' . ucfirst($className);
+			$className = 'ADownloadAdapter' . ucfirst($className);
 			$adapter = new $className;
 		}
 
-		if (is_object($adapter) && ($adapter instanceof DownloadInterface))
+		if (is_object($adapter) && ($adapter instanceof ADownloadInterface))
 		{
 			$this->adapter = $adapter;
 		}
@@ -114,7 +96,7 @@ class Download
 		{
 			$class = get_class($this->adapter);
 
-			return strtolower(str_ireplace('FOF30\\Download\\Adapter\\', '', $class));
+			return strtolower(str_ireplace('ADownloadAdapter', '', $class));
 		}
 
 		return '';
@@ -183,7 +165,7 @@ class Download
 		{
 			return $this->adapter->downloadAndReturn($url, $from, $to, $this->adapterOptions);
 		}
-		catch (DownloadError $e)
+		catch (AExceptionDownload $e)
 		{
 			return false;
 		}
@@ -216,11 +198,10 @@ class Download
 
 			if (strpos($localFilename, '?') !== false)
 			{
-				$paramsPos = strpos($localFilename, '?');
+				$paramsPos     = strpos($localFilename, '?');
 				$localFilename = substr($localFilename, 0, $paramsPos - 1);
 
-				$platformBaseDirectories = $this->container->platform->getPlatformBaseDirs();
-				$tmpDir =  $platformBaseDirectories['tmp'];
+				$tmpDir =  APATH_TEMPINSTALL;
 				$tmpDir = rtrim($tmpDir, '/\\');
 
 				$localFilename = $tmpDir . '/' . $localFilename;
@@ -240,7 +221,7 @@ class Download
 
 		try
 		{
-			$timer = new Timer($maxExecTime, $runTimeBias);
+			$timer = new ATimer($maxExecTime, $runTimeBias);
 			$start = $timer->getRunningTime(); // Mark the start of this download
 			$break = false; // Don't break the step
 
@@ -291,7 +272,7 @@ class Download
 				{
 					$result = $this->adapter->downloadAndReturn($url, $from, $to, $this->adapterOptions);
 				}
-				catch (DownloadError $e)
+				catch (AExceptionDownload $e)
 				{
 					$result = false;
 					$error = $e->getMessage();
@@ -330,7 +311,7 @@ class Download
 					{
 						// Can't open the file for writing
 						$retArray['status'] = false;
-						$retArray['error'] = JText::sprintf('LIB_FOF_DOWNLOAD_ERR_COULDNOTWRITELOCALFILE', $localFilename);
+						$retArray['error'] = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_COULDNOTWRITELOCALFILE', $localFilename);
 
 						return $retArray;
 					}
@@ -397,7 +378,7 @@ class Download
 				"percent"   => $percent,
 			);
 		}
-		catch (DownloadError $e)
+		catch (AExceptionDownload $e)
 		{
 			$retArray['status'] = false;
 			$retArray['error'] = $e->getMessage();
@@ -434,7 +415,7 @@ class Download
 
 			$return[] = array(
 				'fullpath'  => $file,
-				'classname' => '\\FOF30\\Download\\Adapter\\' . ucfirst(basename($parts[0], '.php'))
+				'classname' => 'ADownloadAdapter' . ucfirst(basename($parts[0], '.php'))
 			);
 		}
 

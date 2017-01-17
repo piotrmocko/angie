@@ -1,22 +1,19 @@
 <?php
 /**
- * @package     FOF
- * @copyright   2010-2017 Nicholas K. Dionysopoulos / Akeeba Ltd
- * @license     GNU GPL version 2 or later
+ * @package angifw
+ * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
+ * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ *
+ * Akeeba Next Generation Installer Framework
  */
 
-namespace FOF30\Download\Adapter;
-
-use FOF30\Download\DownloadInterface;
-use FOF30\Download\Exception\DownloadError;
-use JText;
-
-defined('_JEXEC') or die;
+defined('_AKEEBA') or die();
 
 /**
  * A download adapter using URL fopen() wrappers
  */
-class Fopen extends AbstractAdapter implements DownloadInterface
+class Fopen extends ADownloadAdapterAbstract implements ADownloadInterface
 {
 	public function __construct()
 	{
@@ -53,7 +50,7 @@ class Fopen extends AbstractAdapter implements DownloadInterface
 	 *
 	 * @return  string  The raw file data retrieved from the remote URL.
 	 *
-	 * @throws  DownloadError  A generic exception is thrown on error
+	 * @throws  AExceptionDownload  A generic exception is thrown on error
 	 */
 	public function downloadAndReturn($url, $from = null, $to = null, array $params = array())
 	{
@@ -118,8 +115,8 @@ class Fopen extends AbstractAdapter implements DownloadInterface
 
 		if (!isset($http_response_header) && empty($http_response_header_test))
 		{
-			$error = JText::_('LIB_FOF_DOWNLOAD_ERR_FOPEN_ERROR');
-			throw new DownloadError($error, 404);
+			$error = AText::_('LIB_FOF_DOWNLOAD_ERR_FOPEN_ERROR');
+			throw new AExceptionDownload($error, 404);
 		}
 		else
 		{
@@ -145,15 +142,15 @@ class Fopen extends AbstractAdapter implements DownloadInterface
 
 			if ($http_code >= 299)
 			{
-				$error = JText::sprintf('LIB_FOF_DOWNLOAD_ERR_HTTPERROR', $http_code);
-				throw new DownloadError($error, $http_code);
+				$error = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_HTTPERROR', $http_code);
+				throw new AExceptionDownload($error, $http_code);
 			}
 		}
 
 		if ($result === false)
 		{
-			$error = JText::sprintf('LIB_FOF_DOWNLOAD_ERR_FOPEN_ERROR');
-			throw new DownloadError($error, 1);
+			$error = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_FOPEN_ERROR');
+			throw new AExceptionDownload($error, 1);
 		}
 		else
 		{

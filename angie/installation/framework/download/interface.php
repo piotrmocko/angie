@@ -1,83 +1,42 @@
 <?php
 /**
- * @package     FOF
- * @copyright   2010-2017 Nicholas K. Dionysopoulos / Akeeba Ltd
- * @license     GNU GPL version 2 or later
+ * @package angifw
+ * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
+ * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ *
+ * Akeeba Next Generation Installer Framework
  */
 
-namespace FOF30\Download\Adapter;
+defined('_AKEEBA') or die();
 
-use FOF30\Download\DownloadInterface;
-use FOF30\Download\Exception\DownloadError;
-
-defined('_JEXEC') or die;
-
-abstract class AbstractAdapter implements DownloadInterface
+/**
+ * Interface DownloadInterface
+ *
+ * @codeCoverageIgnore
+ */
+interface ADownloadInterface
 {
-	/**
-	 * Load order priority
-	 *
-	 * @var  int
-	 */
-	public $priority = 100;
-
-	/**
-	 * Name of the adapter (identical to filename)
-	 *
-	 * @var  string
-	 */
-	public $name = '';
-
-	/**
-	 * Is this adapter supported in the current execution environment?
-	 *
-	 * @var  bool
-	 */
-	public $isSupported = false;
-
-	/**
-	 * Does this adapter support chunked downloads?
-	 *
-	 * @var  bool
-	 */
-	public $supportsChunkDownload = false;
-
-	/**
-	 * Does this adapter support querying the remote file's size?
-	 *
-	 * @var  bool
-	 */
-	public $supportsFileSize = false;
-
 	/**
 	 * Does this download adapter support downloading files in chunks?
 	 *
 	 * @return  boolean  True if chunk download is supported
 	 */
-	public function supportsChunkDownload()
-	{
-		return $this->supportsChunkDownload;
-	}
+	public function supportsChunkDownload();
 
 	/**
 	 * Does this download adapter support reading the size of a remote file?
 	 *
 	 * @return  boolean  True if remote file size determination is supported
 	 */
-	public function supportsFileSize()
-	{
-		return $this->supportsFileSize;
-	}
+	public function supportsFileSize();
 
 	/**
 	 * Is this download class supported in the current server environment?
 	 *
 	 * @return  boolean  True if this server environment supports this download class
 	 */
-	public function isSupported()
-	{
-		return $this->isSupported;
-	}
+	public function isSupported();
 
 	/**
 	 * Get the priority of this adapter. If multiple download adapters are
@@ -86,20 +45,14 @@ abstract class AbstractAdapter implements DownloadInterface
 	 *
 	 * @return  boolean
 	 */
-	public function getPriority()
-	{
-		return $this->priority;
-	}
+	public function getPriority();
 
 	/**
 	 * Returns the name of this download adapter in use
 	 *
 	 * @return  string
 	 */
-	public function getName()
-	{
-		return $this->name;
-	}
+	public function getName();
 
 	/**
 	 * Download a part (or the whole) of a remote URL and return the downloaded
@@ -118,12 +71,9 @@ abstract class AbstractAdapter implements DownloadInterface
 	 *
 	 * @return  string  The raw file data retrieved from the remote URL.
 	 *
-	 * @throws  DownloadError  A generic exception is thrown on error
+	 * @throws  AExceptionDownload  A generic exception is thrown on error
 	 */
-	public function downloadAndReturn($url, $from = null, $to = null, array $params = array())
-	{
-		return '';
-	}
+	public function downloadAndReturn($url, $from = null, $to = null, array $params = array());
 
 	/**
 	 * Get the size of a remote file in bytes
@@ -132,8 +82,5 @@ abstract class AbstractAdapter implements DownloadInterface
 	 *
 	 * @return  integer  The file size, or -1 if the remote server doesn't support this feature
 	 */
-	public function getFileSize($url)
-	{
-		return -1;
-	}
+	public function getFileSize($url);
 }

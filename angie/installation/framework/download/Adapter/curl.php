@@ -1,22 +1,19 @@
 <?php
 /**
- * @package     FOF
- * @copyright   2010-2017 Nicholas K. Dionysopoulos / Akeeba Ltd
- * @license     GNU GPL version 2 or later
+ * @package angifw
+ * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
+ * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ *
+ * Akeeba Next Generation Installer Framework
  */
 
-namespace FOF30\Download\Adapter;
-
-use FOF30\Download\DownloadInterface;
-use FOF30\Download\Exception\DownloadError;
-use JText;
-
-defined('_JEXEC') or die;
+defined('_AKEEBA') or die();
 
 /**
  * A download adapter using the cURL PHP integration
  */
-class Curl extends AbstractAdapter implements DownloadInterface
+class Curl extends ADownloadAdapterAbstract implements ADownloadInterface
 {
 	protected $headers = array();
 
@@ -46,7 +43,7 @@ class Curl extends AbstractAdapter implements DownloadInterface
 	 *
 	 * @return  string  The raw file data retrieved from the remote URL.
 	 *
-	 * @throws  DownloadError  A generic exception is thrown on error
+	 * @throws  AExceptionDownload  A generic exception is thrown on error
 	 */
 	public function downloadAndReturn($url, $from = null, $to = null, array $params = array())
 	{
@@ -103,7 +100,7 @@ class Curl extends AbstractAdapter implements DownloadInterface
 
 		if ($result === false)
 		{
-			$error = JText::sprintf('LIB_FOF_DOWNLOAD_ERR_CURL_ERROR', $errno, $errmsg);
+			$error = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_CURL_ERROR', $errno, $errmsg);
 		}
 		elseif (($http_status >= 300) && ($http_status <= 399) && isset($this->headers['Location']) && !empty($this->headers['Location']))
 		{
@@ -113,14 +110,14 @@ class Curl extends AbstractAdapter implements DownloadInterface
 		{
 			$result = false;
 			$errno = $http_status;
-			$error = JText::sprintf('LIB_FOF_DOWNLOAD_ERR_HTTPERROR', $http_status);
+			$error = AText::sprintf('LIB_FOF_DOWNLOAD_ERR_HTTPERROR', $http_status);
 		}
 
 		curl_close($ch);
 
 		if ($result === false)
 		{
-			throw new DownloadError($error, $errno);
+			throw new AExceptionDownload($error, $errno);
 		}
 		else
 		{
