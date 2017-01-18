@@ -177,7 +177,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 
             <?php if ($this->large_tables):?>
             <p class="alert alert-block">
-                <?php echo AText::sprintf('DATABASE_WARN_LARGE_COLUMNS', $this->large_tables)?>
+                <?php echo AText::sprintf('DATABASE_WARN_LARGE_COLUMNS', $this->large_tables, floor($this->large_tables) + 1)?>
             </p>
             <?php endif;?>
 		</div>

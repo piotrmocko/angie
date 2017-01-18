@@ -198,7 +198,7 @@ class AngieModelDatabase extends AModel
 	/**
 	 * Detects if we have a flag file for large columns; if so it returns its contents (longest query we will have to run)
 	 *
-	 * @return bool|int
+	 * @return  int
 	 */
 	public function largeTablesDetected()
 	{
@@ -206,11 +206,10 @@ class AngieModelDatabase extends AModel
 
 		if (!file_exists($file))
 		{
-			return false;
+			return 0;
 		}
 
 		$bytes  = (int) file_get_contents($file);
-		$bytes += (512 * 1024);
 
 		return $bytes;
 	}

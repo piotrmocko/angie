@@ -10,8 +10,8 @@ defined('_AKEEBA') or die();
 
 class AngieViewDatabase extends AView
 {
-	/** @var bool Do we have a flag for large tables? */
-	public $large_tables = false;
+	/** @var int Do we have a flag for large tables? */
+	public $large_tables = 0;
 
 	public function onBeforeMain()
 	{
