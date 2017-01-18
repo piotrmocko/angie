@@ -10,7 +10,6 @@ defined('_AKEEBA') or die();
 
 class AngieModelDatabase extends AModel
 {
-
 	/**
 	 * The databases.ini contents
 	 *
@@ -194,5 +193,25 @@ class AngieModelDatabase extends AModel
 		$this->dbini[ $key ] = (array) $data;
 
 		$this->saveDatabasesIni();
+	}
+
+	/**
+	 * Detects if we have a flag file for large columns; if so it returns its contents (longest query we will have to run)
+	 *
+	 * @return bool|int
+	 */
+	public function largeTablesDetected()
+	{
+		$file = APATH_INSTALLATION.'/large_tables_detected';
+
+		if (!file_exists($file))
+		{
+			return false;
+		}
+
+		$bytes  = (int) file_get_contents($file);
+		$bytes += (512 * 1024);
+
+		return $bytes;
 	}
 }

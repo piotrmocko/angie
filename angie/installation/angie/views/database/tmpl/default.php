@@ -7,7 +7,8 @@
  */
 
 defined('_AKEEBA') or die();
-/** @var $this AView */
+
+/** @var $this AngieViewDatabase */
 
 $document = $this->container->application->getDocument();
 
@@ -173,6 +174,12 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 						  title="<?php echo AText::_('DATABASE_LBL_DBNAME_HELP') ?>"></span>
 				</div>
 			</div>
+
+            <?php if ($this->large_tables):?>
+            <p class="alert alert-block">
+                <?php echo AText::sprintf('DATABASE_WARN_LARGE_COLUMNS', $this->large_tables)?>
+            </p>
+            <?php endif;?>
 		</div>
 	</div>
 
