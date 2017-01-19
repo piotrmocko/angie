@@ -19,7 +19,7 @@ FOR %%a IN (%DIRS%) DO (
 
     IF EXIST "!TARGET_DIR!" (
         echo Removing symlink
-        rmdir "!TARGET_DIR!"
+        rmdir /S /Q "!TARGET_DIR!"
     )
 
     MKLINK /D "!TARGET_DIR!" "%SOURCE_DIR%/%%a"
