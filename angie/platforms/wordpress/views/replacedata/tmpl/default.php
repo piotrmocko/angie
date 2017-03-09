@@ -82,6 +82,11 @@ echo $this->loadAnyTemplate('steps/steps');
 				</div>
 			</div>
 		</div>
+
+        <a href="index.php?view=replacedata&force=1" class="btn btn-danger btn-small">
+            <span class="icon icon-white icon-fire"></span>
+	        <?php echo AText::_('SETUP_LBL_REPLACEDATA_BTN_RESET'); ?>
+        </a>
 	</div>
 
 	<div class="clearfix"></div>
