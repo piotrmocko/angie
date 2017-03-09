@@ -775,6 +775,8 @@ class AngieModelWordpressReplacedata extends AModel
 
 		$oldUri = new AUri($old_url);
 		$newUri = new AUri($new_url);
+		$oldDirectory = $oldUri->getPath();
+		$newDirectory = $newUri->getPath();
 
 		// Replace domain site only if the protocol, the port or the domain are different
 		if (
@@ -783,17 +785,24 @@ class AngieModelWordpressReplacedata extends AModel
 			($oldUri->getScheme() != $newUri->getScheme())
 		)
 		{
-			$old = $oldUri->toString(array('scheme', 'host', 'port'));
-			$new = $newUri->toString(array('scheme', 'host', 'port'));
+			// Normally we need to replace both the domain and path, e.g. https://www.example.com => http://localhost/wp
+
+			$old = $oldUri->toString(array('scheme', 'host', 'port', 'path'));
+			$new = $newUri->toString(array('scheme', 'host', 'port', 'path'));
+
+			// However, if the path is the same then we must only replace the domain.
+			if ($oldDirectory == $newDirectory)
+			{
+				$old = $oldUri->toString(array('scheme', 'host', 'port'));
+				$new = $newUri->toString(array('scheme', 'host', 'port'));
+			}
 
 			$replacements[$old] = $new;
+
 		}
 
-		// If the relative path to the site is different, replace it too.
-		$oldDirectory = $oldUri->getPath();
-		$newDirectory = $newUri->getPath();
-
-		if ($oldDirectory != $newDirectory)
+		// If the relative path to the site is different, replace it too, but ONLY if the old directory isn't empty.
+		if (!empty($oldDirectory) && ($oldDirectory != $newDirectory))
 		{
 			$replacements[$oldDirectory] = $newDirectory;
 		}
