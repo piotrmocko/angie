@@ -42,6 +42,8 @@ class ADownloadDownload
 		$allAdapters = self::getFiles(__DIR__ . '/Adapter', array(), array('abstract.php', 'cacert.pem'));
 		$priority = 0;
 
+		$this->adapter = null;
+
 		foreach ($allAdapters as $adapterInfo)
 		{
 			/** @var ADownloadAdapterAbstract $adapter */
@@ -92,7 +94,7 @@ class ADownloadDownload
 	 */
 	public function getAdapterName()
 	{
-		if(is_object($this->adapter))
+		if (!is_null($this->adapter) && is_object($this->adapter))
 		{
 			$class = get_class($this->adapter);
 

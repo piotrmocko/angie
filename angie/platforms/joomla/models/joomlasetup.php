@@ -704,9 +704,14 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
 		// Fetch the latest version from Github
 		$downloader = new ADownloadDownload();
-		$contents   = $downloader->getFromURL('https://raw.githubusercontent.com/joomla/joomla-cms/staging/htaccess.txt');
+		$contents = false;
 
-		// If a connection error happens, let's use the local version of such file
+		if ($downloader->getAdapterName())
+		{
+			$contents   = $downloader->getFromURL('https://raw.githubusercontent.com/joomla/joomla-cms/staging/htaccess.txt');
+		}
+
+		// If a connection error happens or there are no download adapters we'll use our local copy of the file
 		if ($contents === false)
 		{
 			$contents = file_get_contents(__DIR__.'/serverconfig/htaccess.txt');
