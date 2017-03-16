@@ -804,7 +804,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	 */
 	private function removeHtpasswd()
 	{
-		if ($this->hasHtpasswd())
+		if (!$this->hasHtpasswd())
 		{
 			return true;
 		}
