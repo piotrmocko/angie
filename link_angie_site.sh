@@ -5,7 +5,7 @@
 
 if [ -z "$1" ]
 	then
-		echo "Missing platform name to link"
+		echo "Missing path to the site to link"
 		exit
 fi
 
