@@ -704,40 +704,46 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 
 		// Fetch the latest version from Github
 		$downloader = new ADownloadDownload();
-		$contents = false;
+		$contents   = false;
 
 		if ($downloader->getAdapterName())
 		{
-			$contents   = $downloader->getFromURL('https://raw.githubusercontent.com/joomla/joomla-cms/staging/htaccess.txt');
+			$contents = $downloader->getFromURL('https://raw.githubusercontent.com/joomla/joomla-cms/staging/htaccess.txt');
 		}
 
 		// If a connection error happens or there are no download adapters we'll use our local copy of the file
-		if ($contents === false)
+		if (empty($contents))
 		{
-			$contents = file_get_contents(__DIR__.'/serverconfig/htaccess.txt');
+			$contents = file_get_contents(__DIR__ . '/serverconfig/htaccess.txt');
 		}
 
 		// First of all let's remove any backup file. Then copy the current contents of the .htaccess file in a
 		// backup file. Finally delete the .htaccess file and write a new one with the default contents
 		// If any of those steps fails we simply stop
-		if (!@unlink(APATH_ROOT.'/htaccess.bak'))
+		if (!@unlink(APATH_ROOT . '/htaccess.bak'))
 		{
 			return false;
 		}
 
-		$orig = file_get_contents(APATH_ROOT.'/.htaccess');
+		$orig = file_get_contents(APATH_ROOT . '/.htaccess');
 
-		if (!file_put_contents(APATH_ROOT.'/htaccess.bak', $orig))
+		if (!empty($orig))
 		{
-			return false;
+			if (!file_put_contents(APATH_ROOT . '/htaccess.bak', $orig))
+			{
+				return false;
+			}
 		}
 
-		if (!@unlink(APATH_ROOT.'/.htaccess'))
+		if (file_exists(APATH_ROOT . '/.htaccess'))
 		{
-			return false;
+			if (!@unlink(APATH_ROOT . '/.htaccess'))
+			{
+				return false;
+			}
 		}
 
-		if (!file_put_contents(APATH_ROOT.'/.htaccess', $contents))
+		if (!file_put_contents(APATH_ROOT . '/.htaccess', $contents))
 		{
 			return false;
 		}
