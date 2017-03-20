@@ -166,7 +166,7 @@ $key = str_replace('.', '_', $this->input->getCmd('substep', 'default'));
                         <div class="controls">
                             <input type="password" id="superuserpassword" name="<?php echo $key.'_'?>superuserpassword" value="" />
 						<span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_('SETUP_LABEL_SUPERUSERPASSWORD2_HELP') ?>"></span>
+                              title="<?php echo AText::_('SETUP_LABEL_SUPERUSERPASSWORD_HELP2') ?>"></span>
                         </div>
                     </div>
                     <div class="control-group">

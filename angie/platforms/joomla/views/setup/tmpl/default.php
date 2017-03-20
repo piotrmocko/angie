@@ -314,7 +314,7 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					<div class="controls">
 						<input type="password" id="superuserpassword" name="superuserpassword" value="" />
 						<span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-							  title="<?php echo AText::_('SETUP_LABEL_SUPERUSERPASSWORD2_HELP') ?>"></span>
+							  title="<?php echo AText::_('SETUP_LABEL_SUPERUSERPASSWORD_HELP2') ?>"></span>
 					</div>
 				</div>
 				<div class="control-group">
