@@ -22,7 +22,7 @@ $(document).ready(function(){
 	{
 		jQuery('#finaliseKickstart').show();
 	}
-	else if ((window.name == 'abinstaller') || (window.name == 'solo_angie_window'))
+	else if ((window.name == 'abiinstaller') || (window.name == 'solo_angie_window'))
 	{
 		jQuery('#finaliseIntegrated').show();
 	}

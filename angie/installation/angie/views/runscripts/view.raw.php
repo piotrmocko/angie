@@ -42,7 +42,7 @@ class AngieViewRunscripts extends AView
         }
 
 	    // Manually require the configuration file
-	    JFactory::getConfig(JPATH_CONFIGURATION.'/configuration.php');
+	    $this->container->platform->getConfig(JPATH_CONFIGURATION.'/configuration.php');
 
         // Load the JApplicationCli class
         JLoader::import('joomla.application.web');
