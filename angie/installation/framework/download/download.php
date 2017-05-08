@@ -163,6 +163,12 @@ class ADownloadDownload
 	 */
 	public function getFromURL($url, $from = null, $to = null)
 	{
+		// If there's no adapter available fail immediately
+		if (!is_object($this->adapter) || !($this->adapter instanceof ADownloadAdapterAbstract))
+		{
+			return false;
+		}
+
 		try
 		{
 			return $this->adapter->downloadAndReturn($url, $from, $to, $this->adapterOptions);
@@ -220,6 +226,15 @@ class ADownloadDownload
 			"percent"   => 0,
 			"localfile"	=> $localFilename
 		);
+
+		// If there's no adapter available fail immediately
+		if (!is_object($this->adapter) || !($this->adapter instanceof ADownloadAdapterAbstract))
+		{
+			$retArray['status'] = false;
+			$retArray['error'] = "Your server supports neither URL fopen() wrappers nor the PHP module for cURL. It's impossible to download anything from a remote server.";
+
+			return $retArray;
+		}
 
 		try
 		{
