@@ -596,6 +596,12 @@ class AngieModelWordpressReplacedata extends AModel
 		// Am I done with DB replacement? If so let's update some files
 		if (!$more)
 		{
+			// The #__blogs table used by multisite installations requires a bit of post-processing.
+			if ($this->isMultisite())
+			{
+				$this->updateMultisiteTables();
+			}
+
 			$this->updateFiles();
 		}
 
@@ -1004,6 +1010,58 @@ class AngieModelWordpressReplacedata extends AModel
 			}
 
 			file_put_contents($file, $contents);
+		}
+	}
+
+	/**
+	 * Post-processing for the #__blogs table of multisite installations
+	 */
+	private function updateMultisiteTables()
+	{
+		// Get the new base domain and base path
+
+		/** @var AngieModelWordpressConfiguration $config */
+		$config    = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+		$new_url   = $config->get('homeurl');
+		$newUri    = new AUri($new_url);
+		$newDomain = $this->removeSubdomain($newUri->getHost());
+		$newPath   = $newUri->getPath();
+
+		$db = $this->getDbo();
+
+		$query = $db->getQuery(true)
+			->select('*')
+			->from($db->qn('#__blogs'));
+
+		try
+		{
+			$blogs = $db->setQuery($query)->loadObjectList();
+		}
+		catch (Exception $e)
+		{
+			return;
+		}
+
+		foreach ($blogs as $blog)
+		{
+			if ($blog->blog_id == 1)
+			{
+				// Default site: path must match the site's installation path (e.g. /foobar/)
+				$blog->path = '/' . trim($newPath, '/') . '/';
+			}
+
+			// For every record, make sure the path column ends in forward slash (required by WP)
+			$blog->path = rtrim($blog->path, '/') . '/';
+
+			// Save the changed record
+			try
+			{
+				$db->updateObject('#__blogs', $blog, ['blog_id', 'site_id']);
+			}
+			catch (Exception $e)
+			{
+				// If we failed to save the record just skip over to the next one.
+			}
 		}
 	}
 }
