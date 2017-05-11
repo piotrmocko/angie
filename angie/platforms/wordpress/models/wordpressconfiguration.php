@@ -331,7 +331,7 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 							$newUri  = new AUri($new_url);
 							$newPath = $newUri->getPath();
 							$newPath = trim($newPath, '/');
-							$newPath = '/' . $newPath . '/';
+							$newPath = empty($newPath) ? '/' : '/' . $newPath . '/';
 							$line    = "define('" . $key . "', '" . $newPath . "');";
 							break;
 
