@@ -86,10 +86,11 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 				}
 				elseif (strpos($line, 'RewriteBase ') === 0)
 				{
-					$line = "RewriteBase $path";
+					$pathTrimmed = trim($path, '/');
+					$line = "RewriteBase /$pathTrimmed/";
 
 					// If the site is hosted on the domain's root
-					if (empty($path))
+					if (empty($pathTrimmed))
 					{
 						$line = "RewriteBase /";
 					}
