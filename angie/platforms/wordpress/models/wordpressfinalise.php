@@ -95,10 +95,19 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 						$line = "RewriteBase /";
 					}
 				}
+				/**
+				 * This MUST not be done! The index.php is always in the same directory as the .htaccess file. Since we
+				 * have a RewriteBase line the location of index.php is always /index.php.
+				 */
+				/**
 				elseif (strpos($line, 'RewriteRule .') === 0)
 				{
-					$line = 'RewriteRule . ' . $path . '/index.php [L]';
+					$trimmedPath = '/' . trim($path, '/');
+					$trimmedPath .= (substr($trimmedPath, -1) == '/') ? '' : '/';
+
+					$line = 'RewriteRule . ' . $trimmedPath . '/index.php [L]';
 				}
+				/**/
 			}
 
 			// Add the line
