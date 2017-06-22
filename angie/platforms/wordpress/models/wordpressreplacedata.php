@@ -34,8 +34,14 @@ class AngieModelWordpressReplacedata extends AModel
 	/** @var null|ATimer The timer used to step the engine */
 	protected $timer = null;
 
+	/** @var int Minimum execution time (in seconds) */
+	protected $min_exec = 0;
+
 	/** @var int Maximum execution time (in seconds) */
 	protected $max_exec = 3;
+
+	/** @var int Runtime bias */
+	protected $bias = 75;
 
 	/**
 	 * Get a reference to the database driver object
@@ -201,7 +207,9 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->currentRow   = $session->get('replacedata.currentRow', 0);
 		$this->totalRows    = $session->get('replacedata.totalRows', null);
 		$this->batchSize	= $session->get('replacedata.batchSize', 100);
+		$this->min_exec		= $session->get('replacedata.min_exec', 0);
 		$this->max_exec		= $session->get('replacedata.max_exec', 3);
+		$this->bias         = $session->get('replacedata.bias', 75);
 	}
 
 	/**
@@ -216,7 +224,9 @@ class AngieModelWordpressReplacedata extends AModel
 		$session->set('replacedata.currentRow', $this->currentRow);
 		$session->set('replacedata.totalRows', $this->totalRows);
 		$session->set('replacedata.batchSize', $this->batchSize);
+		$session->set('replacedata.min_exec', $this->min_exec);
 		$session->set('replacedata.max_exec', $this->max_exec);
+		$session->set('replacedata.bias', $this->bias);
 	}
 
 	/**
@@ -338,11 +348,13 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->fields       = null;
 		$this->totalRows    = null;
 		$this->batchSize	= $this->input->getInt('batchSize', 100);
+		$this->min_exec     = $this->input->getInt('min_exec', 0);
 		$this->max_exec		= $this->input->getInt('max_exec', 3);
+		$this->bias         = $this->input->getInt('runtime_bias', 75);
 
 		// Replace keys in #__options and #__usermeta which depend on the database table prefix, if the prefix has been changed
 		// reference: http://stackoverflow.com/a/13815934/485241
-		$this->timer = new ATimer(0, $this->max_exec, 75);
+		$this->timer = new ATimer($this->min_exec, $this->max_exec, $this->bias);
 
 		/** @var AngieModelWordpressConfiguration $config */
 		$config    = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
@@ -437,7 +449,7 @@ class AngieModelWordpressReplacedata extends AModel
 	{
 		if ( !is_object($this->timer) || !($this->timer instanceof ATimer))
 		{
-			$this->timer = new ATimer(0, $this->max_exec, 75);
+			$this->timer = new ATimer($this->min_exec, $this->max_exec, $this->bias);
 		}
 
 		$msg              = '';

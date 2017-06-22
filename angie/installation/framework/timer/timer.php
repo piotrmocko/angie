@@ -103,19 +103,19 @@ class ATimer
 	 */
 	public function enforce_min_exec_time($log = true, $serverSideSleep = true)
 	{
+		$php_max_exec = 10;
+
 		// Try to get a sane value for PHP's maximum_execution_time INI parameter
 		if (@function_exists('ini_get'))
 		{
 			$php_max_exec = @ini_get("maximum_execution_time");
 		}
-		else
-		{
-			$php_max_exec = 10;
-		}
+
 		if (($php_max_exec == "") || ($php_max_exec == 0))
 		{
 			$php_max_exec = 10;
 		}
+		
 		// Decrease $php_max_exec time by 500 msec we need (approx.) to tear down
 		// the application, as well as another 500msec added for rounding
 		// error purposes. Also make sure this is never gonna be less than 0.
@@ -187,7 +187,7 @@ class ATimer
 				{
 					ALog::_(ANGIE_LOG_DEBUG, "Sleeping for $sleep_sec seconds, using sleep()");
 				}
-				
+
 				sleep($sleep_sec);
 			}
 		}
