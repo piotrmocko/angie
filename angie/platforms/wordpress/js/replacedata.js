@@ -23,7 +23,9 @@ replacements.start = function()
 		'replaceTo':	$('#replaceTo').val(),
 		'extraTables':	$('#extraTables').val(),
 		'batchSize':	$('#batchSize').val(),
-		'max_exec':		$('#max_exec').val()
+		'min_exec':		$('#min_exec').val(),
+		'max_exec':		$('#max_exec').val(),
+		'runtime_bias':	$('#runtime_bias').val()
 	}, replacements.process);
 };
 
