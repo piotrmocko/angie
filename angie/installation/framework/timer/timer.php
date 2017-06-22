@@ -120,8 +120,8 @@ class ATimer
 		// the application, as well as another 500msec added for rounding
 		// error purposes. Also make sure this is never gonna be less than 0.
 		$php_max_exec = max($php_max_exec * 1000 - 1000, 0);
-		
-		$minexectime = $this->min_exec_time;
+		$minexectime  = $this->min_exec_time * 1000;
+
 		if (!is_numeric($minexectime))
 		{
 			$minexectime = 0;
