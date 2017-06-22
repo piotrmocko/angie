@@ -828,7 +828,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$replacements = array();
 		$db           = $this->getDbo();
 
-		if ( !$this->isMultisite($db))
+		if ( !$this->isMultisite())
 		{
 			return $replacements;
 		}
