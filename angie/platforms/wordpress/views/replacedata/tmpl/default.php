@@ -75,12 +75,24 @@ echo $this->loadAnyTemplate('steps/steps');
 					<input type="text" id="batchSize" name="batchSize" class="input-small" value="100" />
 				</div>
 			</div>
+            <div class="control-group">
+                <label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_MIN_EXEC')?></label>
+                <div class="controls">
+                    <input type="text" id="min_exec" name="min_exec" class="input-small" value="0" />
+                </div>
+            </div>
 			<div class="control-group">
 				<label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_MAX_EXEC')?></label>
 				<div class="controls">
 					<input type="text" id="max_exec" name="max_exec" class="input-small" value="3" />
 				</div>
 			</div>
+            <div class="control-group">
+                <label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_RUNTIME_BIAS')?></label>
+                <div class="controls">
+                    <input type="text" id="runtime_bias" name="runtime_bias" class="input-small" value="75" />
+                </div>
+            </div>
 		</div>
 
         <a href="index.php?view=replacedata&force=1" class="btn btn-danger btn-small">
