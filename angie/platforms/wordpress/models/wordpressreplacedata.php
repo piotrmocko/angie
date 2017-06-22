@@ -617,6 +617,9 @@ class AngieModelWordpressReplacedata extends AModel
 			$this->updateFiles();
 		}
 
+		// Sleep if we didn't hit the minimum execution time
+		$this->timer->enforce_min_exec_time();
+
 		return array('msg' => $msg, 'more' => $more);
 	}
 
