@@ -238,7 +238,7 @@ class ADownloadDownload
 
 		try
 		{
-			$timer = new ATimer($maxExecTime, $runTimeBias);
+			$timer = new ATimer(0, $maxExecTime, $runTimeBias);
 			$start = $timer->getRunningTime(); // Mark the start of this download
 			$break = false; // Don't break the step
 

@@ -342,7 +342,7 @@ class AngieModelWordpressReplacedata extends AModel
 
 		// Replace keys in #__options and #__usermeta which depend on the database table prefix, if the prefix has been changed
 		// reference: http://stackoverflow.com/a/13815934/485241
-		$this->timer = new ATimer($this->max_exec, 75);
+		$this->timer = new ATimer(0, $this->max_exec, 75);
 
 		/** @var AngieModelWordpressConfiguration $config */
 		$config    = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
@@ -437,7 +437,7 @@ class AngieModelWordpressReplacedata extends AModel
 	{
 		if ( !is_object($this->timer) || !($this->timer instanceof ATimer))
 		{
-			$this->timer = new ATimer($this->max_exec, 75);
+			$this->timer = new ATimer(0, $this->max_exec, 75);
 		}
 
 		$msg              = '';

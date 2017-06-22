@@ -12,6 +12,13 @@ defined('_AKEEBA') or die();
 
 class ATimer
 {
+	/**
+	 * Minimum execution time for step
+	 *
+	 * @var int
+	 */
+	private $min_exec_time = 0;
+
 	/** 
 	 * Maximum execution time allowance per step
 	 * 
@@ -29,10 +36,12 @@ class ATimer
 	/**
 	 * Public constructor, creates the timer object and calculates the execution
 	 * time limits.
-	 * 
-	 * @return  ATimer
+	 *
+	 * @param   int $min_exec_time  Minimum execution time
+	 * @param   int $max_exec_time  Maximum execution time
+	 * @param   int $runtime_bias   Runtime bias
 	 */
-	public function __construct($max_exec_time = 5, $runtime_bias = 75)
+	public function __construct($min_exec_time = 0, $max_exec_time = 5, $runtime_bias = 75)
 	{
 		ALog::_(ANGIE_LOG_DEBUG, __METHOD__ . '(' . $max_exec_time . ', ' . $runtime_bias . ')');
 		
@@ -40,6 +49,7 @@ class ATimer
 		$this->start_time = $this->microtime_float();
 		
 		$this->max_exec_time = $max_exec_time * $runtime_bias / 100;
+		$this->min_exec_time = $min_exec_time;
 	}
 
 	/**

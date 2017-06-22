@@ -174,7 +174,7 @@ abstract class ADatabaseRestore
 			$this->dbiniValues['runtimebias'] = 75;
 		}
 
-		$this->timer = new ATimer((int)$this->dbiniValues['maxexectime'], (int)$this->dbiniValues['runtimebias']);
+		$this->timer = new ATimer(0, (int)$this->dbiniValues['maxexectime'], (int)$this->dbiniValues['runtimebias']);
 	}
 
 	/**
