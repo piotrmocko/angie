@@ -47,7 +47,7 @@ replacements.process = function(data)
     // Do we have errors?
     var error_message = data.error;
 
-    if (error_message != '')
+    if (error_message !== undefined && error_message != '')
     {
         try
         {
