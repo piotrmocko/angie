@@ -36,7 +36,10 @@ replacements.start = function()
 		'min_exec':		$('#min_exec').val(),
 		'max_exec':		$('#max_exec').val(),
 		'runtime_bias':	$('#runtime_bias').val()
-	}, replacements.process);
+	},
+        replacements.process,
+        replacements.onError
+    );
 };
 
 replacements.process = function(data)
@@ -81,7 +84,10 @@ replacements.step = function()
 		'task':			'ajax',
 		'method':		'stepEngine',
 		'format':		'json'
-	}, replacements.process);
+	},
+        replacements.process,
+        replacements.onError
+    );
 };
 
 /**
@@ -96,8 +102,8 @@ replacements.resumeBackup = function ()
     document.getElementById('error-panel').style.display = 'none';
     document.getElementById('retry-panel').style.display = 'none';
 
-    // Show progress and warnings
-    document.getElementById('backup-progress-pane').style.display = 'block';
+    // Show progress
+    document.getElementById('replacementsProgress').style.display = 'block';
 
     // Restart the replacements
     setTimeout(function(){replacements.step();}, 100);
@@ -133,6 +139,19 @@ replacements.startRetryTimeoutBar = function ()
     }, 1000);
 };
 
+/**
+ * Cancel the automatic resumption of a backup attempt after an AJAX error has occurred
+ */
+replacements.cancelResume = function ()
+{
+    // Make sure the timer is stopped
+    replacements.resetRetryTimeoutBar();
+
+    // Kill the backup
+    var errorMessage = document.getElementById('backup-error-message-retry').innerHTML;
+    replacements.endWithError(errorMessage);
+};
+
 replacements.onError = function (message)
 {
     // If we are past the max retries, die.
@@ -147,12 +166,8 @@ replacements.onError = function (message)
     replacements.resume.retry++;
     replacements.resetRetryTimeoutBar();
 
-    // Save display state of warnings panel
-    replacements.resume.showWarnings = (document.getElementById('backup-warnings-panel').style.display !== 'none');
-
-    // Hide progress and warnings
-    document.getElementById('backup-progress-pane').style.display  = 'none';
-    document.getElementById('backup-warnings-panel').style.display = 'none';
+    // Hide progress
+    document.getElementById('replacementsProgress').style.display  = 'none';
     document.getElementById('error-panel').style.display           = 'none';
 
     // Setup and show the retry pane
@@ -161,6 +176,22 @@ replacements.onError = function (message)
 
     // Start the countdown
     replacements.startRetryTimeoutBar();
+};
+
+/**
+ * Terminate the backup with an error
+ *
+ * @param   message  The error message received
+ */
+replacements.endWithError = function (message)
+{
+    // Hide progress
+    document.getElementById('replacementsProgress').style.display  = 'none';
+    document.getElementById('retry-panel').style.display           = 'none';
+
+    // Setup and show error pane
+    document.getElementById('backup-error-message').textContent = message;
+    document.getElementById('error-panel').style.display        = 'block';
 };
 
 $(document).ready(function(){
