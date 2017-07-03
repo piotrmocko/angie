@@ -120,7 +120,7 @@ echo $this->loadAnyTemplate('steps/steps');
 	</div>
 </div>
 
-<?php /* Backup retry after error */ ?>
+<?php /* Replacement retry after error */ ?>
 <div id="retry-panel" style="display: none">
     <div class="alert alert-warning">
         <h3 class="alert-heading">
@@ -151,7 +151,7 @@ echo $this->loadAnyTemplate('steps/steps');
     </div>
 </div>
 
-<?php /* Backup error (halt) */ ?>
+<?php /* Replacement error (halt) */ ?>
 <div id="error-panel" style="display: none">
     <div class="alert alert-error">
         <h3 class="alert-heading">
