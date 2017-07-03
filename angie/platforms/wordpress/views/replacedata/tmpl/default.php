@@ -146,7 +146,7 @@ echo $this->loadAnyTemplate('steps/steps');
             </p>
 
             <p><?php echo AText::_('SETUP_REPLACE_TEXT_LASTERRORMESSAGEWAS'); ?></p>
-            <p id="backup-error-message-retry"></p>
+            <p id="replacement-error-message-retry"></p>
         </div>
     </div>
 </div>
@@ -161,7 +161,7 @@ echo $this->loadAnyTemplate('steps/steps');
             <p>
 				<?php echo AText::_('SETUP_REPLACE_TEXT_REPLACEFAILED'); ?>
             </p>
-            <p id="backup-error-message"></p>
+            <p id="replacement-error-message"></p>
 
             <div class="alert alert-block alert-info" id="error-panel-troubleshooting">
                 <p>

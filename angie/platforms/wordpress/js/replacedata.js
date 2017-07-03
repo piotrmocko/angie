@@ -91,9 +91,9 @@ replacements.step = function()
 };
 
 /**
- * Resume a backup attempt after an AJAX error has occurred.
+ * Resume the data replacement step after an AJAX error has occurred.
  */
-replacements.resumeBackup = function ()
+replacements.resumeReplacement = function ()
 {
     // Make sure the timer is stopped
     replacements.resetRetryTimeoutBar();
@@ -134,21 +134,21 @@ replacements.startRetryTimeoutBar = function ()
         if (remainingSeconds == 0)
         {
             clearInterval(replacements.resumeTimer);
-            replacements.resumeBackup();
+            replacements.resumeReplacement();
         }
     }, 1000);
 };
 
 /**
- * Cancel the automatic resumption of a backup attempt after an AJAX error has occurred
+ * Cancel the automatic resumption of the replacement step after an AJAX error has occurred
  */
 replacements.cancelResume = function ()
 {
     // Make sure the timer is stopped
     replacements.resetRetryTimeoutBar();
 
-    // Kill the backup
-    var errorMessage = document.getElementById('backup-error-message-retry').innerHTML;
+    // Kill the replacement
+    var errorMessage = document.getElementById('replacement-error-message-retry').innerHTML;
     replacements.endWithError(errorMessage);
 };
 
@@ -171,7 +171,7 @@ replacements.onError = function (message)
     document.getElementById('error-panel').style.display           = 'none';
 
     // Setup and show the retry pane
-    document.getElementById('backup-error-message-retry').textContent = message;
+    document.getElementById('replacement-error-message-retry').textContent = message;
     document.getElementById('retry-panel').style.display              = 'block';
 
     // Start the countdown
@@ -190,7 +190,7 @@ replacements.endWithError = function (message)
     document.getElementById('retry-panel').style.display           = 'none';
 
     // Setup and show error pane
-    document.getElementById('backup-error-message').textContent = message;
+    document.getElementById('replacement-error-message').textContent = message;
     document.getElementById('error-panel').style.display        = 'block';
 };
 
