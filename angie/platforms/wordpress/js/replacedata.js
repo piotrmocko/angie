@@ -7,7 +7,17 @@
 
 var akeebaAjaxWP = null;
 
-replacements = {};
+replacements = {
+    resumeTimer:        null,
+    resume:
+        {
+            enabled:      true,
+            timeout:      10,
+            maxRetries:   3,
+            retry:        0,
+            showWarnings: 0
+        }
+};
 
 replacements.start = function()
 {
@@ -23,12 +33,37 @@ replacements.start = function()
 		'replaceTo':	$('#replaceTo').val(),
 		'extraTables':	$('#extraTables').val(),
 		'batchSize':	$('#batchSize').val(),
-		'max_exec':		$('#max_exec').val()
-	}, replacements.process);
+		'min_exec':		$('#min_exec').val(),
+		'max_exec':		$('#max_exec').val(),
+		'runtime_bias':	$('#runtime_bias').val()
+	},
+        replacements.process,
+        replacements.onError
+    );
 };
 
 replacements.process = function(data)
 {
+    // Do we have errors?
+    var error_message = data.error;
+
+    if (error_message !== undefined && error_message != '')
+    {
+        try
+        {
+            console.error('Got an error message');
+            console.log(error_message);
+        }
+        catch (e)
+        {
+        }
+
+        // Uh-oh! An error has occurred.
+        replacements.onError(error_message);
+
+        return;
+    }
+
 	$('#blinkenlights').append($('#blinkenlights span:first'));
 	$('#replacementsProgressText').text(data.msg);
 
@@ -49,7 +84,114 @@ replacements.step = function()
 		'task':			'ajax',
 		'method':		'stepEngine',
 		'format':		'json'
-	}, replacements.process);
+	},
+        replacements.process,
+        replacements.onError
+    );
+};
+
+/**
+ * Resume the data replacement step after an AJAX error has occurred.
+ */
+replacements.resumeReplacement = function ()
+{
+    // Make sure the timer is stopped
+    replacements.resetRetryTimeoutBar();
+
+    // Hide error and retry panels
+    document.getElementById('error-panel').style.display = 'none';
+    document.getElementById('retry-panel').style.display = 'none';
+
+    // Show progress
+    document.getElementById('replacementsProgress').style.display = 'block';
+
+    // Restart the replacements
+    setTimeout(function(){replacements.step();}, 100);
+};
+
+/**
+ * Resets the last response timer bar
+ */
+replacements.resetRetryTimeoutBar = function ()
+{
+    clearInterval(replacements.resumeTimer);
+
+    document.getElementById('akeeba-retry-timeout').textContent = replacements.resume.timeout.toFixed(0);
+};
+
+/**
+ * Starts the timer for the last response timer
+ */
+replacements.startRetryTimeoutBar = function ()
+{
+    var remainingSeconds = replacements.resume.timeout;
+
+    replacements.resumeTimer = setInterval(function ()
+    {
+        remainingSeconds--;
+        document.getElementById('akeeba-retry-timeout').textContent = remainingSeconds.toFixed(0);
+
+        if (remainingSeconds == 0)
+        {
+            clearInterval(replacements.resumeTimer);
+            replacements.resumeReplacement();
+        }
+    }, 1000);
+};
+
+/**
+ * Cancel the automatic resumption of the replacement step after an AJAX error has occurred
+ */
+replacements.cancelResume = function ()
+{
+    // Make sure the timer is stopped
+    replacements.resetRetryTimeoutBar();
+
+    // Kill the replacement
+    var errorMessage = document.getElementById('replacement-error-message-retry').innerHTML;
+    replacements.endWithError(errorMessage);
+};
+
+replacements.onError = function (message)
+{
+    // If we are past the max retries, die.
+    if (replacements.resume.retry >= replacements.resume.maxRetries)
+    {
+        replacements.endWithError(message);
+
+        return;
+    }
+
+    // Make sure the timer is stopped
+    replacements.resume.retry++;
+    replacements.resetRetryTimeoutBar();
+
+    // Hide progress
+    document.getElementById('replacementsProgress').style.display  = 'none';
+    document.getElementById('error-panel').style.display           = 'none';
+
+    // Setup and show the retry pane
+    document.getElementById('replacement-error-message-retry').textContent = message;
+    document.getElementById('retry-panel').style.display              = 'block';
+
+    // Start the countdown
+    replacements.startRetryTimeoutBar();
+};
+
+/**
+ * Terminate the backup with an error
+ *
+ * @param   message  The error message received
+ */
+replacements.endWithError = function (message)
+{
+    // Hide progress
+    document.getElementById('replacementsProgress').style.display  = 'none';
+    document.getElementById('retry-panel').style.display           = 'none';
+
+    // Setup and show error pane
+    document.getElementById('replacement-error-message').textContent = message;
+    document.getElementById('error-panel').style.display        = 'block';
 };
 
 $(document).ready(function(){

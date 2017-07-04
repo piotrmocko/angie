@@ -75,12 +75,24 @@ echo $this->loadAnyTemplate('steps/steps');
 					<input type="text" id="batchSize" name="batchSize" class="input-small" value="100" />
 				</div>
 			</div>
+            <div class="control-group">
+                <label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_MIN_EXEC')?></label>
+                <div class="controls">
+                    <input type="text" id="min_exec" name="min_exec" class="input-small" value="0" />
+                </div>
+            </div>
 			<div class="control-group">
 				<label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_MAX_EXEC')?></label>
 				<div class="controls">
 					<input type="text" id="max_exec" name="max_exec" class="input-small" value="3" />
 				</div>
 			</div>
+            <div class="control-group">
+                <label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_RUNTIME_BIAS')?></label>
+                <div class="controls">
+                    <input type="text" id="runtime_bias" name="runtime_bias" class="input-small" value="75" />
+                </div>
+            </div>
 		</div>
 
         <a href="index.php?view=replacedata&force=1" class="btn btn-danger btn-small">
@@ -106,4 +118,64 @@ echo $this->loadAnyTemplate('steps/steps');
 	<div id="blinkenlights">
 		<span class="label label-default">&nbsp;&nbsp;&nbsp;</span><span class="label label-inverse">&nbsp;&nbsp;&nbsp;</span><span class="label label-default">&nbsp;&nbsp;&nbsp;</span><span class="label label-inverse">&nbsp;&nbsp;&nbsp;</span>
 	</div>
+</div>
+
+<?php /* Replacement retry after error */ ?>
+<div id="retry-panel" style="display: none">
+    <div class="alert alert-warning">
+        <h3 class="alert-heading">
+			<?php echo AText::_('SETUP_REPLACE_HEADER_RETRY'); ?>
+        </h3>
+        <div id="retryframe">
+            <p><?php echo AText::_('SETUP_REPLACE_TEXT_FAILEDRETRY'); ?></p>
+            <p>
+                <strong>
+					<?php echo AText::_('SETUP_REPLACE_TEXT_WILLRETRY'); ?>
+                    <span id="akeeba-retry-timeout">0</span>
+					<?php echo AText::_('SETUP_REPLACE_TEXT_WILLRETRYSECONDS'); ?>
+                </strong>
+                <br/>
+                <button class="btn btn-danger btn-small" onclick="replacements.cancelResume(); return false;">
+                    <span class="icon-cancel"></span>
+					<?php echo AText::_('SESSION_BTN_CANCEL'); ?>
+                </button>
+                <button class="btn btn-success btn-small" onclick="replacements.resumeBackup(); return false;">
+                    <span class="icon-redo"></span>
+					<?php echo AText::_('SETUP_REPLACE_TEXT_BTNRESUME'); ?>
+                </button>
+            </p>
+
+            <p><?php echo AText::_('SETUP_REPLACE_TEXT_LASTERRORMESSAGEWAS'); ?></p>
+            <p id="replacement-error-message-retry"></p>
+        </div>
+    </div>
+</div>
+
+<?php /* Replacement error (halt) */ ?>
+<div id="error-panel" style="display: none">
+    <div class="alert alert-error">
+        <h3 class="alert-heading">
+			<?php echo AText::_('SETUP_REPLACE_HEADER_REPLACEFAILED'); ?>
+        </h3>
+        <div id="errorframe">
+            <p>
+				<?php echo AText::_('SETUP_REPLACE_TEXT_REPLACEFAILED'); ?>
+            </p>
+            <p id="replacement-error-message"></p>
+
+            <div class="alert alert-block alert-info" id="error-panel-troubleshooting">
+                <p>
+					<?php echo AText::sprintf('SETUP_REPLACE_TEXT_RTFMTOSOLVE', 'https://www.akeebabackup.com/documentation/troubleshooter/abbackup.html?utm_source=akeeba_backup&utm_campaign=backuperrorlink'); ?>
+                </p>
+                <p>
+                    <?php echo AText::sprintf('SETUP_REPLACE_TEXT_SOLVEISSUE_PRO', 'https://www.akeebabackup.com/support.html?utm_source=akeeba_backup&utm_campaign=backuperrorpro'); ?>
+                </p>
+            </div>
+
+            <button class="btn btn-large btn-primary" onclick="window.location='https://www.akeebabackup.com/documentation/troubleshooter/abbackup.html?utm_source=akeeba_backup&utm_campaign=backuperrorbutton'; return false;">
+                <span class="icon-book icon-white"></span>
+				<?php echo AText::_('SETUP_REPLACE_TROUBLESHOOTINGDOCS'); ?>
+            </button>
+        </div>
+    </div>
 </div>
