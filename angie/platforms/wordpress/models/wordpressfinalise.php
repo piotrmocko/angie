@@ -1,9 +1,9 @@
 <?php
 /**
- * @package angi4j
+ * @package   angi4j
  * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
- * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ * @author    Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
  */
 
 defined('_AKEEBA') or die();
@@ -12,44 +12,44 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 {
 	public function updatehtaccess()
 	{
-        // Let's build the stack of possible files
-        $files = array(
-            APATH_ROOT . '/.htaccess',
-            APATH_ROOT . '/htaccess.bak'
-        );
+		// Let's build the stack of possible files
+		$files = array(
+			APATH_ROOT . '/.htaccess',
+			APATH_ROOT . '/htaccess.bak',
+		);
 
-        // Do I want to give more importance to .bak file first?
-        if($this->input->getInt('bak_first', 0))
-        {
-            rsort($files);
-        }
+		// Do I want to give more importance to .bak file first?
+		if ($this->input->getInt('bak_first', 0))
+		{
+			rsort($files);
+		}
 
-        $fileName = false;
+		$fileName = false;
 
-        foreach($files as $file)
-        {
-            // Did I found what I'm looking for?
-            if(file_exists($file))
-            {
-                $fileName = $file;
+		foreach ($files as $file)
+		{
+			// Did I find what I'm looking for?
+			if (file_exists($file))
+			{
+				$fileName = $file;
 
-                break;
-            }
-        }
+				break;
+			}
+		}
 
-        // No file? Let's stop here
-        if(!$fileName)
-        {
-            return true;
-        }
+		// No file? Let's stop here
+		if (!$fileName)
+		{
+			return true;
+		}
 
 		// Get the site's URL
 		/** @var AngieModelWordpressConfiguration $config */
 		$config  = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 		$new_url = $config->get('siteurl');
 		$homeurl = $config->get('homeurl');
-		$newURI = new AUri($new_url);
-		$path = $newURI->getPath();
+		$newURI  = new AUri($new_url);
+		$path    = $newURI->getPath();
 
 		// Load the .htaccess in memory
 		$contents = @file_get_contents($fileName);
@@ -59,10 +59,19 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 			return false;
 		}
 
-		// Explode its lines
-		$lines = explode("\n", $contents);
-		$contents = '';
+		/**
+		 * If the BEGIN WordPress / END WordPress is not there you get NO replacements. That's not right!
+		 */
 		$inSection = null;
+
+		if (strpos($contents, '# BEGIN WordPress') === false)
+		{
+			$inSection = true;
+		}
+
+		// Explode its lines
+		$lines    = explode("\n", $contents);
+		$contents = '';
 
 		foreach ($lines as $line)
 		{
@@ -87,7 +96,7 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 				elseif (strpos($line, 'RewriteBase ') === 0)
 				{
 					$pathTrimmed = trim($path, '/');
-					$line = "RewriteBase /$pathTrimmed/";
+					$line        = "RewriteBase /$pathTrimmed/";
 
 					// If the site is hosted on the domain's root
 					if (empty($pathTrimmed))
@@ -100,14 +109,14 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 				 * have a RewriteBase line the location of index.php is always /index.php.
 				 */
 				/**
-				elseif (strpos($line, 'RewriteRule .') === 0)
-				{
-					$trimmedPath = '/' . trim($path, '/');
-					$trimmedPath .= (substr($trimmedPath, -1) == '/') ? '' : '/';
-
-					$line = 'RewriteRule . ' . $trimmedPath . '/index.php [L]';
-				}
-				/**/
+				 * elseif (strpos($line, 'RewriteRule .') === 0)
+				 * {
+				 * $trimmedPath = '/' . trim($path, '/');
+				 * $trimmedPath .= (substr($trimmedPath, -1) == '/') ? '' : '/';
+				 *
+				 * $line = 'RewriteRule . ' . $trimmedPath . '/index.php [L]';
+				 * }
+				 * /**/
 			}
 
 			// Add the line
@@ -121,7 +130,7 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 		// If the homeurl and siteurl don't match, copy the .htaccess file and index.php in the correct directory
 		if ($new_url != $homeurl)
 		{
-			$homeUri = new AUri($homeurl);
+			$homeUri  = new AUri($homeurl);
 			$homePath = $homeUri->getPath();
 
 			if (strpos($path, $homePath) !== 0)
@@ -131,13 +140,13 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 			}
 
 			// $homePath is WITHOUT /wordpress_dir (/foobar); $path is the one WITH /wordpress_dir (/foobar/wordpress_dir)
-			$homePath = ltrim($homePath, '/\\');
-			$path = ltrim($path, '/\\');
+			$homePath  = ltrim($homePath, '/\\');
+			$path      = ltrim($path, '/\\');
 			$homeParts = explode('/', $homePath);
 			$siteParts = explode('/', $path);
 
 			$numHomeParts = count($homeParts);
-			$siteParts = array_slice($siteParts, $numHomeParts);
+			$siteParts    = array_slice($siteParts, $numHomeParts);
 
 			// Relative path from HOME to SITE (WP) root
 			$relPath = implode('/', $siteParts);
@@ -161,7 +170,7 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 			}
 
 			// Edit the index.php file
-			$fileName = $targetPath . '/index.php';
+			$fileName     = $targetPath . '/index.php';
 			$fileContents = @file($fileName);
 
 			if (empty($fileContents))
