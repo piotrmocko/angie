@@ -902,26 +902,11 @@ class AngieModelWordpressReplacedata extends AModel
 		$mainBlogId    = $config->get('blog_id_current_site', 1);
 		$useSubdomains = $config->get('subdomain_install', 0);
 
-		// If we use subdomains and we are restoring to a different path we MUST convert subdomains to subdirectories
-		$convertSubdomainsToSubdirs = $replacePaths && $useSubdomains;
-
-		if (!$convertSubdomainsToSubdirs && $useSubdomains && ($newDomain == 'localhost'))
-		{
-			/**
-			 * Special case: localhost
-			 *
-			 * Localhost DOES NOT support subdomains. Therefore the subdomain multisite installation MUST be converted
-			 * to a subdirectory installation.
-			 *
-			 * Why is this special case needed? The previous line will only be triggered if we are restoring to a
-			 * different path. However, when you are restoring to localhost you ARE restoring to the root of the site,
-			 * i.e. the same path as a live multisite subfolder installation of WordPress. This would mean that ANGIE
-			 * would try to restore as a subdomain installation which would fail on localhost.
-			 */
-			$convertSubdomainsToSubdirs = true;
-		}
-
-		$config->set('convertSubdomains', $convertSubdomainsToSubdirs ? 1 : 0);
+		/**
+		 * If we use subdomains and we are restoring to a different path OR we are restoring to localhost THEN
+		 * we must convert subdomains to subdirectories.
+		 */
+		$convertSubdomainsToSubdirs = $this->mustConvertSudomainsToSubdirs($config, $replacePaths, $newDomain);
 
 		// Do I have to replace the domain?
 		if ($oldDomain != $newDomain)
@@ -1084,18 +1069,18 @@ class AngieModelWordpressReplacedata extends AModel
 
 		/** @var AngieModelWordpressConfiguration $config */
 		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
-		$convertSubdomainsToSubdirs = $config->get('convertSubdomains', 0);
 		$new_url                    = $config->get('homeurl');
 		$newUri                     = new AUri($new_url);
 		$newDomain                  = $newUri->getHost();
 		$newPath                    = $newUri->getPath();
 		$old_url                    = $config->get('oldurl');
 		$oldUri                     = new AUri($old_url);
-		$oldDomain                  = $config->get('domain_current_site', $oldUri->getHost());
-		$oldPath                    = $config->get('path_current_site', $oldUri->getPath());
+		$oldDomain                  = $oldUri->getHost();
+		$oldPath                    = $oldUri->getPath();
 		$useSubdomains              = $config->get('subdomain_install', 0);
 		$changedDomain              = $newUri->getHost() != $oldDomain;
 		$changedPath                = $oldPath != $newPath;
+		$convertSubdomainsToSubdirs = $this->mustConvertSudomainsToSubdirs($config, $changedPath, $newDomain);
 
 		$db = $this->getDbo();
 
@@ -1188,5 +1173,31 @@ class AngieModelWordpressReplacedata extends AModel
 				// If we failed to save the record just skip over to the next one.
 			}
 		}
+	}
+
+	private function mustConvertSudomainsToSubdirs(AngieModelWordpressConfiguration $config, $replacePaths, $newDomain)
+	{
+		$useSubdomains = $config->get('subdomain_install', 0);
+
+		// If we use subdomains and we are restoring to a different path we MUST convert subdomains to subdirectories
+		$convertSubdomainsToSubdirs = $replacePaths && $useSubdomains;
+
+		if (!$convertSubdomainsToSubdirs && $useSubdomains && ($newDomain == 'localhost'))
+		{
+			/**
+			 * Special case: localhost
+			 *
+			 * Localhost DOES NOT support subdomains. Therefore the subdomain multisite installation MUST be converted
+			 * to a subdirectory installation.
+			 *
+			 * Why is this special case needed? The previous line will only be triggered if we are restoring to a
+			 * different path. However, when you are restoring to localhost you ARE restoring to the root of the site,
+			 * i.e. the same path as a live multisite subfolder installation of WordPress. This would mean that ANGIE
+			 * would try to restore as a subdomain installation which would fail on localhost.
+			 */
+			$convertSubdomainsToSubdirs = true;
+		}
+
+		return $convertSubdomainsToSubdirs;
 	}
 }
