@@ -361,8 +361,7 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 							 * - we are NOT converting to a subdirectory format
 							 */
 							$isSubdomainInstall = $this->get('subdomain_install', 0);
-							$convertSubdirs     = $this->get('convertSubdirs', 0);
-							$line               = "define('" . $key . "', " . (($isSubdomainInstall && !$convertSubdirs) ? 'true' : 'false') . ");";
+							$line               = "define('" . $key . "', " . ($isSubdomainInstall ? 'true' : 'false') . ");";
 							break;
 
 						// I think users shouldn't change the WPLANG define, since they will have

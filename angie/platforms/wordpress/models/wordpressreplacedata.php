@@ -1177,8 +1177,20 @@ class AngieModelWordpressReplacedata extends AModel
 				// If we failed to save the record just skip over to the next one.
 			}
 		}
+
+		// Finally, update the wp-config.php file
+		$this->updateWPConfigFile($config);
 	}
 
+	/**
+	 * Do I have to convert the subdomain installation to a subdirectory installation?
+	 *
+	 * @param AngieModelWordpressConfiguration $config
+	 * @param                                  $replacePaths
+	 * @param                                  $newDomain
+	 *
+	 * @return  bool
+	 */
 	private function mustConvertSudomainsToSubdirs(AngieModelWordpressConfiguration $config, $replacePaths, $newDomain)
 	{
 		$useSubdomains = $config->get('subdomain_install', 0);
@@ -1203,5 +1215,53 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		return $convertSubdomainsToSubdirs;
+	}
+
+	/**
+	 * Update the wp-config.php file. Required for multisite installations. I can't add this to the
+	 * AngieModelWordpressSetup model
+	 *
+	 * @return  bool
+	 */
+	public function updateWPConfigFile(AngieModelWordpressConfiguration $config)
+	{
+		// Update the base directory, if present
+		$base = $config->get('base', null);
+
+		if (!is_null($base))
+		{
+			$base = '/' . trim($config->getNewBasePath(), '/');
+			$config->set('base', $base);
+		}
+
+		// If I have to convert subdomains to subdirs then I need to update SUBDOMAIN_INSTALL as well
+		$old_url = $config->get('oldurl');
+		$new_url = $config->get('homeurl');
+
+		$oldUri = new AUri($old_url);
+		$newUri = new AUri($new_url);
+
+		$newDomain = $newUri->getHost();
+
+		$newPath = $newUri->getPath();
+		$newPath = empty($newPath) ? '/' : $newPath;
+		$oldPath = $config->get('path_current_site', $oldUri->getPath());
+
+		$replacePaths   = $oldPath != $newPath;
+
+		$mustConvertSubdomains = $this->mustConvertSudomainsToSubdirs($config, $replacePaths, $newDomain);
+
+		if ($mustConvertSubdomains)
+		{
+			$config->set('subdomain_install', 0);
+		}
+
+		// Get the wp-config.php file and try to save it
+		if (!$config->writeConfig(APATH_SITE . '/wp-config.php'))
+		{
+			return false;
+		}
+
+		return true;
 	}
 }

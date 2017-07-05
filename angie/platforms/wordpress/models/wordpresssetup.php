@@ -184,13 +184,14 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 		$this->configModel->set('nonce_salt', substr(base64_encode($random->generate(64)), 0, 64));
 
 		// Update the base directory, if present
-		$base = $this->configModel->getState('base', null);
+		$base = $this->configModel->get('base', null);
 
 		if (!is_null($base))
 		{
 			$this->configModel->set('base', $this->configModel->getNewBasePath());
 		}
 
+		// Save the configuration to the session
 		$this->configModel->saveToSession();
 
 		// Sanity check
