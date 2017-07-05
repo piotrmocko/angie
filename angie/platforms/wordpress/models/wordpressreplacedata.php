@@ -445,6 +445,12 @@ class AngieModelWordpressReplacedata extends AModel
 			}
 		}
 
+		// The #__blogs table used by multisite installations requires a bit of post-processing.
+		if ($this->isMultisite())
+		{
+			$this->updateMultisiteTables();
+		}
+
 		// Finally, return and let the replacement engine run
 		return array('msg' => AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'), 'more' => true);
 	}
@@ -631,12 +637,6 @@ class AngieModelWordpressReplacedata extends AModel
 		// Am I done with DB replacement? If so let's update some files
 		if (!$more)
 		{
-			// The #__blogs table used by multisite installations requires a bit of post-processing.
-			if ($this->isMultisite())
-			{
-				$this->updateMultisiteTables();
-			}
-
 			$this->updateFiles();
 		}
 
