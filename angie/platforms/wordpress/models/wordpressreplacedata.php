@@ -123,6 +123,19 @@ class AngieModelWordpressReplacedata extends AModel
 			$replacements = $this->getDefaultReplacements();
 		}
 
+		/**
+		 * I must not replace / with something else, e.g. /foobar. This would cause URLs such as
+		 * http://www.example.com/something to be replaced with a monstrosity like
+		 * http:/foobar/foobar/www.example.com/foobarsomething which breaks the site :s
+		 *
+		 * The same goes for the .htaccess file, where /foobar would be added in random places,
+		 * breaking the site.
+		 */
+		if (isset($replacements['/']))
+		{
+			unset($replacements['/']);
+		}
+
 		$session->set('dataReplacements', $replacements);
 
 		return $replacements;
@@ -474,18 +487,6 @@ class AngieModelWordpressReplacedata extends AModel
 
 		while ($this->timer->getTimeLeft() > 0)
 		{
-			/**
-			 * I must not replace / with something else, e.g. /foobar. This would cause URLs such as
-			 * http://www.example.com/something to be replaced with a monstrosity like
-			 * http:/foobar/foobar/www.example.com/foobarsomething which breaks the site :s
-			 */
-			$replacements = $this->replacements;
-
-			if (isset($replacements['/']))
-			{
-				unset($replacements['/']);
-			}
-
 			// Are we done with all tables?
 			if (is_null($this->currentTable) && empty($this->tables))
 			{
@@ -586,8 +587,8 @@ class AngieModelWordpressReplacedata extends AModel
 					foreach ($fields as $field)
 					{
 						$fieldValue   = $row[$field];
-						$from         = array_keys($replacements);
-						$to           = array_values($replacements);
+						$from         = array_keys($this->replacements);
+						$to           = array_values($this->replacements);
 
 						if ($serialisedHelper->isSerialised($fieldValue))
 						{
