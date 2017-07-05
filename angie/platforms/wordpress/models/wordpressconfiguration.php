@@ -23,10 +23,11 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 			$this->configvars = $this->getDefaultConfig();
 			$realConfig       = array();
 
-            if (empty($this->configvars['blogname']))
+            if (!$this->configvars['readConfigFromDisk'])
 			{
 				$realConfig = $this->loadFromFile(APATH_CONFIGURATION . '/wp-config.php');
                 $this->getOptionsFromDatabase($realConfig);
+				$this->configvars['readConfigFromDisk'] = true;
 			}
 
 			$this->configvars = array_merge($this->configvars, $realConfig);
@@ -56,6 +57,9 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 
 		// Other
 		$config['blogname'] = '';
+
+		// Status flag
+		$config['readConfigFromDisk'] = false;
 
 		return $config;
 	}
@@ -193,6 +197,17 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 				$config['olddbprefix'] = $prefixData;
 				$config['dbprefix']    = $prefixData;
 			}
+			// Base directory = $base
+			elseif (strpos($line, '$base') === 0)
+			{
+				$parts      = explode('=', $line, 2);
+				$prefixData = trim($parts[1]);
+				$prefixData = rtrim($prefixData, ';');
+				$prefixData = trim($prefixData, "'\"");
+
+				$config['base'] = $prefixData;
+			}
+
 		}
 
 		return $config;
@@ -343,6 +358,17 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 							$line      = "define('" . $key . "', '" . $this->get('siteurl') . "');";
 							break;
 
+						case 'SUBDOMAIN_INSTALL':
+							/**
+							 * We have a subdomain installation if
+							 * - the existing site was a subdomain multisite installation; AND
+							 * - we are NOT converting to a subdirectory format
+							 */
+							$isSubdomainInstall = $this->get('subdomain_install', 0);
+							$convertSubdirs     = $this->get('convertSubdirs', 0);
+							$line               = "define('" . $key . "', " . (($isSubdomainInstall && !$convertSubdirs) ? 'true' : 'false') . ");";
+							break;
+
 						// I think users shouldn't change the WPLANG define, since they will have
 						// to add several files, it's not automatic
 						default:
@@ -354,6 +380,18 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 			elseif (strpos($line, '$table_prefix') === 0)
 			{
 				$line = '$table_prefix = ' . "'" . $this->get('dbprefix') . "';";
+			}
+			elseif (strpos($line, '$base') === 0)
+			{
+				$line = '';
+				$base = $this->get('base', '');
+
+				if (!empty($base))
+				{
+					$base = str_replace('\'', '\\\'', $base);
+					$line = '$base= ' . "'" . $base . "';";
+				}
+
 			}
 
 			$new_config .= $line . "\n";

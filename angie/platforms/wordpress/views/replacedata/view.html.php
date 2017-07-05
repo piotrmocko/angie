@@ -14,10 +14,12 @@ class AngieViewReplacedata extends AView
 	{
 		$this->container->application->getDocument()->addScript('platform/js/replacedata.js');
 
+		$force = $this->input->getBool('force', false);
+
 		/** @var AngieModelWordpressReplacedata $model */
 		$model = $this->getModel();
 
-		$this->replacements = $model->getReplacements();
+		$this->replacements = $model->getReplacements(false, $force);
 		$this->otherTables = $model->getNonCoreTables();
 
 		return true;

@@ -79,11 +79,12 @@ class AngieModelWordpressReplacedata extends AModel
 	/**
 	 * Get the data replacement values
 	 *
-	 * @param bool $fromRequest Should I override session data with those from the request?
+	 * @param   bool  $fromRequest  Should I override session data with those from the request?
+	 * @param   bool  $force        True to forcibly load the default replacements.
 	 *
 	 * @return array
 	 */
-	public function getReplacements($fromRequest = false)
+	public function getReplacements($fromRequest = false, $force = false)
 	{
 		$session      = $this->container->session;
 		$replacements = $session->get('dataReplacements', array());
@@ -117,7 +118,7 @@ class AngieModelWordpressReplacedata extends AModel
 			}
 		}
 
-		if (empty($replacements))
+		if (empty($replacements) || $force)
 		{
 			$replacements = $this->getDefaultReplacements();
 		}
@@ -319,10 +320,18 @@ class AngieModelWordpressReplacedata extends AModel
 				'method' => 'simple', 'fields' => array('domain', 'path')
 			);
 
+			/**
+			 * IMPORTANT! We must NOT change #__blogs here. It needs special handling in updateMultisiteTables().
+			 *
+			 * The special handling is required because we may have to convert from a subdomain to a subdirectory
+			 * installation.
+			 */
+			/**
 			$this->tables[] = array(
 				'table'  => '#__blogs',
 				'method' => 'simple', 'fields' => array('domain', 'path')
 			);
+			/**/
 
 			$this->tables[] = array(
 				'table'  => '#__sitemeta',
@@ -843,7 +852,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$replacements = array();
 		$db           = $this->getDbo();
 
-		if ( !$this->isMultisite())
+		if (!$this->isMultisite())
 		{
 			return $replacements;
 		}
@@ -862,25 +871,48 @@ class AngieModelWordpressReplacedata extends AModel
 		$oldUri = new AUri($old_url);
 		$newUri = new AUri($new_url);
 
-		$newDomain = $this->removeSubdomain($newUri->getHost());
-		$oldDomain = $config->get('domain_current_site', $oldUri->getHost());
+		$newDomain = $newUri->getHost();
+		$oldDomain = $oldUri->getHost();
 
 		$newPath = $newUri->getPath();
+		$newPath = empty($newPath) ? '/' : $newPath;
 		$oldPath = $config->get('path_current_site', $oldUri->getPath());
 
-		// If the old and new domain are subdomains of the same root domain (e.g. abc.example.com and xyz.example.com),
-		// or a subdomain and a root domain (e.g. example.com and abc.example.com) we MUST NOT do domain replacement
-		$replaceSubdomains = $this->removeSubdomain($newDomain) != $this->removeSubdomain($oldDomain);
-
-		// If the old and new paths are the same we MUST NOT do path replacement
-		$replacePaths = $oldPath != $newPath;
+		$replaceDomains = $newDomain != $oldDomain;
+		$replacePaths   = $oldPath != $newPath;
 
 		// Get the multisites information
 		$multiSites = $this->getMultisiteMap($db);
 
 		// Get other information
-		$mainBlogId = $config->get('blog_id_current_site', 1);
+		$mainBlogId    = $config->get('blog_id_current_site', 1);
 		$useSubdomains = $config->get('subdomain_install', 0);
+
+		// If we use subdomains and we are restoring to a different path we MUST convert subdomains to subdirectories
+		$convertSubdomainsToSubdirs = $replacePaths && $useSubdomains;
+
+		if (!$convertSubdomainsToSubdirs && $useSubdomains && ($newDomain == 'localhost'))
+		{
+			/**
+			 * Special case: localhost
+			 *
+			 * Localhost DOES NOT support subdomains. Therefore the subdomain multisite installation MUST be converted
+			 * to a subdirectory installation.
+			 *
+			 * Why is this special case needed? The previous line will only be triggered if we are restoring to a
+			 * different path. However, when you are restoring to localhost you ARE restoring to the root of the site,
+			 * i.e. the same path as a live multisite subfolder installation of WordPress. This would mean that ANGIE
+			 * would try to restore as a subdomain installation which would fail on localhost.
+			 */
+			$convertSubdomainsToSubdirs = true;
+		}
+
+		if ($convertSubdomainsToSubdirs)
+		{
+			$config->set('convertSubdirs', 1);
+		}
+
+		$config->set('convertSubdomains', $convertSubdomainsToSubdirs ? 1 : 0);
 
 		// Do I have to replace the domain?
 		if ($oldDomain != $newDomain)
@@ -889,17 +921,15 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		// Maybe I have to do... nothing?
-		if ($useSubdomains && !$replaceSubdomains)
+		if ($useSubdomains && !$replaceDomains && !$replacePaths)
 		{
 			return $replacements;
 		}
 
-		if (!$useSubdomains)
+		// Subdirectories installation and the path hasn't changed
+		if (!$useSubdomains && !$replacePaths)
 		{
-			if (!$replacePaths)
-			{
-				return $replacements;
-			}
+			return $replacements;
 		}
 
 		// Loop for each multisite
@@ -912,24 +942,32 @@ class AngieModelWordpressReplacedata extends AModel
 			}
 
 			// Multisites using subdomains?
-			if ($useSubdomains)
+			if ($useSubdomains && !$convertSubdomainsToSubdirs)
 			{
+				$blogDomain = $info['domain'];
+
 				// Extract the subdomain
-				$subdomain = substr($info['domain'], 0, -strlen($oldDomain));
+				$subdomain  = substr($blogDomain, 0, -strlen($oldDomain));
 
 				// Add a replacement for this domain
-				$replacements[$info['domain']] = $subdomain . $newDomain;
+				$replacements[$blogDomain] = $subdomain . $newDomain;
 
 				continue;
+			}
+
+			if ($convertSubdomainsToSubdirs)
+			{
+				// Convert old subdomain (blog1.example.com) to new full domain (www.example.net)
+				$replacements[$info['domain']] = $newUri->getHost();
 			}
 
 			// Multisites using subdirectories. Let's check if I have to extract the old path.
 			$path = (strpos($info['path'], $oldPath) === 0) ? substr($info['path'], strlen($oldPath)) : $info['path'];
 
 			// Construct the new path and add it to the list of replacements
-			$path = trim($path, '/');
-			$newMSPath = $newPath . '/' . $path;
-			$newMSPath = trim($newMSPath, '/');
+			$path                        = trim($path, '/');
+			$newMSPath                   = $newPath . '/' . $path;
+			$newMSPath                   = trim($newMSPath, '/');
 			$replacements[$info['path']] = '/' . $newMSPath;
 		}
 
@@ -1031,16 +1069,24 @@ class AngieModelWordpressReplacedata extends AModel
 	/**
 	 * Post-processing for the #__blogs table of multisite installations
 	 */
-	private function updateMultisiteTables()
+	public function updateMultisiteTables()
 	{
 		// Get the new base domain and base path
 
 		/** @var AngieModelWordpressConfiguration $config */
-		$config    = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
-		$new_url   = $config->get('homeurl');
-		$newUri    = new AUri($new_url);
-		$newDomain = $this->removeSubdomain($newUri->getHost());
-		$newPath   = $newUri->getPath();
+		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+		$convertSubdomainsToSubdirs = $config->get('convertSubdirs', 0);
+		$new_url                    = $config->get('homeurl');
+		$newUri                     = new AUri($new_url);
+		$newDomain                  = $newUri->getHost();
+		$newPath                    = $newUri->getPath();
+		$old_url                    = $config->get('oldurl');
+		$oldUri                     = new AUri($old_url);
+		$oldDomain                  = $config->get('domain_current_site', $oldUri->getHost());
+		$oldPath                    = $config->get('path_current_site', $oldUri->getPath());
+		$useSubdomains              = $config->get('subdomain_install', 0);
+		$changedDomain              = $newUri->getHost() != $oldDomain;
+		$changedPath                = $oldPath != $newPath;
 
 		$db = $this->getDbo();
 
@@ -1063,6 +1109,61 @@ class AngieModelWordpressReplacedata extends AModel
 			{
 				// Default site: path must match the site's installation path (e.g. /foobar/)
 				$blog->path = '/' . trim($newPath, '/') . '/';
+			}
+
+			/**
+			 * Converting blog1.example.com to www.example.net/myfolder/blog1 (multisite subdomain installation in the
+			 * site's root TO multisite subfolder installation in a subdirectory)
+			 */
+			if ($convertSubdomainsToSubdirs)
+			{
+				// Extract the subdomain
+				$subdomain = substr($blog->domain, 0, -strlen($oldDomain));
+
+				// Step 1. domain: Convert old subdomain (blog1.example.com) to new full domain (www.example.net)
+				$blog->domain = $newUri->getHost();
+
+				// Step 2. path: Replace old path (/) with new path + slug (/mysite/blog1).
+				$blogPath   = trim($newPath, '/') . '/' . trim($subdomain, '/') . '/';
+				$blog->path = '/' . ltrim($blogPath, '/') . '/';
+
+				if ($blog->path == '//')
+				{
+					$blog->path = '/';
+				}
+			}
+			/**
+			 * Converting blog1.example.com to blog1.example.net (keep multisite subdomain installation, change the
+			 * domain name)
+			 */
+			elseif ($useSubdomains && $changedDomain)
+			{
+				// Change domain (extract subdomain a.k.a. alias, append $newDomain to it)
+				$subdomain    = substr($blog->domain, 0, -strlen($oldDomain));
+				$blog->domain = $subdomain . $newDomain;
+			}
+			/**
+			 * Convert subdomain installations when EITHER the domain OR the path have changed. E.g.:
+			 *  www.example.com/blog1   to  www.example.net/blog1
+			 * OR
+			 *  www.example.com/foo/blog1   to  www.example.com/bar/blog1
+			 * OR
+			 *  www.example.com/foo/blog1   to  www.example.net/bar/blog1
+			 */
+			elseif ($changedDomain || $changedPath)
+			{
+				if ($changedDomain)
+				{
+					// Update the domain
+					$blog->domain = $newUri->getHost();
+				}
+
+				if ($changedPath)
+				{
+					// Change $blog->path (remove old path, keep alias, prefix it with new path)
+					$path       = (strpos($blog->path, $oldPath) === 0) ? substr($blog->path, strlen($oldPath)) : $blog->path;
+					$blog->path = '/' . trim($newPath . '/' . ltrim($path, '/'), '/');
+				}
 			}
 
 			// For every record, make sure the path column ends in forward slash (required by WP)
