@@ -13,7 +13,7 @@ abstract class AngieModelBaseSetup extends AModel
     /**
      * Cached copy of the configuration model
      *
-     * @var  AngieModelBaseConfiguration
+     * @var  AngieModelWordpressConfiguration
      */
     protected $configModel = null;
 

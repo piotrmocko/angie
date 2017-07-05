@@ -342,11 +342,7 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 
 						// Multisite variable - Main site's path
 						case 'PATH_CURRENT_SITE':
-							$new_url = $this->get('homeurl');
-							$newUri  = new AUri($new_url);
-							$newPath = $newUri->getPath();
-							$newPath = trim($newPath, '/');
-							$newPath = empty($newPath) ? '/' : '/' . $newPath . '/';
+							$newPath = $this->getNewBasePath();
 							$line    = "define('" . $key . "', '" . $newPath . "');";
 							break;
 
@@ -475,5 +471,21 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 		catch (Exception $exc)
 		{
 		}
+	}
+
+	/**
+	 * Get the path portion of homeurl, WITH a leading slash, WITHOUT a trailing slash
+	 *
+	 * @return  string
+	 */
+	public function getNewBasePath()
+	{
+		$new_url = $this->get('homeurl');
+		$newUri  = new AUri($new_url);
+		$newPath = $newUri->getPath();
+		$newPath = trim($newPath, '/');
+		$newPath = empty($newPath) ? '/' : '/' . $newPath . '/';
+
+		return $newPath;
 	}
 }
