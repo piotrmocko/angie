@@ -1032,9 +1032,12 @@ class AngieModelWordpressReplacedata extends AModel
 	private function updateFiles()
 	{
 		$files = array(
-			// I'll try to apply the changes to those files and their "backup" counterpart
+			// Do not replace anything in .htaccess; we'll do that in the next (finalize) step of the restoration.
+			/**
 			APATH_SITE.'/.htaccess',
 			APATH_SITE.'/htaccess.bak',
+			/**/
+			// I'll try to apply the changes to those files and their "backup" counterpart
 			APATH_SITE.'/.user.ini.bak',
 			APATH_SITE.'/.user.ini',
 			APATH_SITE.'/php.ini',
