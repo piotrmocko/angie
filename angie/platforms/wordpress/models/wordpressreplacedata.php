@@ -773,7 +773,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 *
 	 * @return  bool  True if this is a multisite installation
 	 */
-	protected function isMultisite()
+	public function isMultisite()
 	{
 		/** @var AngieModelWordpressConfiguration $config */
 		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
@@ -950,10 +950,26 @@ class AngieModelWordpressReplacedata extends AModel
 				continue;
 			}
 
+			// Convert subdomain install to subdirectory install
 			if ($convertSubdomainsToSubdirs)
 			{
-				// Convert old subdomain (blog1.example.com) to new full domain (www.example.net)
-				$replacements[$info['domain']] = $newUri->getHost();
+				$blogDomain = $info['domain'];
+
+				/**
+				 * No, you don't need this. You need to convert the old subdomain to the new domain PLUS path **AND**
+				 * different RewriteRules in .htaccess to magically transform invalid paths to valid paths. Bleh.
+				 */
+				// Convert old subdomain (blog1.example.com) to new full domain (example.net)
+				// $replacements[$blogDomain] = $newUri->getHost();
+
+				// Convert links in post GUID, e.g. //blog1.example.com/ TO //example.net/mydir/blog1/
+				$subdomain  = substr($blogDomain, 0, -strlen($oldDomain) - 1);
+				$from = '//' . $blogDomain;
+				$to = '//' . $newUri->getHost() . $newUri->getPath() . '/' . $subdomain;
+				$to = rtrim($to, '/');
+				$replacements[$from] = $to;
+
+				continue;
 			}
 
 			// Multisites using subdirectories. Let's check if I have to extract the old path.

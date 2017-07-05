@@ -12,6 +12,18 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 {
 	public function updatehtaccess()
 	{
+		/** @var AngieModelWordpressReplacedata $replaceModel */
+		$replaceModel = AModel::getAnInstance('Replacedata', 'AngieModel', array(), $this->container);
+		/** @var AngieModelWordpressConfiguration $config */
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+		$isMultisite = $replaceModel->isMultisite();
+		$new_url = $config->get('homeurl');
+		$newUri = new AUri($new_url);
+		$newPath = $newUri->getPath();
+		$newPath = trim($newPath, '/');
+
+		$multisiteInSubdirectory = $isMultisite && !empty($newPath);
+
 		// Let's build the stack of possible files
 		$files = array(
 			APATH_ROOT . '/.htaccess',
@@ -96,7 +108,7 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 				elseif (strpos($line, 'RewriteBase ') === 0)
 				{
 					$pathTrimmed = trim($path, '/');
-					$line        = "RewriteBase /$pathTrimmed/";
+					$line        = "RewriteBase /$pathTrimmed";
 
 					// If the site is hosted on the domain's root
 					if (empty($pathTrimmed))
@@ -104,6 +116,22 @@ class AngieModelWordpressFinalise extends AngieModelBaseFinalise
 						$line = "RewriteBase /";
 					}
 				}
+				// Multisite in subdirectory: we may have to convert .htaccess rules (1/3)
+				elseif ((strpos($line, 'RewriteRule ^wp-admin$ wp-admin/') === 0) && $multisiteInSubdirectory)
+				{
+					$line = str_replace('RewriteRule ^wp-admin$ wp-admin/', 'RewriteRule ^([_0-9a-zA-Z-]+/)?wp-admin$ $1wp-admin/', $line);
+				}
+				// Multisite in subdirectory: we may have to convert .htaccess rules (2/3)
+				elseif ((strpos($line, 'RewriteRule ^(wp-(content|admin|includes).*) $1') === 0) && $multisiteInSubdirectory)
+				{
+					$line = str_replace('RewriteRule ^(wp-(content|admin|includes).*) $1', 'RewriteRule ^([_0-9a-zA-Z-]+/)?(wp-(content|admin|includes).*) $2', $line);
+				}
+				// Multisite in subdirectory: we may have to convert .htaccess rules (3/3)
+				elseif ((strpos($line, 'RewriteRule ^(.*\.php)$ wp/$1') === 0) && $multisiteInSubdirectory)
+				{
+					$line = str_replace('RewriteRule ^(.*\.php)$ wp/$1', 'RewriteRule ^([_0-9a-zA-Z-]+/)?(.*\.php)$ $2', $line);
+				}
+
 				/**
 				 * This MUST not be done! The index.php is always in the same directory as the .htaccess file. Since we
 				 * have a RewriteBase line the location of index.php is always /index.php.
