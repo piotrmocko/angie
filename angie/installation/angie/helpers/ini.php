@@ -13,10 +13,6 @@
  * let's say, a password. In fact it will throw a warning and stop parsing the file. Same applies if you include
  * special characters without enclosing them in double quotes – despite that something like that is perfectly
  * allowed in INI files and even supported in php.ini itself.
- *
- * Basically, PHP's handling of INI is a massive pile of undocumented crap and WTF. So despite the native
- * functions being faster we will NOT use them as they are also completely broken in too many ways. And then you
- * wonder why PHP developers drink to oblivion in conferences... Sigh...
  */
 abstract class AngieHelperIni
 {

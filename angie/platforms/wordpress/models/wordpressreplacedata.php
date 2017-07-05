@@ -468,6 +468,18 @@ class AngieModelWordpressReplacedata extends AModel
 
 		while ($this->timer->getTimeLeft() > 0)
 		{
+			/**
+			 * I must not replace / with something else, e.g. /foobar. This would cause URLs such as
+			 * http://www.example.com/something to be replaced with a monstrosity like
+			 * http:/foobar/foobar/www.example.com/foobarsomething which breaks the site :s
+			 */
+			$replacements = $this->replacements;
+
+			if (isset($replacements['/']))
+			{
+				unset($replacements['/']);
+			}
+
 			// Are we done with all tables?
 			if (is_null($this->currentTable) && empty($this->tables))
 			{
@@ -545,6 +557,7 @@ class AngieModelWordpressReplacedata extends AModel
 
 			if ( !empty($data))
 			{
+				// Loop all rows
 				foreach ($data as $row)
 				{
 					// Make sure we have time
@@ -566,8 +579,9 @@ class AngieModelWordpressReplacedata extends AModel
 
 					foreach ($fields as $field)
 					{
-						$fieldValue = $row[$field];
-						$from       = array_keys($this->replacements);
+						$fieldValue   = $row[$field];
+						$from         = array_keys($replacements);
+						$to           = array_values($replacements);
 
 						if ($serialisedHelper->isSerialised($fieldValue))
 						{
@@ -576,7 +590,7 @@ class AngieModelWordpressReplacedata extends AModel
 							{
 								$decoded = $serialisedHelper->decode($fieldValue);
 
-								$serialisedHelper->replaceTextInDecoded($decoded, $from, $this->replacements);
+								$serialisedHelper->replaceTextInDecoded($decoded, $from, $to);
 
 								$fieldValue = $serialisedHelper->encode($decoded);
 							}
@@ -588,7 +602,7 @@ class AngieModelWordpressReplacedata extends AModel
 						else
 						{
 							// Replace text data
-							$fieldValue = str_replace($from, $this->replacements, $fieldValue);
+							$fieldValue = str_replace($from, $to, $fieldValue);
 						}
 
 						$row[$field] = $fieldValue;
@@ -907,11 +921,6 @@ class AngieModelWordpressReplacedata extends AModel
 			$convertSubdomainsToSubdirs = true;
 		}
 
-		if ($convertSubdomainsToSubdirs)
-		{
-			$config->set('convertSubdirs', 1);
-		}
-
 		$config->set('convertSubdomains', $convertSubdomainsToSubdirs ? 1 : 0);
 
 		// Do I have to replace the domain?
@@ -1075,7 +1084,7 @@ class AngieModelWordpressReplacedata extends AModel
 
 		/** @var AngieModelWordpressConfiguration $config */
 		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
-		$convertSubdomainsToSubdirs = $config->get('convertSubdirs', 0);
+		$convertSubdomainsToSubdirs = $config->get('convertSubdomains', 0);
 		$new_url                    = $config->get('homeurl');
 		$newUri                     = new AUri($new_url);
 		$newDomain                  = $newUri->getHost();
@@ -1117,8 +1126,8 @@ class AngieModelWordpressReplacedata extends AModel
 			 */
 			if ($convertSubdomainsToSubdirs)
 			{
-				// Extract the subdomain
-				$subdomain = substr($blog->domain, 0, -strlen($oldDomain));
+				// Extract the subdomain WITHOUT the trailing dot
+				$subdomain = substr($blog->domain, 0, -strlen($oldDomain)-1);
 
 				// Step 1. domain: Convert old subdomain (blog1.example.com) to new full domain (www.example.net)
 				$blog->domain = $newUri->getHost();

@@ -83,4 +83,29 @@ class AngieControllerWordpressReplacedata extends AController
 
         echo json_encode($result);
     }
+
+	/**
+	 * Force update multisite tables
+	 *
+	 * @return void
+	 */
+    public function testmst()
+    {
+	    /** @var AngieModelWordpressReplacedata $model */
+	    $model = $this->getThisModel();
+	    $model->loadEngineStatus();
+
+	    try
+	    {
+		    $result = $model->updateMultisiteTables();
+	    }
+	    catch(Exception $e)
+	    {
+		    $result = array('error' => $e->getMessage(), 'msg' => 'Error ' . $e->getCode() . ': ' . $e->getMessage(), 'more' => false);
+	    }
+
+	    $this->container->session->saveData();
+
+	    echo json_encode($result);
+    }
 }
