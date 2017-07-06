@@ -165,14 +165,14 @@ echo $this->loadAnyTemplate('steps/steps');
 
             <div class="alert alert-block alert-info" id="error-panel-troubleshooting">
                 <p>
-					<?php echo AText::sprintf('SETUP_REPLACE_TEXT_RTFMTOSOLVE', 'https://www.akeebabackup.com/documentation/troubleshooter/abbackup.html?utm_source=akeeba_backup&utm_campaign=backuperrorlink'); ?>
+					<?php echo AText::sprintf('SETUP_REPLACE_TEXT_RTFMTOSOLVE', 'https://www.akeebabackup.com/documentation/akeeba-solo/angie-wordpress-replace.html'); ?>
                 </p>
                 <p>
-                    <?php echo AText::sprintf('SETUP_REPLACE_TEXT_SOLVEISSUE_PRO', 'https://www.akeebabackup.com/support.html?utm_source=akeeba_backup&utm_campaign=backuperrorpro'); ?>
+                    <?php echo AText::sprintf('SETUP_REPLACE_TEXT_SOLVEISSUE_PRO', 'https://www.akeebabackup.com/support.html'); ?>
                 </p>
             </div>
 
-            <button class="btn btn-large btn-primary" onclick="window.location='https://www.akeebabackup.com/documentation/troubleshooter/abbackup.html?utm_source=akeeba_backup&utm_campaign=backuperrorbutton'; return false;">
+            <button class="btn btn-large btn-primary" onclick="window.location='https://www.akeebabackup.com/documentation/akeeba-solo/angie-wordpress-replace.html'; return false;">
                 <span class="icon-book icon-white"></span>
 				<?php echo AText::_('SETUP_REPLACE_TROUBLESHOOTINGDOCS'); ?>
             </button>
