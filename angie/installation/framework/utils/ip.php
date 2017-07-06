@@ -1,9 +1,9 @@
 <?php
 /**
- * @package angifw
+ * @package   angifw
  * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
- * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ * @author    Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
  *
  * Akeeba Next Generation Installer Framework
  */
@@ -30,16 +30,20 @@ class AUtilsIp
 	{
 		$ip = self::_real_getUserIP();
 
-		if( (strstr($ip, ',') !== false) || (strstr($ip, ' ') !== false) ) {
-			$ip = str_replace(' ', ',', $ip);
-			$ip = str_replace(',,', ',', $ip);
+		if ((strstr($ip, ',') !== false) || (strstr($ip, ' ') !== false))
+		{
+			$ip  = str_replace(' ', ',', $ip);
+			$ip  = str_replace(',,', ',', $ip);
 			$ips = explode(',', $ip);
-			$ip = '';
-			while(empty($ip) && !empty($ips)) {
+			$ip  = '';
+			while (empty($ip) && !empty($ips))
+			{
 				$ip = array_pop($ips);
 				$ip = trim($ip);
 			}
-		} else {
+		}
+		else
+		{
 			$ip = trim($ip);
 		}
 
@@ -54,14 +58,23 @@ class AUtilsIp
 	private static function _real_getUserIP()
 	{
 		// Normally the $_SERVER superglobal is set
-		if(isset($_SERVER)) {
+		if (isset($_SERVER))
+		{
 			// Do we have an x-forwarded-for HTTP header (e.g. NginX)?
-			if(array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
+			if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER))
+			{
 				return $_SERVER['HTTP_X_FORWARDED_FOR'];
 			}
 
+			// Are we using Sucuri firewall? They use a custom HTTP header
+			if (array_key_exists('HTTP_X_SUCURI_CLIENTIP', $_SERVER))
+			{
+				return $_SERVER['HTTP_X_SUCURI_CLIENTIP'];
+			}
+
 			// Do we have a client-ip header (e.g. non-transparent proxy)?
-			if(array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
+			if (array_key_exists('HTTP_CLIENT_IP', $_SERVER))
+			{
 				return $_SERVER['HTTP_CLIENT_IP'];
 			}
 
@@ -73,22 +86,32 @@ class AUtilsIp
 		// not set the $_SERVER superglobal
 
 		// If getenv() is disabled, you're screwed
-		if(!function_exists('getenv')) {
+		if (!function_exists('getenv'))
+		{
 			return '';
 		}
 
 		// Do we have an x-forwarded-for HTTP header?
-		if (getenv('HTTP_X_FORWARDED_FOR')) {
+		if (getenv('HTTP_X_FORWARDED_FOR'))
+		{
 			return getenv('HTTP_X_FORWARDED_FOR');
 		}
 
+		// Are we using Sucuri firewall? They use a custom HTTP header
+		if (getenv('HTTP_X_SUCURI_CLIENTIP'))
+		{
+			return getenv('HTTP_X_SUCURI_CLIENTIP');
+		}
+
 		// Do we have a client-ip header?
-		if (getenv('HTTP_CLIENT_IP')) {
+		if (getenv('HTTP_CLIENT_IP'))
+		{
 			return getenv('HTTP_CLIENT_IP');
 		}
 
 		// Normal, non-proxied server or server behind a transparent proxy
-		if (getenv('REMOTE_ADDR')) {
+		if (getenv('REMOTE_ADDR'))
+		{
 			return getenv('REMOTE_ADDR');
 		}
 
@@ -102,12 +125,19 @@ class AUtilsIp
 	public static function workaroundIPIssues()
 	{
 		$ip = self::getUserIP();
-		if($_SERVER['REMOTE_ADDR'] == $ip) return;
+		if ($_SERVER['REMOTE_ADDR'] == $ip)
+		{
+			return;
+		}
 
-		if(array_key_exists('REMOTE_ADDR', $_SERVER)) {
+		if (array_key_exists('REMOTE_ADDR', $_SERVER))
+		{
 			$_SERVER['ADMINTOOLS_REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
-		} elseif(function_exists('getenv')) {
-			if (getenv('REMOTE_ADDR')) {
+		}
+		elseif (function_exists('getenv'))
+		{
+			if (getenv('REMOTE_ADDR'))
+			{
 				$_SERVER['ADMINTOOLS_REMOTE_ADDR'] = getenv('REMOTE_ADDR');
 			}
 		}
