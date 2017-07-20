@@ -817,4 +817,9 @@ abstract class ADatabaseRestore
 		}
 		return @round($size/pow(1024,($i)),2).' '.$unit[$i];
 	}
+
+	public function getTimer()
+	{
+		return $this->timer;
+	}
 }

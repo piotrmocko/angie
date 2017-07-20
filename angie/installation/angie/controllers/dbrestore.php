@@ -87,6 +87,7 @@ class AngieControllerDbrestore extends AController
 		try
 		{
 			$restoreEngine = ADatabaseRestore::getInstance($key, $data, $this->container);
+			$restoreEngine->getTimer()->resetTime();
 			$result = $restoreEngine->stepRestoration();
 		}
 		catch (Exception $exc)
