@@ -18,7 +18,7 @@ class AngieControllerJoomlaMain extends AngieControllerBaseMain
 		// Load the default configuration and save it to the session
 		$data = $this->input->getData();
 
-        /** @var AngieModelBaseConfiguration $model */
+        /** @var AngieModelJoomlaConfiguration $model */
         $model = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
         $this->input->setData($data);
         $this->container->session->saveData();
