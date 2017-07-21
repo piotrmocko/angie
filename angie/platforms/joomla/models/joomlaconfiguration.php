@@ -16,13 +16,11 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 		parent::__construct($config, $container);
 
 		// Get the Joomla! version from the configuration or the session
+		$jVersion = $this->container->session->get('jversion', '2.5.0');
+
 		if (array_key_exists('jversion', $config))
 		{
 			$jVersion = $config['jversion'];
-		}
-		else
-		{
-			$jVersion = $this->container->session->get('jversion', '2.5.0');
 		}
 
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
@@ -31,17 +29,16 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 		if (empty($this->configvars))
 		{
 			// Get default configuration based on the Joomla! version
+			$v = '30';
+
 			if (version_compare($jVersion, '2.5.0', 'ge') && version_compare($jVersion, '3.0.0', 'lt'))
 			{
 				$v = '25';
 			}
-			else
-			{
-				$v = '30';
-			}
+
 			$className = 'J' . $v . 'Config';
 			$filename = APATH_INSTALLATION . '/platform/models/jconfig/j' . $v . '.php';
-			$this->configvars = $this->loadFromFile($filename, $className);
+			$this->configvars = $this->loadFromFile($filename, $className, true);
 
 			if (!empty($this->configvars))
 			{
@@ -53,13 +50,22 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 	/**
 	 * Loads the configuration information from a PHP file
 	 *
-	 * @param   string $file      The full path to the file
-	 * @param   string $className The name of the configuration class
-     *
+	 * @param   string  $file              The full path to the file
+	 * @param   string  $className         The name of the configuration class
+	 * @param   bool    $useDirectInclude  Should I include the .php file (if true) or should I use the Pythia-derived
+	 *                                     string parser method (if false, default). The latter is safer in case your
+	 *                                     file contains arbitrary, executable PHP code instead of just a class
+	 *                                     declaration.
+	 *
      * @return  array
 	 */
-	public function loadFromFile($file, $className = 'JConfig')
+	public function loadFromFile($file, $className = 'JConfig', $useDirectInclude = false)
 	{
+		if (!$useDirectInclude)
+		{
+			return $this->extractConfiguration($file);
+		}
+
 		$ret = array();
 
 		include_once $file;
@@ -115,4 +121,128 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 
 		return $out;
 	}
+
+	/**
+	 * Extracts the Joomla! Global Configuration from a configuration.php file without including the file. This works
+	 * very well with most sites, as long as the configuration was not messed with by the user.
+	 *
+	 * @param   string  $filePath  The absolute path to the configuration.php file
+	 *
+	 * @return  array
+	 */
+	private function extractConfiguration($filePath)
+	{
+		$ret = array();
+
+		$fileContents = file($filePath);
+
+		foreach ($fileContents as $line)
+		{
+			$line = trim($line);
+
+			if ((strpos($line, 'public') !== 0) && (strpos($line, 'var') !== 0))
+			{
+				continue;
+			}
+
+			if (strpos($line, 'public') === 0)
+			{
+				$line = substr($line, 6);
+			}
+			else
+			{
+				$line = substr($line, 3);
+			}
+
+			$line = trim($line);
+			$line = rtrim($line, ';');
+			$line = ltrim($line, '$');
+			$line = trim($line);
+			list($key, $value) = explode('=', $line);
+			$key   = trim($key);
+			$value = trim($value);
+
+			if ((strstr($value, '"') === false) && (strstr($value, "'") === false))
+			{
+				continue;
+			}
+
+			$value = $this->parseStringDefinition($value);
+
+			$ret[$key] = $value;
+		}
+
+		return $ret;
+	}
+
+	/**
+	 * Parses a string definition, surrounded by single or double quotes, removing any comments which may be left tucked
+	 * to its end, reducing escaped characters to their unescaped equivalent and returning the clean string.
+	 *
+	 * @param   string  $value
+	 *
+	 * @return  null|string  Null if we can't parse $value as a string.
+	 */
+	private function parseStringDefinition($value)
+	{
+		// At this point the value may be in the form 'foobar');#comment'gargh" if the original line was something like
+		// define('DB_NAME', 'foobar');#comment'gargh");
+
+		$quote = $value[0];
+
+		// The string ends in a different quote character. Backtrack to the matching quote.
+		if (substr($value, -1) != $quote)
+		{
+			$lastQuote = strrpos($value, $quote);
+
+			// WTF?!
+			if ($lastQuote <= 1)
+			{
+				return null;
+			}
+
+			$value = substr($value, 0, $lastQuote + 1);
+		}
+
+		// At this point the value may be cleared but still in the form 'foobar');#comment'
+		// We need to parse the string like PHP would. First, let's trim the quotes
+		$value = trim($value, $quote);
+
+		$pos = 0;
+
+		while ($pos !== false)
+		{
+			$pos = strpos($value, $quote, $pos);
+
+			if ($pos === false)
+			{
+				break;
+			}
+
+			if (substr($value, $pos - 1, 1) == '\\')
+			{
+				$pos++;
+
+				continue;
+			}
+
+			$value = substr($value, 0, $pos);
+		}
+
+		// Finally, reduce the escaped characters.
+
+		if ($quote == "'")
+		{
+			// Single quoted strings only escape single quotes and backspaces
+			$value = str_replace(array("\\'", "\\\\",), array("'", "\\"), $value);
+		}
+		else
+		{
+			// Double quoted strings just need stripslashes.
+			$value = stripslashes($value);
+		}
+
+		return $value;
+	}
+
 }
