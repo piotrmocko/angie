@@ -1088,7 +1088,7 @@ class AngieModelWordpressReplacedata extends AModel
 		// Get the new base domain and base path
 
 		/** @var AngieModelWordpressConfiguration $config */
-		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 		$new_url                    = $config->get('homeurl');
 		$newUri                     = new AUri($new_url);
 		$newDomain                  = $newUri->getHost();
@@ -1186,7 +1186,7 @@ class AngieModelWordpressReplacedata extends AModel
 			// Save the changed record
 			try
 			{
-				$db->updateObject('#__blogs', $blog, ['blog_id', 'site_id']);
+				$db->updateObject('#__blogs', $blog, array('blog_id', 'site_id'));
 			}
 			catch (Exception $e)
 			{
