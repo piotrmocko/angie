@@ -1,9 +1,9 @@
 <?php
 /**
- * @package angifw
+ * @package   angifw
  * @copyright Copyright (C) 2009-2017 Nicholas K. Dionysopoulos. All rights reserved.
- * @author Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
+ * @author    Nicholas K. Dionysopoulos - http://www.dionysopoulos.me
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
  *
  * Akeeba Next Generation Installer Framework
  */
@@ -33,7 +33,7 @@ class ASession
 	{
 		static $instance = null;
 
-		if(!is_object($instance))
+		if (!is_object($instance))
 		{
 			$instance = new ASession();
 		}
@@ -74,8 +74,56 @@ class ASession
 		// causing database restoration issues.
 		$this->method = 'file';
 
-		$storagefile = APATH_INSTALLATION . '/tmp/storagedata-' . $this->sessionkey . '.dat';
+		$storagefile       = APATH_INSTALLATION . '/tmp/storagedata-' . $this->sessionkey . '.dat';
 		$this->storagefile = $storagefile;
+
+		/**
+		 * If there is another storagedata-* file we unset the value for ourselves. This allows us to warn the user that
+		 * the restoration is already in progress by someone else.
+		 */
+		try
+		{
+			$baseNameSelf     = basename($storagefile);
+
+			$di = new DirectoryIterator(APATH_INSTALLATION . '/tmp');
+
+			foreach ($di as $file)
+			{
+				if (!$file->isFile())
+				{
+					continue;
+				}
+
+				if ($file->isDot())
+				{
+					continue;
+				}
+
+				$basename = $file->getBasename();
+
+				if ($basename == $baseNameSelf)
+				{
+					continue;
+				}
+
+				if (substr($basename, -4) != '.dat')
+				{
+					continue;
+				}
+
+				// Another storage file found. Whoopsie! You are doing something wrong here, pal.
+				if (substr($basename, 0, 12) == 'storagedata-')
+				{
+					$this->storagefile = '';
+
+					break;
+				}
+			}
+		}
+		catch (Exception $e)
+		{
+			// Do nothing; unreadable / unwriteable sessions are caught elsewhere
+		}
 
 		$this->loadData();
 	}
@@ -95,29 +143,22 @@ class ASession
 	 */
 	public function isStorageWorking()
 	{
-		if(!file_exists($this->storagefile)) {
-			$dummy = '';
-			$fp = @fopen($this->storagefile,'wb');
+		if (!file_exists($this->storagefile))
+		{
+			$fp = @fopen($this->storagefile, 'wb');
 
 			if ($fp === false)
 			{
-				$result = false;
-			}
-			else
-			{
-				@fclose($fp);
-				@unlink($this->storagefile);
-				$result = true;
+				return false;
 			}
 
-			return $result;
-		}
-		else
-		{
-			return @is_writable($this->storagefile);
+			@fclose($fp);
+			@unlink($this->storagefile);
+
+			return true;
 		}
 
-		return false;
+		return @is_writable($this->storagefile);
 	}
 
 	/**
@@ -133,35 +174,43 @@ class ASession
 	 */
 	public function loadData()
 	{
-		$file = @fopen($this->storagefile,'rb');
-		if($file === false)
+		$file = @fopen($this->storagefile, 'rb');
+
+		if ($file === false)
 		{
 			$this->data = array();
+
 			return;
 		}
-		else
-		{
-			$raw_data = fread($file, filesize($this->storagefile));
-		}
-		if(@strlen($raw_data) > 0)
+
+		$raw_data   = fread($file, filesize($this->storagefile));
+		$this->data = array();
+
+		if (@strlen($raw_data) > 0)
 		{
 			$this->decode_data($raw_data);
-		}
-		else
-		{
-			$this->data = array();
 		}
 	}
 
 	/**
 	 * Saves session data to a file or a session variable (auto detect)
+	 *
+	 * @return  bool  True if the session storage filename is set
 	 */
 	public function saveData()
 	{
+		if (empty($this->storagefile))
+		{
+			return false;
+		}
+
 		$data = $this->encode_data();
-		$fp = @fopen($this->storagefile,'wb');
+		$fp   = @fopen($this->storagefile, 'wb');
+
 		@fwrite($fp, $data);
 		@fclose($fp);
+
+		return true;
 	}
 
 	/**
@@ -185,14 +234,12 @@ class ASession
 	 */
 	public function get($key, $default = null)
 	{
-		if(array_key_exists($key, $this->data))
+		if (array_key_exists($key, $this->data))
 		{
 			return $this->data[$key];
 		}
-		else
-		{
-			return $default;
-		}
+
+		return $default;
 	}
 
 	/**
@@ -202,10 +249,47 @@ class ASession
 	 */
 	public function remove($key)
 	{
-		if(array_key_exists($key, $this->data))
+		if (array_key_exists($key, $this->data))
 		{
 			unset($this->data[$key]);
 		}
+	}
+
+	/**
+	 * Do we have a storage file for the session? If not, it means that ANGIE has detected another active session, i.e.
+	 * someone else is using it already to restore a site. This method is used by the Dispatcher to block the request
+	 * and warn the user of the issue.
+	 *
+	 * @return  bool
+	 */
+	public function hasStorageFile()
+	{
+		return !empty($this->storagefile);
+	}
+
+	/**
+	 * Returns the session key file. Used to display the message in view=session&layout=blocked which is displayed when
+	 * the user is trying to access ANGIE while someone else is already using it.
+	 *
+	 * @return  string
+	 */
+	public function getSessionKey()
+	{
+		return $this->sessionkey;
+	}
+
+	/**
+	 * Disable saving the storage data. This is used by the password view to prevent starting a new session when a
+	 * password has not been entered. This way, if the installer is password-protected, a random visitor getting to the
+	 * installer before the site administrator will NOT cause the administrator to be locked out of the installer,
+	 * therefore won't require the administrator to have to delete the session storage files from tmp to get access to
+	 * their site's installer.
+	 *
+	 * @return  void
+	 */
+	public function disableSave()
+	{
+		$this->storagefile = '';
 	}
 
 	/**
@@ -215,59 +299,71 @@ class ASession
 	private function encode_data()
 	{
 		$data = serialize($this->data);
-		if( function_exists('base64_encode') && function_exists('base64_decode') )
+
+		if (function_exists('base64_encode') && function_exists('base64_decode'))
 		{
-			// Prefer Basse64 ebcoding of data
-			$data = base64_encode($data);
+			// Prefer Βαse64 encoding of data
+			return base64_encode($data);
 		}
-		elseif( function_exists('convert_uuencode') && function_exists('convert_uudecode') )
+
+		if (function_exists('convert_uuencode') && function_exists('convert_uudecode'))
 		{
-			// UUEncode is just as good if Base64 is not available
-			$data = convert_uuencode( $data );
+			// UUEncode is just as good if Βαse64 is not available
+			return convert_uuencode($data);
 		}
-		elseif( function_exists('bin2hex') && function_exists('pack') )
+
+		if (function_exists('bin2hex') && function_exists('pack'))
 		{
 			// Ugh! Let's use plain hex encoding
-			$data = bin2hex($data);
+			return bin2hex($data);
 		}
-		// Note: on an anal server we might end up with raw data; all bets are off!
 
+		// Note: on such a badly configure server we might end up with raw data; all bets are off!
 		return $data;
 	}
 
 	/**
 	 * Loads the temporary data off their serialized form
-	 * @param $data
+	 *
+	 * @param   string $data
 	 */
 	private function decode_data($data)
 	{
 		$this->data = array();
+		$data       = $this->internalDecode($data);
+		$temp       = @unserialize($data);
 
-		if( function_exists('base64_encode') && function_exists('base64_decode') )
-		{
-			// Prefer Basse64 ebcoding of data
-			$data = base64_decode($data);
-		}
-		elseif( function_exists('convert_uuencode') && function_exists('convert_uudecode') )
-		{
-			// UUEncode is just as good if Base64 is not available
-			$data = convert_uudecode( $data );
-		}
-		elseif( function_exists('bin2hex') && function_exists('pack') )
-		{
-			// Ugh! Let's use plain hex encoding
-			$data = pack("H*" , $data);
-		}
-		// Note: on an anal server we might end up with raw data; all bets are off!
-
-		$temp = @unserialize($data);
-		if(is_array($temp))
+		if (is_array($temp))
 		{
 			$this->data = $temp;
 		}
-		else
+	}
+
+	/**
+	 * The symmetric method to encode_data
+	 *
+	 * @param   string $data
+	 *
+	 * @return  string
+	 */
+	private function internalDecode($data)
+	{
+		if (function_exists('base64_encode') && function_exists('base64_decode'))
 		{
-			$this->data = array();
+			return base64_decode($data);
 		}
+
+		if (function_exists('convert_uuencode') && function_exists('convert_uudecode'))
+		{
+			return convert_uudecode($data);
+		}
+
+		if (function_exists('bin2hex') && function_exists('pack'))
+		{
+			// Ugh! Let's use plain hex encoding
+			return pack("H*", $data);
+		}
+
+		return $data;
 	}
 }

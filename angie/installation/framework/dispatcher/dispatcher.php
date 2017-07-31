@@ -248,39 +248,39 @@ class ADispatcher
 
 		// Get and execute the controller
 		$defaultApp = $this->container->application->getName();
-		$option	= $this->input->getCmd('option', $defaultApp);
-		$view	= $this->input->getCmd('view', $this->defaultView);
-		$task	= $this->input->getCmd('task', 'default');
+		$option     = $this->input->getCmd('option', $defaultApp);
+		$view       = $this->input->getCmd('view', $this->defaultView);
+		$task       = $this->input->getCmd('task', 'default');
 
 		if (empty($task))
 		{
 			$task = $this->getTask($view);
 		}
 
-		$this->input->set('view',$view);
-		$this->input->set('task',$task);
+		$this->input->set('view', $view);
+		$this->input->set('task', $task);
 
-		$config = $this->config;
+		$config          = $this->config;
 		$config['input'] = $this->input;
 
 		$controller = AController::getTmpInstance($option, $view, $config, $this->container);
-		$status = $controller->execute($task);
+		$status     = $controller->execute($task);
 
-		if($status === false)
-        {
+		if ($status === false)
+		{
 			throw new Exception(AText::_('ANGI_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
-		if(!$this->onAfterDispatch())
-        {
+		if (!$this->onAfterDispatch())
+		{
 			throw new Exception(AText::_('ANGI_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
-        // Issue the redirect only if we're not in JSON format
-        if($this->input->getCmd('format', '') != 'json')
-        {
-            $controller->redirect();
-        }
+		// Issue the redirect only if we're not in JSON format
+		if ($this->input->getCmd('format', '') != 'json')
+		{
+			$controller->redirect();
+		}
 	}
 
 	/**

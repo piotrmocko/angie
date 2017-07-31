@@ -12,21 +12,22 @@ class AngieControllerPassword extends AController
 {
 	public function unlock()
 	{
-		$parts = explode(':', AKEEBA_PASSHASH);
+		$parts    = explode(':', AKEEBA_PASSHASH);
 		$password = $this->input->get('password', '', 'raw');
 		$passHash = md5($password . $parts[1]);
 
-        $this->container->session->set('angie.passhash', $passHash);
-        $this->container->session->saveData();
+		$this->container->session->set('angie.passhash', $passHash);
 
-		if($passHash == $parts[0])
+		if ($passHash == $parts[0])
 		{
+			$this->container->session->saveData();
 			$this->setRedirect('index.php?view=main');
+
+			return;
 		}
-		else
-		{
-			$msg = AText::_('PASSWORD_ERR_INVALIDPASSWORD');
-			$this->setRedirect('index.php?view=password', $msg, 'error');
-		}
+
+		$msg = AText::_('PASSWORD_ERR_INVALIDPASSWORD');
+		$this->container->session->disableSave();
+		$this->setRedirect('index.php?view=password', $msg, 'error');
 	}
 }

@@ -51,3 +51,33 @@ pre.scrollmore
 	display: none;
   }
 }
+
+/**
+ * ANGIE Session Blocked page
+ */
+
+#angie-session-blocked p.small-text {
+	font-size: small;
+	padding: 1em 2em;
+	margin: 0;
+	color: #333333;
+}
+
+#angie-session-blocked p.small-text code {
+	font-size: small;
+	border: none;
+	background: transparent;
+	color: #903030;
+}
+
+#angie-session-blocked div.well li {
+	font-size: larger;
+	color: #000;
+	line-height: 170%;
+}
+
+#angie-session-blocked div.well code {
+	border: none;
+	background: none;
+	color: #ff0000;
+}
