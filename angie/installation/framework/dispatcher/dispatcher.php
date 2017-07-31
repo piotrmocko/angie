@@ -248,39 +248,52 @@ class ADispatcher
 
 		// Get and execute the controller
 		$defaultApp = $this->container->application->getName();
-		$option	= $this->input->getCmd('option', $defaultApp);
-		$view	= $this->input->getCmd('view', $this->defaultView);
-		$task	= $this->input->getCmd('task', 'default');
+		$option     = $this->input->getCmd('option', $defaultApp);
+		$view       = $this->input->getCmd('view', $this->defaultView);
+		$task       = $this->input->getCmd('task', 'default');
+
+		/**
+		 * If the session save file is empty we have to show a warning to the user and refuse to do anything else. This
+		 * case means that ANGIE has detected another active session in the tmp directory, i.e. someone else has already
+		 * started restoring the site. Therefore we shouldn't allow the current user to continue.
+		 */
+		if (!$this->container->session->hasStorageFile())
+		{
+			$view = 'session';
+			$task = 'default';
+
+			$this->input->set('layout', 'blocked');
+		}
 
 		if (empty($task))
 		{
 			$task = $this->getTask($view);
 		}
 
-		$this->input->set('view',$view);
-		$this->input->set('task',$task);
+		$this->input->set('view', $view);
+		$this->input->set('task', $task);
 
-		$config = $this->config;
+		$config          = $this->config;
 		$config['input'] = $this->input;
 
 		$controller = AController::getTmpInstance($option, $view, $config, $this->container);
-		$status = $controller->execute($task);
+		$status     = $controller->execute($task);
 
-		if($status === false)
-        {
+		if ($status === false)
+		{
 			throw new Exception(AText::_('ANGI_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
-		if(!$this->onAfterDispatch())
-        {
+		if (!$this->onAfterDispatch())
+		{
 			throw new Exception(AText::_('ANGI_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
-        // Issue the redirect only if we're not in JSON format
-        if($this->input->getCmd('format', '') != 'json')
-        {
-            $controller->redirect();
-        }
+		// Issue the redirect only if we're not in JSON format
+		if ($this->input->getCmd('format', '') != 'json')
+		{
+			$controller->redirect();
+		}
 	}
 
 	/**
