@@ -40,4 +40,9 @@ $mySessionId = AApplication::getInstance()->getContainer()->session->getSessionK
     <h4><?php echo AText::_('SESSIONBLOCKED_HEADER_WHY_AM_I_SEEING_THIS') ?></h4>
     <p class="small-text"><?php echo AText::_('SESSIONBLOCKED_LBL_BECAUSE_SECURITY') ?></p>
     <p class="small-text"><?php echo AText::_('SESSIONBLOCKED_LBL_BECAUSE_WE_CARE') ?></p>
+
+    <?php if (!defined('AKEEBA_PASSHASH')): ?>
+    <h4><?php echo AText::_('SESSIONBLOCKED_HEADER_BEST_WAY_TO_AVOID') ?></h4>
+    <p class="small-text"><?php echo AText::_('SESSIONBLOCKED_LBL_BEST_WAY_TO_AVOID') ?></p>
+    <?php endif; ?>
 </div>
