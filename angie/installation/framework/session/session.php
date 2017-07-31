@@ -279,6 +279,20 @@ class ASession
 	}
 
 	/**
+	 * Disable saving the storage data. This is used by the password view to prevent starting a new session when a
+	 * password has not been entered. This way, if the installer is password-protected, a random visitor getting to the
+	 * installer before the site administrator will NOT cause the administrator to be locked out of the installer,
+	 * therefore won't require the administrator to have to delete the session storage files from tmp to get access to
+	 * their site's installer.
+	 *
+	 * @return  void
+	 */
+	public function disableSave()
+	{
+		$this->storagefile = '';
+	}
+
+	/**
 	 * Returns a serialized form of the temporary data
 	 * @return string The serialized data
 	 */

@@ -7,6 +7,8 @@
  */
 
 defined('_AKEEBA') or die();
+
+$this->container->session->disableSave();
 ?>
 <div class="row-fluid">
 	<div class="span3"></div>

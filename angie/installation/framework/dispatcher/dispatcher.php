@@ -252,19 +252,6 @@ class ADispatcher
 		$view       = $this->input->getCmd('view', $this->defaultView);
 		$task       = $this->input->getCmd('task', 'default');
 
-		/**
-		 * If the session save file is empty we have to show a warning to the user and refuse to do anything else. This
-		 * case means that ANGIE has detected another active session in the tmp directory, i.e. someone else has already
-		 * started restoring the site. Therefore we shouldn't allow the current user to continue.
-		 */
-		if (!$this->container->session->hasStorageFile())
-		{
-			$view = 'session';
-			$task = 'default';
-
-			$this->input->set('layout', 'blocked');
-		}
-
 		if (empty($task))
 		{
 			$task = $this->getTask($view);
