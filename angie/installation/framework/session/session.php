@@ -70,6 +70,14 @@ class ASession
 
 		$this->sessionkey = md5($ip . $_SERVER['HTTP_USER_AGENT'] . $httpsstatus . $server_ip . $_SERVER['SERVER_NAME']);
 
+		if (defined('ANGIE_FORCED_SESSION_KEY') && !empty(ANGIE_FORCED_SESSION_KEY))
+		{
+			if ($this->sessionkey != ANGIE_FORCED_SESSION_KEY)
+			{
+				die(AText::_('SESSIONBLOCKED_HEADER_IN_USE'));
+			}
+		}
+
 		// Always use the file method. The PHP session method seems to be
 		// causing database restoration issues.
 		$this->method = 'file';
@@ -114,9 +122,23 @@ class ASession
 				// Another storage file found. Whoopsie! You are doing something wrong here, pal.
 				if (substr($basename, 0, 12) == 'storagedata-')
 				{
-					$this->storagefile = '';
+					/**
+					 * If the user has not overridden the session key to lock it to their browser we unset the
+					 * storagefile property, causing the session to error out. This triggers the "Oops! The installer
+					 * is already in use." page.
+					 */
+					if (!defined('ANGIE_FORCED_SESSION_KEY') || empty(ANGIE_FORCED_SESSION_KEY))
+					{
+						$this->storagefile = '';
 
-					break;
+						break;
+					}
+
+					/**
+					 * If, however, the user has edited defines.php to force the session key we can simply delete the
+					 * extra session files.
+					 */
+					@unlink($file->getPathname());
 				}
 			}
 		}

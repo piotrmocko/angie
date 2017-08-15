@@ -8,6 +8,8 @@
  * Akeeba Next Generation Installer For Joomla!
  */
 
+define('ANGIE_FORCED_SESSION_KEY', '');
+
 define('APATH_BASE',          __DIR__);
 define('APATH_INSTALLATION',  __DIR__);
 
