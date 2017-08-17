@@ -25,6 +25,23 @@ class ASession
 	private $sessionkey = null;
 
 	/**
+	 * Should I enable extra session security?
+	 *
+	 * When this is enabled ANGIE will check if there's another session. If so, it will refuse to run until you remove
+	 * the session file for all other sessions from the tmp directory. Implemented in Akeeba Engine 5.4.0 I had to
+	 * disable it in 5.4.2 because people are cognitively challenged. By that I mean that they cannot follow a six step
+	 * bullet point walk-through for deleting a bunch of files, written in small words so that even an 8 year old with a
+	 * cursory, primary school encounter into English as a second language could understand. Regrettably, grown adults
+	 * operating web sites seem unable to achieve the same level of reading comprehension as our hypothetical 8 year
+	 * old.
+	 *
+	 * So here's the deal: if you do not want ANYONE ON THE FREAKING INTERNET to find out all the gory details about
+	 * your site during restoration, including your database password, JUST USE THE ANGIE PASSWORD FEATURE. This is what
+	 * we wrote that feature for.
+	 */
+	const ENABLE_EXTRA_SECURITY = false;
+
+	/**
 	 * Singleton implementation
 	 *
 	 * @return  ASession
@@ -89,62 +106,65 @@ class ASession
 		 * If there is another storagedata-* file we unset the value for ourselves. This allows us to warn the user that
 		 * the restoration is already in progress by someone else.
 		 */
-		try
+		if (self::ENABLE_EXTRA_SECURITY)
 		{
-			$baseNameSelf     = basename($storagefile);
-
-			$di = new DirectoryIterator(APATH_INSTALLATION . '/tmp');
-
-			foreach ($di as $file)
+			try
 			{
-				if (!$file->isFile())
-				{
-					continue;
-				}
+				$baseNameSelf     = basename($storagefile);
 
-				if ($file->isDot())
-				{
-					continue;
-				}
+				$di = new DirectoryIterator(APATH_INSTALLATION . '/tmp');
 
-				$basename = $file->getBasename();
-
-				if ($basename == $baseNameSelf)
+				foreach ($di as $file)
 				{
-					continue;
-				}
-
-				if (substr($basename, -4) != '.dat')
-				{
-					continue;
-				}
-
-				// Another storage file found. Whoopsie! You are doing something wrong here, pal.
-				if (substr($basename, 0, 12) == 'storagedata-')
-				{
-					/**
-					 * If the user has not overridden the session key to lock it to their browser we unset the
-					 * storagefile property, causing the session to error out. This triggers the "Oops! The installer
-					 * is already in use." page.
-					 */
-					if (!defined('ANGIE_FORCED_SESSION_KEY') || empty(ANGIE_FORCED_SESSION_KEY))
+					if (!$file->isFile())
 					{
-						$this->storagefile = '';
-
-						break;
+						continue;
 					}
 
-					/**
-					 * If, however, the user has edited defines.php to force the session key we can simply delete the
-					 * extra session files.
-					 */
-					@unlink($file->getPathname());
+					if ($file->isDot())
+					{
+						continue;
+					}
+
+					$basename = $file->getBasename();
+
+					if ($basename == $baseNameSelf)
+					{
+						continue;
+					}
+
+					if (substr($basename, -4) != '.dat')
+					{
+						continue;
+					}
+
+					// Another storage file found. Whoopsie! You are doing something wrong here, pal.
+					if (substr($basename, 0, 12) == 'storagedata-')
+					{
+						/**
+						 * If the user has not overridden the session key to lock it to their browser we unset the
+						 * storagefile property, causing the session to error out. This triggers the "Oops! The installer
+						 * is already in use." page.
+						 */
+						if (!defined('ANGIE_FORCED_SESSION_KEY') || empty(ANGIE_FORCED_SESSION_KEY))
+						{
+							$this->storagefile = '';
+
+							break;
+						}
+
+						/**
+						 * If, however, the user has edited defines.php to force the session key we can simply delete the
+						 * extra session files.
+						 */
+						@unlink($file->getPathname());
+					}
 				}
 			}
-		}
-		catch (Exception $e)
-		{
-			// Do nothing; unreadable / unwriteable sessions are caught elsewhere
+			catch (Exception $e)
+			{
+				// Do nothing; unreadable / unwriteable sessions are caught elsewhere
+			}
 		}
 
 		$this->loadData();
