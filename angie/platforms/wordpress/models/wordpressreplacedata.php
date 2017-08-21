@@ -674,6 +674,12 @@ class AngieModelWordpressReplacedata extends AModel
 		// Take into account JSON-encoded data
 		foreach ($replacements as $from => $to)
 		{
+			// If we don't do that we end with the string literal "null" which is incorrect
+			if (is_null($to))
+			{
+				$to = '';
+			}
+
 			$jsonFrom = json_encode($from);
 			$jsonTo   = json_encode($to);
 			$jsonFrom = trim($jsonFrom, '"');
