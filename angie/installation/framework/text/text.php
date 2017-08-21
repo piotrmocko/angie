@@ -58,6 +58,7 @@ abstract class AText
 		if (@file_exists($filename))
 		{
 			$strings = AngieHelperIni::parse_ini_file($filename, false);
+			$strings = self::replaceQQ($strings);
 			self::$strings = array_merge(self::$strings, $strings);
 		}
 
@@ -168,5 +169,17 @@ abstract class AText
 			return call_user_func_array('sprintf', $args);
 		}
 		return '';
+	}
+
+	/**
+	 * @param $strings
+	 *
+	 * @return array
+	 */
+	protected static function replaceQQ($strings)
+	{
+		return array_map(function ($value) {
+			return str_replace('"_QQ_"', '&quot;', $value);
+		}, $strings);
 	}
 }
