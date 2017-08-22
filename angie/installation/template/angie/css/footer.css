@@ -81,3 +81,22 @@ pre.scrollmore
 	background: none;
 	color: #ff0000;
 }
+
+/**
+ * Used by the key-value editor
+ */
+input.input-100 {
+	width: 100%;
+}
+
+span.keyValueButtonUp {
+	margin: 0 0.25em;
+}
+
+@media (max-width: 767px)
+{
+	div.keyValueLine {
+		border-bottom: 2px solid #999999;
+		margin-bottom: 1em;
+	}
+}

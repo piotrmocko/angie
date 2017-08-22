@@ -18,6 +18,24 @@ $document->addScript('angie/js/finalise.js');
 
 echo $this->loadAnyTemplate('steps/buttons');
 echo $this->loadAnyTemplate('steps/steps');
+
+$lblFrom = AText::_('SETUP_LBL_REPLACEDATA_FROM');
+$lblTo = AText::_('SETUP_LBL_REPLACEDATA_TO');
+$lblDelete = AText::_('SETUP_LBL_REPLACEDATA_DELETE');
+
+$js = <<< JS
+
+$(document).ready(function($){
+	replacements.strings["lblKey"] = "$lblFrom";
+	replacements.strings["lblValue"] = "$lblTo";
+	replacements.strings["lblDelete"] = "$lblDelete";
+	replacements.showEditor();
+});
+
+JS;
+
+
+$document->addScriptDeclaration($js);
 ?>
 
 <div class="well well-small">
@@ -28,27 +46,41 @@ echo $this->loadAnyTemplate('steps/steps');
 	<h3>
 		<?php echo AText::_('SETUP_LBL_REPLACEDATA_REPLACEMENTS_HEAD'); ?>
 	</h3>
-	<p>
-		<?php echo AText::_('SETUP_LBL_REPLACEDATA_REPLACEMENTS_HELP'); ?>
-	</p>
 
-	<div class="row-fluid">
-		<div class="span6">
-			<h4>
-				<?php echo AText::_('SETUP_LBL_REPLACEDATA_FROM'); ?>
-			</h4>
-			<textarea class="span12" rows="5" name="replaceFrom" id="replaceFrom"><?php echo implode("\n", array_keys($this->replacements)); ?></textarea>
-		</div>
+    <div id="textBoxEditor">
+        <p>
+		    <?php echo AText::_('SETUP_LBL_REPLACEDATA_REPLACEMENTS_HELP'); ?>
+        </p>
 
-		<div class="span6">
-			<h4>
-				<?php echo AText::_('SETUP_LBL_REPLACEDATA_TO'); ?>
-			</h4>
-			<textarea class="span12" rows="5" name="replaceTo" id="replaceTo"><?php echo implode("\n", $this->replacements); ?></textarea>
-		</div>
+        <div class="row-fluid">
+            <div class="span6">
+                <h4>
+				    <?php echo AText::_('SETUP_LBL_REPLACEDATA_FROM'); ?>
+                </h4>
+                <textarea class="span12" rows="5" name="replaceFrom" id="replaceFrom"><?php echo implode("\n", array_keys($this->replacements)); ?></textarea>
+            </div>
 
-		<div class="clearfix"></div>
-	</div>
+            <div class="span6">
+                <h4>
+				    <?php echo AText::_('SETUP_LBL_REPLACEDATA_TO'); ?>
+                </h4>
+                <textarea class="span12" rows="5" name="replaceTo" id="replaceTo"><?php echo implode("\n", $this->replacements); ?></textarea>
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <div id="keyValueEditor" style="display: none">
+        <p>
+		    <?php echo AText::_('SETUP_LBL_REPLACEDATA_REPLACEMENTS_JSGUI_HELP'); ?>
+        </p>
+        <div class="row-fluid" id="keyValueContainer">
+
+        </div>
+    </div>
+
+    <div class="clearfix"></div>
 
 	<h3>
 		<?php echo AText::_('SETUP_LBL_REPLACEDATA_TABLES_HEAD'); ?>

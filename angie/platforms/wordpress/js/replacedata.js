@@ -16,7 +16,9 @@ replacements = {
             maxRetries:   3,
             retry:        0,
             showWarnings: 0
-        }
+        },
+	editor: {},
+	strings: {}
 };
 
 replacements.start = function()
@@ -24,7 +26,7 @@ replacements.start = function()
 	$('#replacementsGUI').hide('fast');
 	$('#replacementsProgress').show('fast');
 
-	akeebaAjaxWP.callJSON({
+	var request = {
 		'view':			'replacedata',
 		'task':			'ajax',
 		'method':		'initEngine',
@@ -36,7 +38,9 @@ replacements.start = function()
 		'min_exec':		$('#min_exec').val(),
 		'max_exec':		$('#max_exec').val(),
 		'runtime_bias':	$('#runtime_bias').val()
-	},
+	};
+
+	akeebaAjaxWP.callJSON(request,
         replacements.process,
         replacements.onError
     );
@@ -194,16 +198,217 @@ replacements.endWithError = function (message)
     document.getElementById('error-panel').style.display        = 'block';
 };
 
+replacements.editor.render = function(selector, data)
+{
+	// Get the row container from the selector
+	var elContainer = $(selector);
+
+	// Store the key-value information as a data property
+	elContainer.data(elContainer, 'keyValueData', data);
+
+	// Render one GUI row per data row
+	for (var valFrom in data)
+	{
+		// Skip if the key is a property from the object's prototype
+		if (!data.hasOwnProperty(valFrom)) continue;
+
+		var valTo = data[valFrom];
+
+		replacements.editor.renderRow(elContainer, valFrom, valTo);
+	}
+
+	// Add the last, empty row
+	replacements.editor.renderRow(elContainer, "", "");
+};
+
+replacements.editor.renderRow = function(elContainer, valFrom, valTo)
+{
+	var elRow = $("<div />").addClass("keyValueLine row-fluid");
+
+	var elFromInput = $("<input />")
+		.addClass("input-large input-100 keyValueFrom")
+		.attr("type", "text")
+		.attr("title", replacements.strings["lblKey"])
+		.attr("placeholder", replacements.strings["lblKey"])
+		.val(valFrom);
+
+	var elToInput = $("<input />")
+	.addClass("input-large input-100 keyValueTo")
+		.attr("type", "text")
+		.attr("title", replacements.strings["lblValue"])
+		.attr("placeholder", replacements.strings["lblValue"])
+		.val(valTo);
+
+	var elDeleteIcon = $("<span />")
+		.addClass("icon icon-white icon-trash");
+
+	var elDeleteButton = $("<span />")
+		.addClass("btn btn-danger keyValueButtonDelete")
+		.addClass("title", replacements.strings["lblDelete"])
+	    .append(elDeleteIcon);
+
+	var elUpIcon = $("<span />")
+		.addClass("icon icon-arrow-up");
+
+	var elUpButton = $("<span />")
+		.addClass("btn btn-small keyValueButtonUp")
+	    .append(elUpIcon);
+
+	var elDownIcon = $("<span />")
+		.addClass("icon icon-arrow-down");
+
+	var elDownButton = $("<span />")
+		.addClass("btn btn-small keyValueButtonDown")
+	    .append(elDownIcon);
+
+	var elFromWrapper = $("<div />").addClass("span5 keyValueFromWrapper").append(elFromInput);
+	var elToWrapper = $("<div />").addClass("span5 keyValueToWrapper").append(elToInput);
+	var elButtonsWrapper = $("<div />").addClass("span2 keyValueButtonsWrapper")
+		.append(elDeleteButton)
+		.append(elUpButton)
+		.append(elDownButton);
+
+	elFromInput.blur(function(e) {
+		replacements.editor.reflow(elContainer);
+	});
+
+	elToInput.blur(function(e) {
+		replacements.editor.reflow(elContainer);
+	});
+
+	elDeleteButton.click(function(e) {
+		elFromInput.val("");
+		elToInput.val("");
+		replacements.editor.reflow(elContainer);
+	});
+
+	elUpButton.click(function(e) {
+		var elPrev = elRow.prev();
+
+		if (!elPrev.length)
+		{
+			return;
+		}
+
+		var elPrevFrom = elPrev.find('.keyValueFrom');
+		var elPrevTo = elPrev.find('.keyValueTo');
+
+		var prevFrom = elPrevFrom.val();
+		var prevTo = elPrevTo.val();
+
+		elPrevFrom.val(elFromInput.val());
+		elPrevTo.val(elToInput.val());
+		elFromInput.val(prevFrom);
+		elToInput.val(prevTo);
+
+		replacements.editor.reflow(elContainer);
+	});
+
+	elDownButton.click(function(e) {
+		var elNext = elRow.next();
+
+		if (!elNext.length)
+		{
+			return;
+		}
+
+		var elNextFrom = elNext.find('.keyValueFrom');
+		var elNextTo = elNext.find('.keyValueTo');
+
+		var nextFrom = elNextFrom.val();
+		var nextTo = elNextTo.val();
+
+		elNextFrom.val(elFromInput.val());
+		elNextTo.val(elToInput.val());
+		elFromInput.val(nextFrom);
+		elToInput.val(nextTo);
+
+		replacements.editor.reflow(elContainer);
+	});
+
+	elRow.append(elFromWrapper, elToWrapper, elButtonsWrapper);
+	elContainer.append(elRow);
+};
+
+replacements.editor.reflow = function(elContainer)
+{
+	var data = {};
+	var strFrom = "";
+	var strTo = "";
+	var elRows = elContainer.children();
+	var hasEmptyRow = false;
+
+	// Convert rows to a data object
+	$.each(elRows, function (idx, elRow) {
+		var $elRow = $(elRow);
+		var valFrom = $elRow.find('.keyValueFrom').val();
+		var valTo = $elRow.find('.keyValueTo').val();
+
+		// If the From value is empty I may have to delete this row
+		if (valFrom === '')
+		{
+			if (idx < elRows.length)
+			{
+				// This is an empty From in a row other than the last. Remove it.
+				$elRow.remove();
+			}
+			else
+			{
+				// This is the last empty row. Do not remove and set the flag of having a last empty row.
+				hasEmptyRow = true;
+			}
+
+			return;
+		}
+
+		data[valFrom] = valTo;
+		strFrom += "\n" + valFrom;
+		strTo += "\n" + valTo;
+	});
+
+	// If I don't have a last empty row, create one
+	if (!hasEmptyRow)
+	{
+		replacements.editor.renderRow(elContainer, "", "");
+	}
+
+	// Store the key-value information as a data property
+	elContainer.data(elContainer, 'keyValueData', data);
+
+	// Transfer the data to the textboxes
+	$("#replaceFrom").val(strFrom.replace(/^\s+/g, ""));
+	$("#replaceTo").val(strTo.replace(/^\s+/g, ""));
+};
+
+/**
+ * Displays the Javascript powered key-value editor
+ */
+replacements.showEditor = function ()
+{
+	var from = $('#replaceFrom').val().split("\n");
+	var to = $('#replaceTo').val().split("\n");
+	var extractedValues = {};
+
+	for (var i = 0; i < Math.min(from.length, to.length); i++)
+	{
+		extractedValues[from[i]] = to[i];
+	}
+
+	$("#textBoxEditor").hide();
+	$("#keyValueEditor").show();
+	replacements.editor.render('#keyValueContainer', extractedValues);
+};
+
 $(document).ready(function(){
 	akeebaAjaxWP = new akeebaAjaxConnector('index.php');
 	// Hijack the Next button
-	$('#btnNext').click(function (e){
+	$('#btnNext').click(function (e) {
 		setTimeout(function(){replacements.start();}, 100);
 
 		return false;
 	});
 
-	$('#showAdvanced').click(function(){
+	$('#showAdvanced').click(function() {
 		$(this).hide();
 		$('#replaceThrottle').show();
 	});
