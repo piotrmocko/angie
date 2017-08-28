@@ -12,9 +12,6 @@ defined('_AKEEBA') or die();
 
 class ASession
 {
-	/** @var string Chooses the data storage method (file/session) */
-	private $method;
-
 	/** @var string Where temporary data is stored when using file storage */
 	private $storagefile;
 
@@ -111,10 +108,6 @@ class ASession
 				die(AText::_('SESSIONBLOCKED_HEADER_IN_USE'));
 			}
 		}
-
-		// Always use the file method. The PHP session method seems to be
-		// causing database restoration issues.
-		$this->method = 'file';
 
 		$storagefile       = APATH_INSTALLATION . '/tmp/storagedata-' . $this->sessionkey . '.dat';
 		$this->storagefile = $storagefile;
