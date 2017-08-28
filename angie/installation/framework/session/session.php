@@ -68,7 +68,27 @@ class ASession
 			$server_ip = '';
 		}
 
-		$this->sessionkey = md5($ip . $_SERVER['HTTP_USER_AGENT'] . $httpsstatus . $server_ip . $_SERVER['SERVER_NAME']);
+		/**
+		 * I removed server IP because of cases like the (private) ticket #28313  The user has a server farm with four
+		 * nodes. Each node has the same SERVER_NAME but a different (internal network) LOCAL_ADDR. As a result the
+		 * session key is different depending on which nodes responds.
+		 *
+		 * If session lock is enabled this will kick you out unless your requst is handled by the one node that
+		 * originally replied to your request.
+		 *
+		 * If session lock is disabled the restoration will go through BUT the database connection information will not
+		 * be remembered betweeen page loads (since they are saved in the session which depends on the server IP). This
+		 * WILL cause database restoration mayhem if you are restoring on the same db server as the original site: some
+		 * of the nodes will have a blank session which "remembers" the original site's db connection information,
+		 * therefore they will OVERWRITE your main site.
+		 *
+		 * If you run a server farm you MUST have /administrator and /installation (as well as kickstart.php) served
+		 * always from one specific node. You should then rsync that server's files to all other servers in the group.
+		 * You should probably do the same for pages that allow uploads from clients but that's beyond the scope of what
+		 * we do here.
+		 */
+		// $this->sessionkey = md5($ip . $_SERVER['HTTP_USER_AGENT'] . $httpsstatus . $server_ip . $_SERVER['SERVER_NAME']);
+		$this->sessionkey = md5($ip . $_SERVER['HTTP_USER_AGENT'] . $httpsstatus . $_SERVER['SERVER_NAME']);
 
 		// Always use the file method. The PHP session method seems to be
 		// causing database restoration issues.
