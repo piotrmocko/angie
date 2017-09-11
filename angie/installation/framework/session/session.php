@@ -101,7 +101,7 @@ class ASession
 		// $this->sessionkey = md5($ip . $_SERVER['HTTP_USER_AGENT'] . $httpsstatus . $server_ip . $_SERVER['SERVER_NAME']);
 		$this->sessionkey = md5($ip . $_SERVER['HTTP_USER_AGENT'] . $httpsstatus . $_SERVER['SERVER_NAME']);
 
-		if (defined('ANGIE_FORCED_SESSION_KEY') && !empty(ANGIE_FORCED_SESSION_KEY))
+		if (defined('ANGIE_FORCED_SESSION_KEY') && ANGIE_FORCED_SESSION_KEY)
 		{
 			if ($this->sessionkey != ANGIE_FORCED_SESSION_KEY)
 			{
@@ -156,7 +156,7 @@ class ASession
 						 * storagefile property, causing the session to error out. This triggers the "Oops! The installer
 						 * is already in use." page.
 						 */
-						if (!defined('ANGIE_FORCED_SESSION_KEY') || empty(ANGIE_FORCED_SESSION_KEY))
+						if (!defined('ANGIE_FORCED_SESSION_KEY') || !ANGIE_FORCED_SESSION_KEY)
 						{
 							$this->storagefile = '';
 
