@@ -73,7 +73,7 @@ class AngieControllerWordpressReplacedata extends AController
 
         // These values are stored inside the session, after the setup step
         $old_url = $config->get('oldurl');
-        $new_url = $config->get('homeurl');
+        $new_url = $config->get('siteurl');
 
         // If we are restoring to the same URL we don't need to replace any data
         if ($old_url == $new_url)
