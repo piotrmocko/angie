@@ -15,3 +15,6 @@
 /experiment
 
 link_angie_site_davide.sh
+
+/angie/installation/angie/language/en-GB.ini
+/angie/platforms/*/language/en-GB.ini
