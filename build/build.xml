@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<project name="ANGIE" description="Akeeba Next Generation Installer Engine" default="all" >
+	<import file="${phing.dir}/../../buildfiles/phing/common.xml" />
+
+	<property name="dirs.translations" value="../translations" />
+
+	<!--
+	====================================================================================================
+	Tasks - General
+	====================================================================================================
+	-->
+
+	<target name="git" description="Do not use">
+	</target>
+	
+	<target name="documentation" description="Do not use">
+	</target>
+</project>
