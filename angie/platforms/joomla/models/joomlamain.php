@@ -26,9 +26,11 @@ class AngieModelJoomlaMain extends AngieModelBaseMain
 			$jv  = new JVersion();
 			$ret =$jv->getShortVersion();
 		}
-		elseif (file_exists(APATH_LIBRARIES . '/libraries/src/Version.php'))
+		elseif (file_exists(APATH_LIBRARIES . '/src/Version.php'))
 		{
-			include_once APATH_LIBRARIES . '/libraries/src/Version.php';
+			define('JPATH_PLATFORM', 1);
+
+			include_once APATH_LIBRARIES . '/src/Version.php';
 
 			$jv  = new \Joomla\CMS\Version();
 			$ret = $jv->getShortVersion();
