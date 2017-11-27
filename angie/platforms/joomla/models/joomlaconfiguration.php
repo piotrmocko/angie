@@ -10,6 +10,8 @@ defined('_AKEEBA') or die();
 
 class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 {
+	protected $joomlaVersion = '';
+
 	public function __construct($config = array(), AContainer $container = null)
 	{
 		// Call the parent constructor
@@ -23,17 +25,38 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 			$jVersion = $config['jversion'];
 		}
 
+		$this->joomlaVersion = $jVersion;
+
 		// Load the configuration variables from the session or the default configuration shipped with ANGIE
 		$this->configvars = $this->container->session->get('configuration.variables');
 
 		if (empty($this->configvars))
 		{
-			// Get default configuration based on the Joomla! version
+			// Get default configuration based on the Joomla! version. The default is Joomla! 3.x.
 			$v = '30';
 
+			// Check for Joomla! 2.5 or earlier (covers 1.6, 1.7, 2.5)
 			if (version_compare($jVersion, '2.5.0', 'ge') && version_compare($jVersion, '3.0.0', 'lt'))
 			{
 				$v = '25';
+			}
+
+			// Check for Joomla! 1.5.x
+			if (version_compare($jVersion, '1.4.99999', 'ge') && version_compare($jVersion, '1.6.0', 'lt'))
+			{
+				$v = '15';
+			}
+
+			// Check for Joomla! 1.0.x
+			if (version_compare($jVersion, '1.4.99999', 'lt'))
+			{
+				die('Woah! Joomla! 1.0 is way too old for this restoration script. You need to use JoomlaPack - the Akeeba Backup predecessor whose development we discontinued back in 2009.');
+			}
+
+			// Check for Joomla! 4
+			if (version_compare($jVersion, '3.99999.99999', 'gt'))
+			{
+				$v = '40';
 			}
 
 			$className = 'J' . $v . 'Config';
@@ -112,6 +135,21 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 				{
 					$value = $this->TranslateWinPath($value);
 				}
+
+				if (($name == 'dbtype') && ($value == 'pdomysql'))
+				{
+					/**
+					 * Joomla! 4 renamed 'pdomysql' to 'mysql'. Internally we still use 'pdomysql' so I need to translate.
+					 *
+					 * This is where we translate our ANGIE db driver name to Joomla's configuration name. The opposite
+					 * takes place in extractConfiguration() in this class.
+					 */
+					if (version_compare($this->joomlaVersion, '3.99999.99999', 'gt'))
+					{
+						$value = 'mysql';
+					}
+				}
+
 				$value = "'" . addcslashes($value, '\'\\') . "'";
 			}
 			$out .= "\tpublic $" . $name . " = " . $value . ";\n";
@@ -132,9 +170,9 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 	 */
 	private function extractConfiguration($filePath)
 	{
-		$ret = array();
-
+		$ret          = array();
 		$fileContents = file($filePath);
+		$isJoomla4    = version_compare($this->joomlaVersion, '3.99999.99999', 'gt');
 
 		foreach ($fileContents as $line)
 		{
@@ -168,6 +206,17 @@ class AngieModelJoomlaConfiguration extends AngieModelBaseConfiguration
 			}
 
 			$value = $this->parseStringDefinition($value);
+
+			/**
+			 * Joomla! 4 renamed 'pdomysql' to 'mysql'. Internally we still use 'pdomysql' so I need to translate.
+			 *
+			 * This is where we translate Joomla's configuration to our ANGIE db driver name. The opposite takes
+			 * place in getFileContents() in this class.
+			 */
+			if ($isJoomla4 && ($key == 'dbtype') && ($value == 'mysql'))
+			{
+				$value = 'pdomysql';
+			}
 
 			$ret[$key] = $value;
 		}
