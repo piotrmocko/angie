@@ -45,7 +45,10 @@ require_once __DIR__ . '/defines.php';
 require_once __DIR__. '/angie/autoloader.php';
 
 // Required by the Joomla! CMS version file (mind. blown!)
-define('JPATH_PLATFORM', APATH_LIBRARIES);
+if (!defined('JPATH_PLATFORM'))
+{
+	define('JPATH_PLATFORM', APATH_LIBRARIES);
+}
 
 try
 {

@@ -20,8 +20,12 @@ class AngieViewRunscripts extends AView
 
         if (!defined('_JDEFINES'))
         {
-            define('JPATH_BASE', APATH_SITE);
-            require_once JPATH_BASE . '/includes/defines.php';
+	        if(!defined('JPATH_BASE'))
+	        {
+		        define('JPATH_BASE', APATH_SITE);
+	        }
+
+	        require_once JPATH_BASE . '/includes/defines.php';
         }
 
         // Load the rest of the framework include files
