@@ -392,6 +392,18 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 			$new_config .= $line . "\n";
 		}
 
+		// Temporarily remove the end of line from the last line of the file
+		$new_config = rtrim($new_config);
+
+		// Remove a closing PHP tag from the file BECAUSE IT'S BAD PRACTICE TO HAVE ONE
+		if (substr($new_config, -2) == '?>')
+		{
+			$new_config = substr($new_config, 0, -2);
+		}
+
+		// Finally, add a newline before EOF
+		$new_config .= "\n";
+
 		return $new_config;
 	}
 
