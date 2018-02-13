@@ -21,7 +21,7 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 		if (empty($this->configvars))
 		{
 			$this->configvars = $this->getDefaultConfig();
-			$realConfig = $this->loadFromFile(APATH_CONFIGURATION . '/config/settings.inc.php');
+			$realConfig = $this->loadFromFile();
 			$this->configvars = array_merge($this->configvars, $realConfig);
 
 			if (!empty($this->configvars))
@@ -53,73 +53,128 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 
     /**
      * Loads the configuration information from a PHP file
-     *
-     * @param   string $file The full path to the file
-     *
+	 *
      * @return array
      */
-    public function loadFromFile($file)
+    public function loadFromFile()
     {
-        $config          = array();
+    	// Version 1.7 moved files around, we have to perform a check on the installed version to apply the propert logic
+    	$version = $this->container->session->get('version');
 
-        // PrestaShop configuration file is a simple PHP file, we can't just include it because we
-        // could have "funny" surprise
-        // The only option is to parse each line and extract the value
-        $contents = file_get_contents($file);
+    	if (version_compare($version, '1.7', 'ge'))
+		{
+			$config = $this->loadFromFile_17();
+		}
+		else
+		{
+			$config = $this->loadFromFile_1516();
+		}
 
-        //Ok, now let's start analyzing
-        $lines = explode("\n", $contents);
-
-        foreach($lines as $line)
-        {
-            $line = trim($line);
-            $matches = array();
-
-            // Skip commented lines. However it will get the line between a multiline comment, but that's not a problem
-            if(strpos($line, '#') === 0 || strpos($line, '//') === 0 || strpos($line, '/*') === 0)
-            {
-                // skip it
-            }
-            elseif(strpos($line, 'define(') !== false)
-            {
-                preg_match('#define\(["\'](.*?)["\']\,\s["\'](.*?)["\']#', $line, $matches);
-
-                if(isset($matches[1]))
-                {
-                    $key = $matches[1];
-
-                    switch(strtoupper($key))
-                    {
-                        case '_DB_NAME_' :
-                            $config['dbname'] = $matches[2];
-                            break;
-                        case '_DB_USER_':
-                            $config['dbuser'] = $matches[2];
-                            break;
-                        case '_DB_PASSWD_':
-                            $config['dbpass'] = $matches[2];
-                            break;
-                        case '_DB_SERVER_':
-                            $config['dbhost'] = $matches[2];
-                            break;
-                        case '_DB_PREFIX_':
-                            $config['dbprefix'] = $matches[2];
-                            break;
-                        case '_COOKIE_KEY_':
-                            $config['cookiekey'] = $matches[2];
-                            break;
-                        default:
-                            // Do nothing, it's a variable we're not interested in
-                            break;
-                    }
-                }
-            }
-        }
-
-        $config['sitename'] = $this->getStoreName();
+		$config['sitename'] = $this->getStoreName();
 
         return $config;
     }
+
+	/**
+	 * Loads the configuration file for a PrestaShop 1.7 site or newer
+	 *
+	 * @return array
+	 */
+    private function loadFromFile_17()
+	{
+		$config = array();
+
+		// In version 1.7 it's a simply PHP file that we can safely include
+		$file = APATH_ROOT . '/app/config/parameters.php';
+
+		if (!file_exists($file))
+		{
+			return $config;
+		}
+
+		$parameters = include_once $file;
+
+		$config['dbname']	 = $parameters['parameters']['database_name'];
+		$config['dbuser']	 = $parameters['parameters']['database_user'];
+		$config['dbpass']	 = $parameters['parameters']['database_password'];
+		$config['dbhost']	 = $parameters['parameters']['database_host'];
+		$config['dbprefix']	 = $parameters['parameters']['database_prefix'];
+		$config['cookiekey'] = $parameters['parameters']['cookie_key'];
+
+		return $config;
+	}
+
+	/**
+	 * Loads the configuration file for a PrestaShop site previous to version 1.7
+	 *
+	 * @return array
+	 */
+	private function loadFromFile_1516()
+	{
+		$file   = APATH_CONFIGURATION . '/config/settings.inc.php';
+		$config = array();
+
+		if (!file_exists($file))
+		{
+			return $config;
+		}
+
+		// PrestaShop configuration file is a simple PHP file, we can't just include it because we
+		// could have "funny" surprise
+		// The only option is to parse each line and extract the value
+		$contents = file_get_contents($file);
+
+		//Ok, now let's start analyzing
+		$lines = explode("\n", $contents);
+
+		foreach($lines as $line)
+		{
+			$line = trim($line);
+			$matches = array();
+
+			// Skip commented lines. However it will get the line between a multiline comment, but that's not a problem
+			if(strpos($line, '#') === 0 || strpos($line, '//') === 0 || strpos($line, '/*') === 0)
+			{
+				// skip it
+			}
+			elseif(strpos($line, 'define(') !== false)
+			{
+				preg_match('#define\(["\'](.*?)["\']\,\s["\'](.*?)["\']#', $line, $matches);
+
+				if(isset($matches[1]))
+				{
+					$key = $matches[1];
+
+					switch(strtoupper($key))
+					{
+						case '_DB_NAME_' :
+							$config['dbname'] = $matches[2];
+							break;
+						case '_DB_USER_':
+							$config['dbuser'] = $matches[2];
+							break;
+						case '_DB_PASSWD_':
+							$config['dbpass'] = $matches[2];
+							break;
+						case '_DB_SERVER_':
+							$config['dbhost'] = $matches[2];
+							break;
+						case '_DB_PREFIX_':
+							$config['dbprefix'] = $matches[2];
+							break;
+						case '_COOKIE_KEY_':
+							$config['cookiekey'] = $matches[2];
+							break;
+						default:
+							// Do nothing, it's a variable we're not interested in
+							break;
+					}
+				}
+			}
+		}
+
+		return $config;
+	}
 
     /**
      * Creates the string that will be put inside the new configuration file.
