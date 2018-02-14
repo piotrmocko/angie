@@ -88,7 +88,7 @@ class AngieModelPrestashopMain extends AngieModelBaseMain
 		}
 
 		// There are some defines, but they *shouldn't* create problems
-		include_once $filename;
+		include $filename;
 
 		if(defined('_PS_VERSION_'))
 		{

@@ -58,7 +58,7 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
      */
     public function loadFromFile()
     {
-    	// Version 1.7 moved files around, we have to perform a check on the installed version to apply the propert logic
+    	// Version 1.7 moved files around, we have to perform a check on the installed version to apply the proper logic
     	$version = $this->container->session->get('version');
 
     	if (version_compare($version, '1.7', 'ge'))
@@ -92,7 +92,7 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 			return $config;
 		}
 
-		$parameters = include_once $file;
+		$parameters = include $file;
 
 		$config['dbname']	 = $parameters['parameters']['database_name'];
 		$config['dbuser']	 = $parameters['parameters']['database_user'];
@@ -181,71 +181,100 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
      * This is a separate function so we can show the content if we're unable to write to the filesystem
      * and ask the user to manually do that.
      */
-    public function getFileContents($file = null)
+    public function getFileContents()
     {
-        if(!$file)
-        {
-            $file = APATH_ROOT.'/config/settings.inc.php';
-        }
+		// Version 1.7 moved files around, we have to perform a check on the installed version to apply the proper logic
+		$version = $this->container->session->get('version');
 
-        $new_config = '';
-        $old_config = file_get_contents($file);
-
-        $lines = explode("\n", $old_config);
-
-        foreach($lines as $line)
-        {
-            $line    = trim($line);
-            $matches = array();
-
-            // Skip commented lines. However it will get the line between a multiline comment, but that's not a problem
-            if(strpos($line, '#') === 0 || strpos($line, '//') === 0 || strpos($line, '/*') === 0)
-            {
-                // simply do nothing, we will add the line later
-            }
-            elseif(strpos($line, 'define(') !== false)
-            {
-                preg_match('#define\(["\'](.*?)["\']\,#', $line, $matches);
-
-                if(isset($matches[1]))
-                {
-                    $key = $matches[1];
-
-                    switch(strtoupper($key))
-                    {
-                        case '_DB_NAME_' :
-                            $value = $this->get('dbname');
-                            $line = "define('".$key."', '".$value."');";
-                            break;
-                        case '_DB_USER_':
-                            $value = $this->get('dbuser');
-                            $line = "define('".$key."', '".$value."');";
-                            break;
-                        case '_DB_PASSWD_':
-                            $value = $this->get('dbpass');
-							$value = addcslashes($value, "'\\");
-                            $line = "define('".$key."', '".$value."');";
-                            break;
-                        case '_DB_SERVER_':
-                            $value = $this->get('dbhost');
-                            $line = "define('".$key."', '".$value."');";
-                            break;
-                        case '_DB_PREFIX_':
-                            $value = $this->get('dbprefix');
-                            $line = "define('".$key."', '".$value."');";
-                            break;
-                        default:
-                            // Do nothing, it's a variable we're not interested in
-                            break;
-                    }
-                }
-            }
-
-            $new_config .= $line."\n";
-        }
+		if (version_compare($version, '1.7', 'ge'))
+		{
+			$new_config = $this->getFileContents_17();
+		}
+		else
+		{
+			$new_config = $this->getFileContents_1516();
+		}
 
         return $new_config;
     }
+
+    private function getFileContents_17()
+	{
+		$file = APATH_ROOT . '/app/config/parameters.php';
+
+		$parameters = include $file;
+
+		$parameters['parameters']['database_name']		= $this->get('dbname');
+		$parameters['parameters']['database_user']		= $this->get('dbuser');
+		$parameters['parameters']['database_password']	= $this->get('dbpass');
+		$parameters['parameters']['database_host']		= $this->get('dbhost');
+		$parameters['parameters']['database_prefix']	= $this->get('dbprefix');
+
+		$return = "<?php return ".var_export($parameters)."; \n";
+
+		return $return;
+	}
+
+    private function getFileContents_1516()
+	{
+		$file = APATH_ROOT.'/config/settings.inc.php';
+
+		$new_config = '';
+		$old_config = file_get_contents($file);
+
+		$lines = explode("\n", $old_config);
+
+		foreach($lines as $line)
+		{
+			$line    = trim($line);
+			$matches = array();
+
+			// Skip commented lines. However it will get the line between a multiline comment, but that's not a problem
+			if(strpos($line, '#') === 0 || strpos($line, '//') === 0 || strpos($line, '/*') === 0)
+			{
+				// simply do nothing, we will add the line later
+			}
+			elseif(strpos($line, 'define(') !== false)
+			{
+				preg_match('#define\(["\'](.*?)["\']\,#', $line, $matches);
+
+				if(isset($matches[1]))
+				{
+					$key = $matches[1];
+
+					switch(strtoupper($key))
+					{
+						case '_DB_NAME_' :
+							$value = $this->get('dbname');
+							$line = "define('".$key."', '".$value."');";
+							break;
+						case '_DB_USER_':
+							$value = $this->get('dbuser');
+							$line = "define('".$key."', '".$value."');";
+							break;
+						case '_DB_PASSWD_':
+							$value = $this->get('dbpass');
+							$value = addcslashes($value, "'\\");
+							$line = "define('".$key."', '".$value."');";
+							break;
+						case '_DB_SERVER_':
+							$value = $this->get('dbhost');
+							$line = "define('".$key."', '".$value."');";
+							break;
+						case '_DB_PREFIX_':
+							$value = $this->get('dbprefix');
+							$line = "define('".$key."', '".$value."');";
+							break;
+						default:
+							// Do nothing, it's a variable we're not interested in
+							break;
+					}
+				}
+			}
+
+			$new_config .= $line."\n";
+		}
+	}
 
     /**
      * Writes the new config params inside the wp-config file and the database.
