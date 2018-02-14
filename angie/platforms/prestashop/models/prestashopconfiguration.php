@@ -250,11 +250,9 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
     /**
      * Writes the new config params inside the wp-config file and the database.
      *
-     * @param   string  $file
-     *
      * @return bool
      */
-    public function writeConfig($file)
+    public function writeConfig()
     {
         // First of all I'll save the options stored inside the db. In this way, even if
         // the configuration file write fails, the user has only to manually update the
@@ -262,7 +260,16 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 
         $this->updateStore();
 
-        $new_config = $this->getFileContents($file);
+        $new_config = $this->getFileContents();
+
+		// Version 1.7 moved files around, we have to perform a check on the installed version to apply the propert logic
+		$version = $this->container->session->get('version');
+		$file	 = APATH_CONFIGURATION . '/config/settings.inc.php';
+
+		if (version_compare($version, '1.7', 'ge'))
+		{
+			$file = APATH_ROOT . '/app/config/parameters.php';
+		}
 
         if(!file_put_contents($file, $new_config))
         {
