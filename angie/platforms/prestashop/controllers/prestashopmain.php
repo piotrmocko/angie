@@ -23,18 +23,16 @@ class AngieControllerPrestashopMain extends AngieControllerBaseMain
         $this->input->setData($data);
         $this->container->session->saveData();
 
-		// Try to load the configuration from the site's configuration
-		$filename = APATH_SITE . '/config/settings.inc.php';
-		if (file_exists($filename))
-		{
-			$vars = $model->loadFromFile($filename);
+		$vars = $model->loadFromFile();
 
+		if ($vars)
+		{
 			foreach ($vars as $k => $v)
 			{
 				$model->set($k, $v);
 			}
 
-            $this->container->session->saveData();
+			$this->container->session->saveData();
 
 			echo json_encode(true);
 		}

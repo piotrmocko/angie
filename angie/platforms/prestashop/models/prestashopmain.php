@@ -15,23 +15,87 @@ class AngieModelPrestashopMain extends AngieModelBaseMain
 	 */
 	public function detectVersion()
 	{
-		$ret = '1.5';
+		$ret = '0.0';
 
-		$filename = APATH_ROOT . '/config/settings.inc.php';
+		// PrestaShop moved configuration files in another file, which is present in versions 1.5 and 1.6
+		// This means that first of all we'll have to check for version 1.7 structure, then fallback to the previous one
+		$version = $this->detectVersion17();
 
-		if (file_exists($filename))
+		if (!$version)
 		{
-            // There are some defines, but they *shouldn't* create problems
-            include_once $filename;
+			$version = $this->detectVersion15_16();
+		}
 
-            if(defined('_PS_VERSION_'))
-            {
-                $ret = _PS_VERSION_;
-            }
+		if ($version)
+		{
+			$ret = $version;
 		}
 
 		$this->container->session->set('version', $ret);
 		$this->container->session->saveData();
+	}
+
+	private function detectVersion17()
+	{
+		$ret	  = false;
+		$filename = APATH_ROOT . '/config/autoload.php';
+
+		if (!file_exists($filename))
+		{
+			return $ret;
+		}
+
+		// This file loads the whole application, so I can't include it, I have to parse the code
+		$contents = file_get_contents($filename);
+
+		// This should never happen, but better play safe
+		if (stripos($contents, '_PS_VERSION_') === false)
+		{
+			return $ret;
+		}
+
+		$lines = explode("\n", $contents);
+
+		foreach ($lines as $line)
+		{
+			$line = trim($line);
+
+			if (stripos($line, '_PS_VERSION_') === false)
+			{
+				continue;
+			}
+
+			$parts   = explode('_PS_VERSION_', $line);
+			$version = trim($parts[1], ", ');");
+
+			$ret = $version;
+
+			// No need for further processing
+			break;
+		}
+
+		return $ret;
+	}
+
+	private function detectVersion15_16()
+	{
+		$ret 	  = false;
+		$filename = APATH_ROOT . '/config/settings.inc.php';
+
+		if (!file_exists($filename))
+		{
+			return $ret;
+		}
+
+		// There are some defines, but they *shouldn't* create problems
+		include $filename;
+
+		if(defined('_PS_VERSION_'))
+		{
+			$ret = _PS_VERSION_;
+		}
+
+		return $ret;
 	}
 
 	/**

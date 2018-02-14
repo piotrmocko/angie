@@ -11,6 +11,13 @@ defined('_AKEEBA') or die();
 class AngieModelPrestashopSetup extends AngieModelBaseSetup
 {
 	/**
+	 * Cached copy of the configuration model
+	 *
+	 * @var  AngieModelPrestashopConfiguration
+	 */
+	protected $configModel = null;
+
+	/**
 	 * Gets the basic site parameters
 	 *
 	 * @return  array
@@ -103,8 +110,8 @@ class AngieModelPrestashopSetup extends AngieModelBaseSetup
 		// Apply the Super Administrator changes
 		$this->applySuperAdminChanges();
 
-		// Get the wp-config.php file and try to save it
-		if (!$this->configModel->writeConfig(APATH_SITE.'/config/settings.inc.php'))
+		// Get the configuration file and try to save it
+		if (!$this->configModel->writeConfig())
 		{
 			return false;
 		}
@@ -155,6 +162,7 @@ class AngieModelPrestashopSetup extends AngieModelBaseSetup
         $db	= $this->getDatabase();
 
 		// Create a new encrypted password. We will use the cookie key as salt
+		// PrestaShop 1.7 uses bcrypt, but that's fine since it will re-hash the password at login
 		$crypt = md5($this->configModel->get('cookiekey').$password1);
 
 		// Update the database record
