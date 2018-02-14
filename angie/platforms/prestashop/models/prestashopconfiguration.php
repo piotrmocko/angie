@@ -210,7 +210,7 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 		$parameters['parameters']['database_host']		= $this->get('dbhost');
 		$parameters['parameters']['database_prefix']	= $this->get('dbprefix');
 
-		$return = "<?php return ".var_export($parameters)."; \n";
+		$return = "<?php return ".var_export($parameters, true)."; \n";
 
 		return $return;
 	}

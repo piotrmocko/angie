@@ -162,6 +162,7 @@ class AngieModelPrestashopSetup extends AngieModelBaseSetup
         $db	= $this->getDatabase();
 
 		// Create a new encrypted password. We will use the cookie key as salt
+		// PrestaShop 1.7 uses bcrypt, but that's fine since it will re-hash the password at login
 		$crypt = md5($this->configModel->get('cookiekey').$password1);
 
 		// Update the database record
