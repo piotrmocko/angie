@@ -395,9 +395,16 @@ class AngieModelSteps extends AModel
 
 		foreach ($steps as $step => $substeps)
 		{
+			$substepsCount = 0;
+
+			if (is_array($substepsCount))
+			{
+				$substepsCount = count($substeps);
+			}
+
 			$element = array(
 				'name'				=> $step,
-				'substeps'			=> count($substeps),
+				'substeps'			=> $substepsCount,
 				'active'			=> false,
 				'active_substep'	=> 0,
 			);
@@ -405,9 +412,11 @@ class AngieModelSteps extends AModel
 			if ($activeStep == $step)
 			{
 				$element['active'] = true;
+
 				if (!empty($substeps))
 				{
 					$pos = array_search($activeSubstep, $substeps);
+
 					if ($pos !== false)
 					{
 						$element['active_substep'] = $pos + 1;
