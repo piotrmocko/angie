@@ -274,6 +274,8 @@ class AngieModelPrestashopConfiguration extends AngieModelBaseConfiguration
 
 			$new_config .= $line."\n";
 		}
+
+		return $new_config;
 	}
 
     /**
