@@ -273,4 +273,19 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 
 		return true;
 	}
+
+	/**
+	 * Detects if WordFence file handling auto-prepend mode exists or not
+	 *
+	 * @return bool
+	 */
+	public function hasWordFence()
+	{
+		if (file_exists(APATH_ROOT.'/wordfence-waf.php'))
+		{
+			return true;
+		}
+
+		return false;
+	}
 }

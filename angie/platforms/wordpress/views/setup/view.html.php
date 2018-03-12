@@ -16,6 +16,8 @@ class AngieViewSetup extends AView
 
 	public function onBeforeMain()
 	{
+		/** @var AngieModelWordpressSetup $model */
+		$model           = $this->getModel();
 		$this->stateVars = $this->getModel()->getStateVariables();
 
 		// Prime the options array with some default info
@@ -24,6 +26,21 @@ class AngieViewSetup extends AView
 			'disabled' => '',
 			'help'     => 'SETUP_LBL_SERVERCONFIG_WORDFENCE_HELP'
 		);
+
+		// If we are restoring to a new server everything is checked by default
+		if ($model->isNewhost())
+		{
+			$this->disable_wordfence['checked'] = 'checked="checked"';
+		}
+
+		// If any option is not valid (ie missing files) we gray out the option AND remove the check
+		// to avoid user confusion
+		if (!$model->hasWordFence())
+		{
+			$this->disable_wordfence['checked']  = '';
+			$this->disable_wordfence['disabled'] = 'disabled="disabled"';
+			$this->disable_wordfence['help'] 	 = 'SETUP_LBL_SERVERCONFIG_NONEED_HELP';
+		}
 
 		return true;
 	}
