@@ -10,7 +10,7 @@
 
 defined('_AKEEBA') or die();
 
-/** @var $this AView */
+/** @var $this AngieViewSetup */
 
 $document = $this->container->application->getDocument();
 
@@ -154,6 +154,22 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             </div>
         <?php endif; ?>
 	</div>
+
+    <div class="row-fluid">
+        <div class="span6">
+            <h3><?php echo AText::_('SETUP_HEADER_SERVERCONFIG')?></h3>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" value="1" id="disable_wordfence" name="disable_wordfence" <?php echo $this->disable_wordfence['disabled'] ?> <?php echo $this->disable_wordfence['checked'] ?> />
+						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_WORDFENCE'); ?>
+                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
+                              title="<?php echo AText::_($this->disable_wordfence['help']) ?>"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
 
 <div id="browseModal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="browseModalLabel">

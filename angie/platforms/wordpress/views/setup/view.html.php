@@ -10,9 +10,20 @@ defined('_AKEEBA') or die();
 
 class AngieViewSetup extends AView
 {
+	/** @var stdClass */
+	public $stateVars;
+	public $disable_wordfence = array();
+
 	public function onBeforeMain()
 	{
 		$this->stateVars = $this->getModel()->getStateVariables();
+
+		// Prime the options array with some default info
+		$this->disable_wordfence = array(
+			'checked'  => '',
+			'disabled' => '',
+			'help'     => 'SETUP_LBL_SERVERCONFIG_WORDFENCE_HELP'
+		);
 
 		return true;
 	}
