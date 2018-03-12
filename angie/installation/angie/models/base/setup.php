@@ -55,6 +55,30 @@ abstract class AngieModelBaseSetup extends AModel
 
     abstract public function applySettings();
 
+	/**
+	 * Are we restoring to a new host?
+	 *
+	 * @return bool
+	 */
+	public function isNewhost()
+	{
+		/** @var AngieModelBaseMain $mainModel */
+		$mainModel = AModel::getAnInstance('Main', 'AngieModel');
+		$extrainfo = $mainModel->getExtraInfo();
+
+		if (isset($extrainfo['host']))
+		{
+			$uri = AUri::getInstance();
+
+			if ($extrainfo['host']['current'] != $uri->getHost())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
     /**
      * Returns the database connection variables for the default database.
      *
