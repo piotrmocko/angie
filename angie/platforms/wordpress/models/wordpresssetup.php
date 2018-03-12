@@ -154,6 +154,9 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 		// Get the state variables and update the global configuration
 		$stateVars = $this->getStateVariables();
 
+		// Apply server config changes
+		$this->applyServerconfigchanges();
+
 		// -- General settings
 		$this->configModel->set('blogname', $stateVars->blogname);
 		$this->configModel->set('blogdescription', $stateVars->blogdescription);
@@ -287,5 +290,26 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 		}
 
 		return false;
+	}
+
+	/**
+	 * Applies server configuration changes (removing/renaming server configuration files)
+	 */
+	private function applyServerconfigchanges()
+	{
+		if ($this->input->get('disable_wordfence'))
+		{
+			$this->disable_wordfence();
+		}
+	}
+
+	private function disable_wordfence()
+	{
+		if (!$this->hasWordFence())
+		{
+			return true;
+		}
+
+		return true;
 	}
 }
