@@ -280,16 +280,44 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 	/**
 	 * Detects if WordFence file handling auto-prepend mode exists or not
 	 *
-	 * @return bool
+	 * @return bool|string		False if auto-prepend is not enabled, otherwise the name of the config file that sets the directive
 	 */
 	public function hasWordFence()
 	{
-		if (file_exists(APATH_ROOT.'/wordfence-waf.php'))
+		if (!file_exists(APATH_ROOT.'/wordfence-waf.php'))
 		{
-			return true;
+			return false;
 		}
 
-		return false;
+		$config_files = array(
+			'.htaccess',
+			'htaccess.bak',
+			'.user.ini',
+			'.user.ini.bak',
+			'php.ini',
+			'php.ini.bak'
+		);
+
+		// Auto-prepend value could be in different places. Search in all of them, if we get an hit, let's stop
+		foreach ($config_files as $configFile)
+		{
+			$full_path = APATH_ROOT.'/'.$configFile;
+
+			if (!file_exists($full_path))
+			{
+				continue;
+			}
+
+			$contents = file_get_contents($full_path);
+
+			// The "auto_prepend_file" name is always the same in all those files, it only changes the way it's set
+			if (strpos($contents, 'auto_prepend_file') !== false)
+			{
+				return $full_path;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -305,10 +333,39 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 
 	private function disable_wordfence()
 	{
-		if (!$this->hasWordFence())
+		$configPath = $this->hasWordFence();
+
+		if (!$configPath)
 		{
 			return true;
 		}
+
+		$contents   = file_get_contents($configPath);
+		$contents   = explode("\n", $contents);
+		$configFile = basename($configPath);
+
+		$new_config = '';
+
+		foreach ($contents as $line)
+		{
+			if (strpos($line, 'auto_prepend_file') !== false)
+			{
+				// Apply the correct comment depending on the type of file
+				if (strpos($configFile, '.ini') !== false)
+				{
+					$line = '; '.$line;
+				}
+				elseif(strpos($configFile, 'htaccess') !== false)
+				{
+					$line = '# '.$line;
+				}
+			}
+
+			$new_config .= $line."\n";
+		}
+
+		// Finally write it back
+		file_put_contents($configPath, $new_config);
 
 		return true;
 	}
