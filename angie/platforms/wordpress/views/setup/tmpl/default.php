@@ -119,8 +119,6 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
                     <label class="checkbox">
                         <input type="checkbox" value="1" id="disable_autoprepend" name="disable_autoprepend" <?php echo $this->auto_prepend['disabled'] ?> <?php echo $this->auto_prepend['checked'] ?> />
 						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_AUTOPREPEND'); ?>
-                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_($this->auto_prepend['help']) ?>"></span>
                     </label>
                 </div>
             </div>

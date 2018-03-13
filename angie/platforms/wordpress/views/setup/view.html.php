@@ -19,16 +19,14 @@ class AngieViewSetup extends AView
 	{
 		/** @var AngieModelWordpressSetup $model */
 		$model           = $this->getModel();
-		$this->stateVars = $this->getModel()->getStateVariables();
 
+		$this->stateVars 	  = $model->getStateVariables();
 		$this->hasAutoPrepend = $model->hasAutoPrepend();
-
 
 		// Prime the options array with some default info
 		$this->auto_prepend = array(
 			'checked'  => '',
-			'disabled' => '',
-			'help'     => 'SETUP_LBL_SERVERCONFIG_AUTOPREPEND_HELP'
+			'disabled' => ''
 		);
 
 		// If we are restoring to a new server everything is checked by default
@@ -39,11 +37,10 @@ class AngieViewSetup extends AView
 
 		// If any option is not valid (ie missing files) we gray out the option AND remove the check
 		// to avoid user confusion
-		if (!$model->hasAutoPrepend())
+		if (!$this->hasAutoPrepend)
 		{
 			$this->auto_prepend['checked']  = '';
 			$this->auto_prepend['disabled'] = 'disabled="disabled"';
-			$this->auto_prepend['help']     = 'SETUP_LBL_SERVERCONFIG_NONEED_HELP';
 		}
 
 		return true;

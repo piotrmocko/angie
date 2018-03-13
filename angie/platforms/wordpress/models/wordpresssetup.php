@@ -322,7 +322,12 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 	{
 		if ($this->input->get('disable_autoprepend'))
 		{
-			$this->disable_autoprepend();
+			// If everything went fine, let's set a variable flag so we can remember the user to re-enable them
+			if ($this->disable_autoprepend())
+			{
+				$this->container->session->set('autoprepend_disabled', true);
+				$this->container->session->saveData();
+			}
 		}
 	}
 
