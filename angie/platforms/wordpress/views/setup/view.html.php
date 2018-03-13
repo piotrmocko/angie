@@ -28,7 +28,7 @@ class AngieViewSetup extends AView
 		$this->auto_prepend = array(
 			'checked'  => '',
 			'disabled' => '',
-			'help'     => 'SETUP_LBL_SERVERCONFIG_WORDFENCE_HELP'
+			'help'     => 'SETUP_LBL_SERVERCONFIG_AUTOPREPEND_HELP'
 		);
 
 		// If we are restoring to a new server everything is checked by default
