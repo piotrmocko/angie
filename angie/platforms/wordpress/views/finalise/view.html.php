@@ -10,14 +10,18 @@ defined('_AKEEBA') or die();
 
 class AngieViewFinalise extends AView
 {
+	public $showconfig;
+	public $configuration;
+
+	/** @var bool The user disabled auto-prepend scripts? If so, warn him to re-enable them */
+	public $autoprepend_disabled = false;
+
 	public function onBeforeMain()
 	{
         $this->container->application->getDocument()->addScript('platform/js/finalise_wp.js');
 
-		$model = $this->getModel();
-
 		$writtenConfiguration = $this->container->session->get('writtenConfiguration', true);
-		$this->showconfig = !$writtenConfiguration;
+		$this->showconfig 	  = !$writtenConfiguration;
 
 		if ($this->showconfig)
 		{
@@ -25,6 +29,8 @@ class AngieViewFinalise extends AView
 			$configurationModel = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
 			$this->configuration = $configurationModel->getFileContents();
 		}
+
+		$this->autoprepend_disabled = $this->container->session->get('autoprepend_disabled', false);
 
 		return true;
 	}

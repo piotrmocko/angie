@@ -10,7 +10,7 @@
 
 defined('_AKEEBA') or die();
 
-/** @var $this AView */
+/** @var $this AngieViewSetup */
 
 $document = $this->container->application->getDocument();
 
@@ -105,9 +105,26 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             </div>
 		</div>
 
+        <div class="span6">
+            <h3><?php echo AText::_('SETUP_HEADER_SERVERCONFIG')?></h3>
+
+			<?php if ($this->hasAutoPrepend):?>
+            <p class="alert alert-danger">
+                <?php echo AText::sprintf('SETUP_LBL_SERVERCONFIG_AUTOPREPEND_WARN', 'http://php.net/manual/en/ini.core.php#ini.auto-prepend-file')?>
+            </p>
+			<?php endif;?>
+
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" value="1" id="disable_autoprepend" name="disable_autoprepend" <?php echo $this->auto_prepend['disabled'] ?> <?php echo $this->auto_prepend['checked'] ?> />
+						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_AUTOPREPEND'); ?>
+                    </label>
+                </div>
+            </div>
         <?php if (isset($this->stateVars->superusers)): ?>
             <!-- Super Administrator settings -->
-            <div class="span6">
+
                 <h3><?php echo AText::_('SETUP_HEADER_SUPERUSERPARAMS') ?></h3>
                 <div class="form-horizontal">
                     <div class="control-group">
@@ -151,9 +168,10 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
                         </div>
                     </div>
                 </div>
-            </div>
         <?php endif; ?>
+        </div>
 	</div>
+
 </form>
 
 <div id="browseModal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="browseModalLabel">

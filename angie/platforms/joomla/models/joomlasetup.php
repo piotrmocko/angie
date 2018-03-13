@@ -835,30 +835,6 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 	}
 
 	/**
-	 * Are we restoring to a new host?
-	 *
-	 * @return bool
-	 */
-	public function isNewhost()
-	{
-		/** @var AngieModelBaseMain $mainModel */
-		$mainModel = AModel::getAnInstance('Main', 'AngieModel');
-		$extrainfo = $mainModel->getExtraInfo();
-
-		if (isset($extrainfo['host']))
-		{
-			$uri = AUri::getInstance();
-
-			if ($extrainfo['host']['current'] != $uri->getHost())
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
 	 * Checks if the current site has user-defined configuration files (ie php.ini or .user.ini etc etc)
 	 *
 	 * @return  bool

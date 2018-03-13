@@ -59,6 +59,11 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 </div>
 
 <div id="finalisationInterface" style="display: none">
+    <?php if ($this->autoprepend_disabled): ?>
+    <p class="alert alert-warning">
+        <?php echo AText::_('FINALISE_AUTOPREPEND_WARN')?>
+    </p>
+    <?php endif; ?>
 	<?php if ($this->showconfig): ?>
 	<?php echo $this->loadAnyTemplate('finalise/config'); ?>
 	<?php else: ?>
