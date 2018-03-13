@@ -105,9 +105,27 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
             </div>
 		</div>
 
+        <div class="span6">
+		<?php if ($this->hasAutoPrepend):?>
+            <h3><?php echo AText::_('SETUP_HEADER_SERVERCONFIG')?></h3>
+
+            <p class="alert alert-danger">
+                <?php echo AText::sprintf('SETUP_LBL_SERVERCONFIG_AUTOPREPEND_WARN', 'http://php.net/manual/en/ini.core.php#ini.auto-prepend-file')?>
+            </p>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" value="1" id="disable_autoprepend" name="disable_autoprepend" <?php echo $this->auto_prepend['disabled'] ?> <?php echo $this->auto_prepend['checked'] ?> />
+						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_WORDFENCE'); ?>
+                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
+                              title="<?php echo AText::_($this->auto_prepend['help']) ?>"></span>
+                    </label>
+                </div>
+            </div>
+		<?php endif;?>
         <?php if (isset($this->stateVars->superusers)): ?>
             <!-- Super Administrator settings -->
-            <div class="span6">
+
                 <h3><?php echo AText::_('SETUP_HEADER_SUPERUSERPARAMS') ?></h3>
                 <div class="form-horizontal">
                     <div class="control-group">
@@ -151,25 +169,10 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
                         </div>
                     </div>
                 </div>
-            </div>
         <?php endif; ?>
+        </div>
 	</div>
 
-    <div class="row-fluid">
-        <div class="span6">
-            <h3><?php echo AText::_('SETUP_HEADER_SERVERCONFIG')?></h3>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox" value="1" id="disable_wordfence" name="disable_wordfence" <?php echo $this->disable_wordfence['disabled'] ?> <?php echo $this->disable_wordfence['checked'] ?> />
-						<?php echo AText::_('SETUP_LBL_SERVERCONFIG_WORDFENCE'); ?>
-                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
-                              title="<?php echo AText::_($this->disable_wordfence['help']) ?>"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
 </form>
 
 <div id="browseModal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="browseModalLabel">

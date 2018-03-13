@@ -278,17 +278,12 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 	}
 
 	/**
-	 * Detects if WordFence file handling auto-prepend mode exists or not
+	 * Detects if there is an auto-prepend file (for example WordFence firewall plugin)
 	 *
 	 * @return bool|string		False if auto-prepend is not enabled, otherwise the name of the config file that sets the directive
 	 */
-	public function hasWordFence()
+	public function hasAutoPrepend()
 	{
-		if (!file_exists(APATH_ROOT.'/wordfence-waf.php'))
-		{
-			return false;
-		}
-
 		$config_files = array(
 			'.htaccess',
 			'htaccess.bak',
@@ -325,15 +320,15 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 	 */
 	private function applyServerconfigchanges()
 	{
-		if ($this->input->get('disable_wordfence'))
+		if ($this->input->get('disable_autoprepend'))
 		{
-			$this->disable_wordfence();
+			$this->disable_autoprepend();
 		}
 	}
 
-	private function disable_wordfence()
+	private function disable_autoprepend()
 	{
-		$configPath = $this->hasWordFence();
+		$configPath = $this->hasAutoPrepend();
 
 		if (!$configPath)
 		{
