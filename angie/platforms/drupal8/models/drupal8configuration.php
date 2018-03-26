@@ -552,7 +552,30 @@ PHP;
         // Let's evaluate the code of every fragment. Since eval() could be disabled, let's do the write + include trick
         foreach($fragments as $fragment)
         {
-            $file = tempnam(APATH_TEMPINSTALL, 'angie');
+			// Sanity check for open/close comments
+			$lines = explode("\n", $fragment);
+			$clean = array();
+
+			foreach ($lines as $line)
+			{
+				$line = trim($line);
+
+				// This should take care of closing tag comment (*/) and running comment (*)
+				if (strpos($line, '*') === 0)
+				{
+					continue;
+				}
+
+				if (strpos($line, '/*') === 0)
+				{
+					continue;
+				}
+
+				$clean[] = $line;
+			}
+
+			$fragment = implode("\n", $clean);
+            $file 	  = tempnam(APATH_TEMPINSTALL, 'angie');
 
             file_put_contents($file, "<?php \n".$fragment);
 
