@@ -28,6 +28,9 @@ class AngieModelWordpressReplacedata extends AModel
 	/** @var array The replacements to conduct */
 	protected $replacements = array();
 
+	/** @var int Maximum column size allowed for data replacement */
+	protected $column_size = 1048576;
+
 	/** @var int How many rows to process at once */
 	protected $batchSize = 100;
 
@@ -220,6 +223,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->currentTable = $session->get('replacedata.currentTable', null);
 		$this->currentRow   = $session->get('replacedata.currentRow', 0);
 		$this->totalRows    = $session->get('replacedata.totalRows', null);
+		$this->column_size	= $session->get('replacedata.column_size', 1048576);
 		$this->batchSize	= $session->get('replacedata.batchSize', 100);
 		$this->min_exec		= $session->get('replacedata.min_exec', 0);
 		$this->max_exec		= $session->get('replacedata.max_exec', 3);
@@ -237,6 +241,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$session->set('replacedata.currentTable', $this->currentTable);
 		$session->set('replacedata.currentRow', $this->currentRow);
 		$session->set('replacedata.totalRows', $this->totalRows);
+		$session->set('replacedata.column_size', $this->column_size);
 		$session->set('replacedata.batchSize', $this->batchSize);
 		$session->set('replacedata.min_exec', $this->min_exec);
 		$session->set('replacedata.max_exec', $this->max_exec);
