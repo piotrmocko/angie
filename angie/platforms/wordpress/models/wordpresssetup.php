@@ -312,7 +312,7 @@ class AngieModelWordpressSetup extends AngieModelBaseSetup
 			}
 		}
 
-		return true;
+		return false;
 	}
 
 	/**
