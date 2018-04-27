@@ -51,7 +51,7 @@ replacements.process = function(data)
 {
     // Do we have errors/warnings?
     var error_message   = data.error;
-    var warning_message = data.warning;
+    var warning_messages = data.warnings;
 
     if (error_message !== undefined && error_message != '')
     {
@@ -70,18 +70,18 @@ replacements.process = function(data)
         return;
     }
 
-    if (warning_message !== undefined && warning_message != '')
+    if (warning_messages)
 	{
         try
         {
             console.warn('Got a warning message');
-            console.log(warning_message);
+            console.log(warning_messages);
         }
         catch (e)
         {
         }
 
-        replacements.onWarning(warning_message);
+        replacements.onWarning(warning_messages);
 	}
 
 	$('#blinkenlights').append($('#blinkenlights span:first'));
@@ -198,10 +198,13 @@ replacements.onError = function (message)
     replacements.startRetryTimeoutBar();
 };
 
-replacements.onWarning = function(message)
+replacements.onWarning = function(messages)
 {
     document.getElementById('warning-panel').style.display = 'block';
-    $('<div></div>').html(message).appendTo('#warnings-list');
+
+    $.each(messages, function (index, message) {
+        $('<div></div>').html(message).appendTo('#warnings-list');
+    });
 };
 
 /**
