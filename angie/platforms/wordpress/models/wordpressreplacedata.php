@@ -561,6 +561,7 @@ class AngieModelWordpressReplacedata extends AModel
 			// This is a complex replacement for serialised data. Let's get a bunch of data.
 			$tableName        = $this->currentTable['table'];
 			$this->currentRow = empty($this->currentRow) ? 0 : $this->currentRow;
+
 			try
 			{
 				$query = $db->getQuery(true)->select('*')->from($db->qn($tableName));
@@ -603,18 +604,26 @@ class AngieModelWordpressReplacedata extends AModel
 
 						if ($serialisedHelper->isSerialised($fieldValue))
 						{
-							// Replace serialised data
-							try
+							// Replace serialised data only if it's LOWER than the maximum column size
+							if (strlen($fieldValue) <= $this->column_size)
 							{
-								$decoded = $serialisedHelper->decode($fieldValue);
+								try
+								{
+									$decoded = $serialisedHelper->decode($fieldValue);
 
-								$serialisedHelper->replaceTextInDecoded($decoded, $from, $to);
+									$serialisedHelper->replaceTextInDecoded($decoded, $from, $to);
 
-								$fieldValue = $serialisedHelper->encode($decoded);
+									$fieldValue = $serialisedHelper->encode($decoded);
+								}
+								catch (Exception $e)
+								{
+									// Yeah, well...
+								}
 							}
-							catch (Exception $e)
+							else
 							{
-								// Yeah, well...
+								// Otherwise skip it and report back to the user about this field
+								$warnings[] = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
 							}
 						}
 						else
