@@ -471,7 +471,11 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		// Finally, return and let the replacement engine run
-		return array('msg' => AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'), 'more' => true);
+		return array(
+			'msg' 		=> AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'),
+			'more' 		=> true,
+			'warnings' 	=> array()
+		);
 	}
 
 	/**
@@ -487,6 +491,7 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		$msg              = '';
+		$warnings		  = array();
 		$more             = true;
 		$db               = $this->getDbo();
 		$serialisedHelper = new AUtilsSerialised();
@@ -650,7 +655,11 @@ class AngieModelWordpressReplacedata extends AModel
 		// Sleep if we didn't hit the minimum execution time
 		$this->timer->enforce_min_exec_time();
 
-		return array('msg' => $msg, 'more' => $more);
+		return array(
+			'msg' 		=> $msg,
+			'more' 		=> $more,
+			'warnings' 	=> $warnings
+		);
 	}
 
 	/**
