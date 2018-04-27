@@ -48,8 +48,9 @@ replacements.start = function()
 
 replacements.process = function(data)
 {
-    // Do we have errors?
-    var error_message = data.error;
+    // Do we have errors/warnings?
+    var error_message   = data.error;
+    var warning_message = data.warning;
 
     if (error_message !== undefined && error_message != '')
     {
@@ -67,6 +68,20 @@ replacements.process = function(data)
 
         return;
     }
+
+    if (warning_message !== undefined && warning_message != '')
+	{
+        try
+        {
+            console.warn('Got a warning message');
+            console.log(warning_message);
+        }
+        catch (e)
+        {
+        }
+
+        replacements.onWarning(warning_message);
+	}
 
 	$('#blinkenlights').append($('#blinkenlights span:first'));
 	$('#replacementsProgressText').text(data.msg);
@@ -180,6 +195,12 @@ replacements.onError = function (message)
 
     // Start the countdown
     replacements.startRetryTimeoutBar();
+};
+
+replacements.onWarning = function(message)
+{
+    document.getElementById('warning-panel').style.display = 'block';
+    $('<div></div>').html(message).appendTo('#warnings-list');
 };
 
 /**
