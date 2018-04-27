@@ -374,6 +374,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->currentRow   = null;
 		$this->fields       = null;
 		$this->totalRows    = null;
+		$this->column_size	= $this->input->getInt('column_size', 1048576);
 		$this->batchSize	= $this->input->getInt('batchSize', 100);
 		$this->min_exec     = $this->input->getInt('min_exec', 0);
 		$this->max_exec		= $this->input->getInt('max_exec', 3);

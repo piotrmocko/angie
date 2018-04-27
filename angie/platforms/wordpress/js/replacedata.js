@@ -34,6 +34,7 @@ replacements.start = function()
 		'replaceFrom':	$('#replaceFrom').val(),
 		'replaceTo':	$('#replaceTo').val(),
 		'extraTables':	$('#extraTables').val(),
+		'column_size':	$('#column_size').val(),
 		'batchSize':	$('#batchSize').val(),
 		'min_exec':		$('#min_exec').val(),
 		'max_exec':		$('#max_exec').val(),

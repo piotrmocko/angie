@@ -105,7 +105,7 @@ $document->addScriptDeclaration($js);
             <div class="control-group">
                 <label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_COLUMNSIZE')?></label>
                 <div class="controls">
-                    <input type="text" id="max_column_size" name="max_column_size" class="input-small" value="1048576" />
+                    <input type="text" id="column_size" name="column_size" class="input-small" value="1048576" />
                 </div>
             </div>
 			<div class="control-group">
