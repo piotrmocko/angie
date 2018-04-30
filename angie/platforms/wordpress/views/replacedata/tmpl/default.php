@@ -222,12 +222,15 @@ $document->addScriptDeclaration($js);
 <?php /* Replacement warnings */ ?>
 <div id="warning-panel" style="display:none">
     <div class="akeeba-panel--warning">
-        <div class="alert alert-danger">
+        <div class="alert alert-warning">
             <h3 class="alert-heading">
 				<?php echo AText::_('SETUP_REPLACE_HEADER_REPLACEWARNING'); ?>
             </h3>
-        </div>
-        <div id="warnings-list">
+
+            <div id="warnings-list">
+            </div>
+
+            <div class="clearfix"></div>
         </div>
     </div>
 </div>

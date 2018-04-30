@@ -70,7 +70,7 @@ replacements.process = function(data)
         return;
     }
 
-    if (warning_messages)
+    if (warning_messages && warning_messages.length > 0)
 	{
         try
         {
