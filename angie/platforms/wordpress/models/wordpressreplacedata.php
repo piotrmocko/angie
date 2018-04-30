@@ -46,6 +46,9 @@ class AngieModelWordpressReplacedata extends AModel
 	/** @var int Runtime bias */
 	protected $bias = 75;
 
+	/** @var array Store any warning we get, so we can inform the user */
+	protected $warnings = array();
+
 	/**
 	 * Get a reference to the database driver object
 	 *
@@ -228,6 +231,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->min_exec		= $session->get('replacedata.min_exec', 0);
 		$this->max_exec		= $session->get('replacedata.max_exec', 3);
 		$this->bias         = $session->get('replacedata.bias', 75);
+		$this->warnings     = $session->get('replacedata.warnings', array());
 	}
 
 	/**
@@ -246,6 +250,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$session->set('replacedata.min_exec', $this->min_exec);
 		$session->set('replacedata.max_exec', $this->max_exec);
 		$session->set('replacedata.bias', $this->bias);
+		$session->set('replacedata.warnings', $this->warnings);
 	}
 
 	/**
@@ -623,7 +628,8 @@ class AngieModelWordpressReplacedata extends AModel
 							else
 							{
 								// Otherwise skip it and report back to the user about this field
-								$warnings[] = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
+								$warnings[] 	  = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
+								$this->warnings[] = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
 							}
 						}
 						else

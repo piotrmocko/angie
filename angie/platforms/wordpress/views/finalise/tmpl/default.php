@@ -72,6 +72,15 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 		</h3>
 	<?php endif; ?>
 
+    <?php if($this->replace_warnings):?>
+    <div class="alert alert-warning">
+        <h3><?php echo AText::_('FINALISE_REPLACEMENTS_WARN')?></h3>
+        <div>
+            <?php echo AText::sprintf('FINALISE_REPLACEMENTS_WARN_BODY', implode('<br/>', $this->replace_warnings))?>
+        </div>
+    </div>
+    <?php endif; ?>
+
 	<div id="finaliseKickstart" style="display: none">
 		<p>
 			<?php echo AText::_('FINALISE_LBL_KICKSTART'); ?>
