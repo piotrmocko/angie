@@ -101,6 +101,13 @@ $document->addScriptDeclaration($js);
 		<span id="showAdvanced" class="btn btn-primary"><?php echo AText::_('SETUP_SHOW_ADVANCED')?></span>
 		<div id="replaceThrottle" style="display: none;">
 			<h4><?php echo AText::_('SETUP_ADVANCE_OPTIONS')?></h4>
+
+            <div class="control-group">
+                <label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_COLUMNSIZE')?></label>
+                <div class="controls">
+                    <input type="text" id="column_size" name="column_size" class="input-small" value="1048576" />
+                </div>
+            </div>
 			<div class="control-group">
 				<label class="control-label"><?php echo AText::_('SETUP_REPLACE_DATA_BATCHSIZE')?></label>
 				<div class="controls">
@@ -208,6 +215,22 @@ $document->addScriptDeclaration($js);
                 <span class="icon-book icon-white"></span>
 				<?php echo AText::_('SETUP_REPLACE_TROUBLESHOOTINGDOCS'); ?>
             </button>
+        </div>
+    </div>
+</div>
+
+<?php /* Replacement warnings */ ?>
+<div id="warning-panel" style="display:none">
+    <div class="akeeba-panel--warning">
+        <div class="alert alert-warning">
+            <h3 class="alert-heading">
+				<?php echo AText::_('SETUP_REPLACE_HEADER_REPLACEWARNING'); ?>
+            </h3>
+
+            <div id="warnings-list">
+            </div>
+
+            <div class="clearfix"></div>
         </div>
     </div>
 </div>

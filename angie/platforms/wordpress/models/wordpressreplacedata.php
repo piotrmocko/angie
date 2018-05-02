@@ -28,6 +28,9 @@ class AngieModelWordpressReplacedata extends AModel
 	/** @var array The replacements to conduct */
 	protected $replacements = array();
 
+	/** @var int Maximum column size allowed for data replacement */
+	protected $column_size = 1048576;
+
 	/** @var int How many rows to process at once */
 	protected $batchSize = 100;
 
@@ -42,6 +45,9 @@ class AngieModelWordpressReplacedata extends AModel
 
 	/** @var int Runtime bias */
 	protected $bias = 75;
+
+	/** @var array Store any warning we get, so we can inform the user */
+	protected $warnings = array();
 
 	/**
 	 * Get a reference to the database driver object
@@ -220,10 +226,12 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->currentTable = $session->get('replacedata.currentTable', null);
 		$this->currentRow   = $session->get('replacedata.currentRow', 0);
 		$this->totalRows    = $session->get('replacedata.totalRows', null);
+		$this->column_size	= $session->get('replacedata.column_size', 1048576);
 		$this->batchSize	= $session->get('replacedata.batchSize', 100);
 		$this->min_exec		= $session->get('replacedata.min_exec', 0);
 		$this->max_exec		= $session->get('replacedata.max_exec', 3);
 		$this->bias         = $session->get('replacedata.bias', 75);
+		$this->warnings     = $session->get('replacedata.warnings', array());
 	}
 
 	/**
@@ -237,10 +245,12 @@ class AngieModelWordpressReplacedata extends AModel
 		$session->set('replacedata.currentTable', $this->currentTable);
 		$session->set('replacedata.currentRow', $this->currentRow);
 		$session->set('replacedata.totalRows', $this->totalRows);
+		$session->set('replacedata.column_size', $this->column_size);
 		$session->set('replacedata.batchSize', $this->batchSize);
 		$session->set('replacedata.min_exec', $this->min_exec);
 		$session->set('replacedata.max_exec', $this->max_exec);
 		$session->set('replacedata.bias', $this->bias);
+		$session->set('replacedata.warnings', $this->warnings);
 	}
 
 	/**
@@ -369,6 +379,7 @@ class AngieModelWordpressReplacedata extends AModel
 		$this->currentRow   = null;
 		$this->fields       = null;
 		$this->totalRows    = null;
+		$this->column_size	= $this->input->getInt('column_size', 1048576);
 		$this->batchSize	= $this->input->getInt('batchSize', 100);
 		$this->min_exec     = $this->input->getInt('min_exec', 0);
 		$this->max_exec		= $this->input->getInt('max_exec', 3);
@@ -465,7 +476,11 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		// Finally, return and let the replacement engine run
-		return array('msg' => AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'), 'more' => true);
+		return array(
+			'msg' 		=> AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'),
+			'more' 		=> true,
+			'warnings' 	=> array()
+		);
 	}
 
 	/**
@@ -481,6 +496,7 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		$msg              = '';
+		$warnings		  = array();
 		$more             = true;
 		$db               = $this->getDbo();
 		$serialisedHelper = new AUtilsSerialised();
@@ -550,6 +566,7 @@ class AngieModelWordpressReplacedata extends AModel
 			// This is a complex replacement for serialised data. Let's get a bunch of data.
 			$tableName        = $this->currentTable['table'];
 			$this->currentRow = empty($this->currentRow) ? 0 : $this->currentRow;
+
 			try
 			{
 				$query = $db->getQuery(true)->select('*')->from($db->qn($tableName));
@@ -592,18 +609,27 @@ class AngieModelWordpressReplacedata extends AModel
 
 						if ($serialisedHelper->isSerialised($fieldValue))
 						{
-							// Replace serialised data
-							try
+							// Replace serialised data only if it's LOWER than the maximum column size
+							if (strlen($fieldValue) <= $this->column_size)
 							{
-								$decoded = $serialisedHelper->decode($fieldValue);
+								try
+								{
+									$decoded = $serialisedHelper->decode($fieldValue);
 
-								$serialisedHelper->replaceTextInDecoded($decoded, $from, $to);
+									$serialisedHelper->replaceTextInDecoded($decoded, $from, $to);
 
-								$fieldValue = $serialisedHelper->encode($decoded);
+									$fieldValue = $serialisedHelper->encode($decoded);
+								}
+								catch (Exception $e)
+								{
+									// Yeah, well...
+								}
 							}
-							catch (Exception $e)
+							else
 							{
-								// Yeah, well...
+								// Otherwise skip it and report back to the user about this field
+								$warnings[] 	  = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
+								$this->warnings[] = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
 							}
 						}
 						else
@@ -644,7 +670,11 @@ class AngieModelWordpressReplacedata extends AModel
 		// Sleep if we didn't hit the minimum execution time
 		$this->timer->enforce_min_exec_time();
 
-		return array('msg' => $msg, 'more' => $more);
+		return array(
+			'msg' 		=> $msg,
+			'more' 		=> $more,
+			'warnings' 	=> $warnings
+		);
 	}
 
 	/**

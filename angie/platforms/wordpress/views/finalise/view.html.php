@@ -13,6 +13,9 @@ class AngieViewFinalise extends AView
 	public $showconfig;
 	public $configuration;
 
+	/** @var array Did we get any warning during the replace step? If so, warn the user */
+	public $replace_warnings = array();
+
 	/** @var bool The user disabled auto-prepend scripts? If so, warn him to re-enable them */
 	public $autoprepend_disabled = false;
 
@@ -31,6 +34,7 @@ class AngieViewFinalise extends AView
 		}
 
 		$this->autoprepend_disabled = $this->container->session->get('autoprepend_disabled', false);
+		$this->replace_warnings = $this->container->session->get('replacedata.warnings', array());
 
 		return true;
 	}

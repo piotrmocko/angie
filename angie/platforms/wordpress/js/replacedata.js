@@ -34,6 +34,7 @@ replacements.start = function()
 		'replaceFrom':	$('#replaceFrom').val(),
 		'replaceTo':	$('#replaceTo').val(),
 		'extraTables':	$('#extraTables').val(),
+		'column_size':	$('#column_size').val(),
 		'batchSize':	$('#batchSize').val(),
 		'min_exec':		$('#min_exec').val(),
 		'max_exec':		$('#max_exec').val(),
@@ -48,8 +49,9 @@ replacements.start = function()
 
 replacements.process = function(data)
 {
-    // Do we have errors?
-    var error_message = data.error;
+    // Do we have errors/warnings?
+    var error_message   = data.error;
+    var warning_messages = data.warnings;
 
     if (error_message !== undefined && error_message != '')
     {
@@ -67,6 +69,20 @@ replacements.process = function(data)
 
         return;
     }
+
+    if (warning_messages && warning_messages.length > 0)
+	{
+        try
+        {
+            console.warn('Got a warning message');
+            console.log(warning_messages);
+        }
+        catch (e)
+        {
+        }
+
+        replacements.onWarning(warning_messages);
+	}
 
 	$('#blinkenlights').append($('#blinkenlights span:first'));
 	$('#replacementsProgressText').text(data.msg);
@@ -180,6 +196,15 @@ replacements.onError = function (message)
 
     // Start the countdown
     replacements.startRetryTimeoutBar();
+};
+
+replacements.onWarning = function(messages)
+{
+    document.getElementById('warning-panel').style.display = 'block';
+
+    $.each(messages, function (index, message) {
+        $('<div></div>').html(message).appendTo('#warnings-list');
+    });
 };
 
 /**
