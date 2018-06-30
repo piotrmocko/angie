@@ -156,6 +156,20 @@ abstract class ADatabaseRestore
     protected $logFile;
 
 	/**
+	 * Should I halt the restoration when a CREATE query fails?
+	 *
+	 * @var   bool
+	 */
+    protected $breakOnFailedCreate = true;
+
+	/**
+	 * Should I halt the restoration when an INSERT (or other non-CREATE) query fails?
+	 *
+	 * @var   bool
+	 */
+    protected $breakOnFailedInsert = true;
+
+	/**
 	 * Public constructor. Initialises the database restoration engine.
 	 *
 	 * @param   string      $dbkey          The databases.ini key of the current database
@@ -191,8 +205,20 @@ abstract class ADatabaseRestore
 			$this->dbiniValues['failed_query_log'] = sprintf('failed_queries_%s.log', $this->sanitizeDBKey($dbkey));
 		}
 
-		$this->logFile = APATH_TEMPINSTALL . '/' . $this->dbiniValues['failed_query_log'];
-		$this->timer   = new ATimer(0, (int) $this->dbiniValues['maxexectime'], (int) $this->dbiniValues['runtimebias']);
+		if (!key_exists('break_on_failed_create', $this->dbiniValues))
+		{
+			$this->dbiniValues['break_on_failed_create'] = true;
+		}
+
+		if (!key_exists('break_on_failed_insert', $this->dbiniValues))
+		{
+			$this->dbiniValues['break_on_failed_insert'] = true;
+		}
+
+		$this->logFile             = APATH_TEMPINSTALL . '/' . $this->dbiniValues['failed_query_log'];
+		$this->breakOnFailedCreate = $this->dbiniValues['break_on_failed_create'];
+		$this->breakOnFailedInsert = $this->dbiniValues['break_on_failed_insert'];
+		$this->timer               = new ATimer(0, (int) $this->dbiniValues['maxexectime'], (int) $this->dbiniValues['runtimebias']);
 	}
 
 	/**
