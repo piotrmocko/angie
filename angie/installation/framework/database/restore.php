@@ -141,8 +141,19 @@ abstract class ADatabaseRestore
 	 */
 	protected $queries = null;
 
-    /** @var  AContainer    Application container */
+	/**
+	 * Application container
+	 *
+	 * @var   AContainer
+	 */
     protected $container;
+
+	/**
+	 * The full path to a log file which contains failed queries which were ignored
+	 *
+	 * @var   string
+	 */
+    protected $logFile;
 
 	/**
 	 * Public constructor. Initialises the database restoration engine.
@@ -153,14 +164,14 @@ abstract class ADatabaseRestore
 	 */
 	public function __construct($dbkey, $dbiniValues, AContainer $container = null)
 	{
-        if(is_null($container))
-        {
-            $container = AApplication::getInstance()->getContainer();
-        }
+		if (is_null($container))
+		{
+			$container = AApplication::getInstance()->getContainer();
+		}
 
-        $this->container = $container;
+		$this->container = $container;
 
-		$this->dbkey = $dbkey;
+		$this->dbkey       = $dbkey;
 		$this->dbiniValues = $dbiniValues;
 
 		$this->populatePartsMap();
@@ -169,12 +180,19 @@ abstract class ADatabaseRestore
 		{
 			$this->dbiniValues['maxexectime'] = 5;
 		}
+
 		if (!key_exists('runtimebias', $this->dbiniValues))
 		{
 			$this->dbiniValues['runtimebias'] = 75;
 		}
 
-		$this->timer = new ATimer(0, (int)$this->dbiniValues['maxexectime'], (int)$this->dbiniValues['runtimebias']);
+		if (!key_exists('failed_query_log', $this->dbiniValues))
+		{
+			$this->dbiniValues['failed_query_log'] = sprintf('failed_queries_%s.log', $this->sanitizeDBKey($dbkey));
+		}
+
+		$this->logFile = APATH_TEMPINSTALL . '/' . $this->dbiniValues['failed_query_log'];
+		$this->timer   = new ATimer(0, (int) $this->dbiniValues['maxexectime'], (int) $this->dbiniValues['runtimebias']);
 	}
 
 	/**
@@ -847,5 +865,81 @@ abstract class ADatabaseRestore
 	public function getTimer()
 	{
 		return $this->timer;
+	}
+
+	/**
+	 * This method processes a string and replaces non alphanumeric characters with underscores
+	 *
+	 * @param   string  $string    String to process
+	 *
+	 * @return  string  Processed string
+	 */
+	private function sanitizeDBKey($string)
+	{
+		// Sanitize non-alphanumeric to underscores
+		$str = preg_replace('/(\s|[^A-Za-z0-9\_])+/', '_', $string);
+
+		// Trim underscores at beginning and end of the string
+		$str = trim($str, '_');
+
+		return $str;
+	}
+
+	/**
+	 * Remove the failed query log. You need to call this at the beginning of the restoration.
+	 *
+	 * @return  void
+	 */
+	public function removeLog()
+	{
+		if (empty($this->logFile))
+		{
+			return;
+		}
+
+		if (@file_exists($this->logFile))
+		{
+			@unlink($this->logFile);
+		}
+	}
+
+	/**
+	 * Returns the full filesystem path of the failed query log file.
+	 *
+	 * @return  string
+	 */
+	public function getLogPath()
+	{
+		return $this->logFile;
+	}
+
+	/**
+	 * Add a failed query to the failed query log file.
+	 *
+	 * @param   string  $sql  The failed database query to log
+	 *
+	 * @return  void
+	 */
+	private function logQuery($sql)
+	{
+		if (empty($this->logFile))
+		{
+			return;
+		}
+
+		if (!@file_exists($this->logFile))
+		{
+			return;
+		}
+
+		$fp = @fopen($this->logFile, 'at');
+
+		if ($fp === false)
+		{
+			return;
+		}
+
+		@fwrite($fp, rtrim($sql, "\n") . "\n");
+		@fclose($fp);
 	}
 }
