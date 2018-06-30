@@ -981,8 +981,22 @@ abstract class ADatabaseRestore
 		// Is this a CREATE query?
 		$isCreateQuery = (substr($sql, 0, 7) == 'CREATE ');
 
+		// Should I throw an exception (halt the restoration) for this failed query?
+		$throwException = $this->breakOnFailedInsert;
+
+		if ($isCreateQuery)
+		{
+			$throwException = $this->breakOnFailedCreate;
+		}
+
 		// Log the failed query. If writing to the log fails nothing bad happens.
 		$this->logQuery($sql);
+
+		// If I am not supposed to halt the restoration stop here.
+		if (!$throwException)
+		{
+			return;
+		}
 
 		// Format the error message in a human readable way and throw it again
 		$message = '<h2>' . AText::sprintf('ANGI_RESTORE_ERROR_ERRORATLINE', $this->linenumber) . '</h2>' . "\n";
