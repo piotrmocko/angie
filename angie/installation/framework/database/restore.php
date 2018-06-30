@@ -952,6 +952,9 @@ abstract class ADatabaseRestore
 			return;
 		}
 
+		// Is this a CREATE query?
+		$isCreateQuery = (substr($sql, 0, 7) == 'CREATE ');
+
 		// Log the failed query. If writing to the log fails nothing bad happens.
 		$this->logQuery($sql);
 
