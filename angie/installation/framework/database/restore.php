@@ -937,14 +937,9 @@ abstract class ADatabaseRestore
 	 *
 	 * @return  void
 	 */
-	private function logQuery($sql)
+	private function logQuery($sql, $error = null)
 	{
 		if (empty($this->logFile))
-		{
-			return;
-		}
-
-		if (!@file_exists($this->logFile))
 		{
 			return;
 		}
@@ -954,6 +949,12 @@ abstract class ADatabaseRestore
 		if ($fp === false)
 		{
 			return;
+		}
+
+		if (!empty($error))
+		{
+			$error = '# Failed with error: ' . str_replace("\n\r", '', trim($error));
+			@fwrite($fp, $error);
 		}
 
 		@fwrite($fp, rtrim($sql, "\n") . "\n");
@@ -990,7 +991,7 @@ abstract class ADatabaseRestore
 		}
 
 		// Log the failed query. If writing to the log fails nothing bad happens.
-		$this->logQuery($sql);
+		$this->logQuery($sql, $exc->getCode() . ' -- ' . $exc->getMessage());
 
 		// If I am not supposed to halt the restoration stop here.
 		if (!$throwException)

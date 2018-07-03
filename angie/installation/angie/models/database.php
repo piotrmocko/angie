@@ -112,7 +112,7 @@ class AngieModelDatabase extends AModel
 							$data['break_on_failed_create'] = true;
 						}
 
-						if (!array_key_exists('break_on_failed_create', $data))
+						if (!array_key_exists('break_on_failed_insert', $data))
 						{
 							$data['break_on_failed_insert'] = true;
 						}
