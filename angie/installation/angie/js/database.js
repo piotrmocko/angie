@@ -61,21 +61,23 @@ function databaseRunRestoration(key)
 	};
 
 	// Get the form data and add them to the dbinfo request array
-	data.dbinfo.dbtype		= $('#dbtype').val();
-	data.dbinfo.dbhost		= $('#dbhost').val();
-	data.dbinfo.dbuser		= $('#dbuser').val();
-	data.dbinfo.dbpass		= $('#dbpass').val();
-	data.dbinfo.dbname		= $('#dbname').val();
-	data.dbinfo.existing	= $('#existing').val();
-	data.dbinfo.prefix		= $('#prefix').val();
-	data.dbinfo.foreignkey	= +$('#foreignkey').is(':checked');
-	data.dbinfo.noautovalue	= +$('#noautovalue').is(':checked');
-	data.dbinfo.replace		= +$('#replace').is(':checked');
-	data.dbinfo.utf8db		= +$('#utf8db').is(':checked');
-	data.dbinfo.utf8tables	= +$('#utf8tables').is(':checked');
-	data.dbinfo.utf8mb4	    = +$('#utf8mb4').is(':checked');
-	data.dbinfo.maxexectime	= $('#maxexectime').val();
-	data.dbinfo.throttle	= $('#throttle').val();
+	data.dbinfo.dbtype                 = $('#dbtype').val();
+	data.dbinfo.dbhost                 = $('#dbhost').val();
+	data.dbinfo.dbuser                 = $('#dbuser').val();
+	data.dbinfo.dbpass                 = $('#dbpass').val();
+	data.dbinfo.dbname                 = $('#dbname').val();
+	data.dbinfo.existing               = $('#existing').val();
+	data.dbinfo.prefix                 = $('#prefix').val();
+	data.dbinfo.foreignkey             = +$('#foreignkey').is(':checked');
+	data.dbinfo.noautovalue            = +$('#noautovalue').is(':checked');
+	data.dbinfo.replace                = +$('#replace').is(':checked');
+	data.dbinfo.utf8db                 = +$('#utf8db').is(':checked');
+	data.dbinfo.utf8tables             = +$('#utf8tables').is(':checked');
+	data.dbinfo.utf8mb4                = +$('#utf8mb4').is(':checked');
+	data.dbinfo.break_on_failed_create = +$('#break_on_failed_create').is(':checked');
+	data.dbinfo.break_on_failed_insert = +$('#break_on_failed_insert').is(':checked');
+	data.dbinfo.maxexectime            = $('#maxexectime').val();
+	data.dbinfo.throttle               = $('#throttle').val();
 
 	databaseThrottle = data.dbinfo.throttle;
 	if (databaseThrottle <= 100)
