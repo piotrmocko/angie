@@ -170,6 +170,13 @@ abstract class ADatabaseRestore
     protected $breakOnFailedInsert = true;
 
 	/**
+	 * How many SQL queries resulted in an error during the restoration
+	 *
+	 * @var   int
+	 */
+    protected $errorcount = 0;
+
+	/**
 	 * Public constructor. Initialises the database restoration engine.
 	 *
 	 * @param   string      $dbkey          The databases.ini key of the current database
@@ -295,7 +302,7 @@ abstract class ADatabaseRestore
 	public function removeInformationFromStorage()
 	{
 		$variables = array('start', 'foffset', 'totalqueries', 'curpart',
-			'partsmap', 'totalsize', 'runsize');
+			'partsmap', 'totalsize', 'runsize', 'errorcount');
 		$session = $this->container->session;
 
 		foreach($variables as $var)
@@ -369,13 +376,14 @@ abstract class ADatabaseRestore
 		}
 
 		// First, try to fetch from the session storage
-		$this->totalSize = $this->getFromStorage('totalsize', 0);
-		$this->runSize = $this->getFromStorage('runsize', 0);
-		$this->partsMap = $this->getFromStorage('partsmap', array());
-		$this->curpart = $this->getFromStorage('curpart', 0);
-		$this->foffset = $this->getFromStorage('foffset', 0);
-		$this->start = $this->getFromStorage('start', 0);
+		$this->totalSize    = $this->getFromStorage('totalsize', 0);
+		$this->runSize      = $this->getFromStorage('runsize', 0);
+		$this->partsMap     = $this->getFromStorage('partsmap', array());
+		$this->curpart      = $this->getFromStorage('curpart', 0);
+		$this->foffset      = $this->getFromStorage('foffset', 0);
+		$this->start        = $this->getFromStorage('start', 0);
 		$this->totalqueries = $this->getFromStorage('totalqueries', 0);
+		$this->errorcount   = $this->getFromStorage('errorcount', 0);
 
 		// If that didn't work try a full initalisation
 		if (empty($this->partsMap))
@@ -384,12 +392,13 @@ abstract class ADatabaseRestore
 
 			$parts = $this->getParam('parts', 1);
 
-			$this->partsMap = array();
-			$path = APATH_INSTALLATION . '/sql';
-			$this->totalSize = 0;
-			$this->runSize = 0;
-			$this->curpart = 0;
-			$this->foffset = 0;
+			$this->partsMap   = array();
+			$path             = APATH_INSTALLATION . '/sql';
+			$this->totalSize  = 0;
+			$this->runSize    = 0;
+			$this->curpart    = 0;
+			$this->foffset    = 0;
+			$this->errorcount = 0;
 
 			for ($index = 0; $index <= $parts; $index++)
 			{
@@ -399,16 +408,16 @@ abstract class ADatabaseRestore
 				}
 				else
 				{
-					$basename = substr($sqlfile, 0, -4).'.s'.sprintf('%02u', $index);
+					$basename = substr($sqlfile, 0, -4) . '.s' . sprintf('%02u', $index);
 				}
 
-				$file = $path.'/'.$basename;
+				$file = $path . '/' . $basename;
 				if (!file_exists($file))
 				{
-					$file = 'sql/'.$basename;
+					$file = 'sql/' . $basename;
 				}
-				$filesize = @filesize($file) ;
-				$this->totalSize += intval($filesize);
+				$filesize         = @filesize($file);
+				$this->totalSize  += intval($filesize);
 				$this->partsMap[] = $file;
 			}
 
@@ -419,6 +428,7 @@ abstract class ADatabaseRestore
 			$this->setToStorage('foffset', $this->foffset);
 			$this->setToStorage('start', $this->start);
 			$this->setToStorage('totalqueries', $this->totalqueries);
+			$this->setToStorage('errorcount', $this->errorcount);
 
 			$this->container->session->saveData();
 		}
@@ -676,9 +686,9 @@ abstract class ADatabaseRestore
 	{
 		$parts = $this->getParam('parts', 1);
 		$this->openFile();
-		$this->linenumber = $this->start;
+		$this->linenumber    = $this->start;
 		$this->totalsizeread = 0;
-		$this->queries = 0;
+		$this->queries       = 0;
 
 		while ($this->timer->getTimeLeft() > 0)
 		{
@@ -737,7 +747,7 @@ abstract class ADatabaseRestore
 		$bytes_togo = $this->totalSize - $this->runSize;
 
 		// Check for global EOF
-		if (($this->curpart >= ($parts-1)) && feof($this->file))
+		if (($this->curpart >= ($parts - 1)) && feof($this->file))
 		{
 			$bytes_togo = 0;
 		}
@@ -747,12 +757,13 @@ abstract class ADatabaseRestore
 		$this->setToStorage('foffset', $this->foffset);
 		$this->setToStorage('totalqueries', $this->totalqueries);
 		$this->setToStorage('runsize', $this->runSize);
+		$this->setToStorage('errorcount', $this->errorcount);
 
 		if ($bytes_togo == 0)
 		{
 			// Clear stored variables if we're finished
-			$lines_togo = '0';
-			$lines_tota = $this->linenumber - 1;
+			$lines_togo   = '0';
+			$lines_tota   = $this->linenumber - 1;
 			$queries_togo = '0';
 			$queries_tota = $this->totalqueries;
 			$this->removeInformationFromStorage();
@@ -781,16 +792,18 @@ abstract class ADatabaseRestore
 
 		// Return meaningful data
 		return array(
-			'percent'			=> round(100 * ($this->runSize / $this->totalSize), 1),
-			'restored'			=> $this->sizeformat($this->runSize),
-			'total'				=> $this->sizeformat($this->totalSize),
-			'queries_restored'	=> $this->totalqueries,
-			'current_line'		=> $this->linenumber,
-			'current_part'		=> $this->curpart,
-			'total_parts'		=> $parts,
-			'eta'				=> $this->etaformat($remainingSeconds),
-			'error'				=> '',
-			'done'				=> ($bytes_togo == 0) ? '1' : '0'
+			'percent'          => round(100 * ($this->runSize / $this->totalSize), 1),
+			'restored'         => $this->sizeformat($this->runSize),
+			'total'            => $this->sizeformat($this->totalSize),
+			'queries_restored' => $this->totalqueries,
+			'errorcount'       => $this->errorcount,
+			'errorlog'         => $this->getLogPath(),
+			'current_line'     => $this->linenumber,
+			'current_part'     => $this->curpart,
+			'total_parts'      => $parts,
+			'eta'              => $this->etaformat($remainingSeconds),
+			'error'            => '',
+			'done'             => ($bytes_togo == 0) ? '1' : '0',
 		);
 	}
 
@@ -978,6 +991,9 @@ abstract class ADatabaseRestore
 		{
 			return;
 		}
+
+		// Increase the SQL error counter
+		$this->errorcount++;
 
 		// Is this a CREATE query?
 		$isCreateQuery = (substr($sql, 0, 7) == 'CREATE ');
