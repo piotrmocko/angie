@@ -87,10 +87,27 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</tr>
 				</tbody>
 			</table>
-		</div>
+            <div class="alert alert-warning" id="restoration-warnings">
+                <h4><?php echo AText::_('DATABASE_HEADER_INPROGRESS_WARNINGS'); ?></h4>
+                <p>
+					<?php echo AText::_('DATABASE_MSG_INPROGRESS_WARNINGS'); ?>
+                    <br />
+                    <code id="restoration-inprogress-log"></code>
+                </p>
+            </div>
+
+        </div>
 		<div id="restoration-success">
-			<div class="alert alert-success">
-				<?php echo AText::_('DATABASE_HEADER_SUCCESS'); ?>
+			<div class="alert alert-success" id="restoration-success-nowarnings">
+				<h4><?php echo AText::_('DATABASE_HEADER_SUCCESS'); ?></h4>
+			</div>
+			<div class="alert alert-warning" id="restoration-success-warnings">
+				<h4><?php echo AText::_('DATABASE_HEADER_WARNINGS'); ?></h4>
+                <p>
+                    <?php echo AText::_('DATABASE_MSG_WARNINGS'); ?>
+                    <br />
+                    <code id="restoration-sql-log"></code>
+                </p>
 			</div>
 			<p>
 				<?php echo AText::_('DATABASE_MSG_SUCCESS'); ?>

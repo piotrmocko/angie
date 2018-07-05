@@ -9,6 +9,8 @@ var databaseKey = null;
 var databaseThrottle = 100;
 var databasePasswordMessage = '';
 var databasePrefixMessage = '';
+var databaseHasWarnings = false;
+var databaseLogFile = '';
 
 /**
  * Initialisation of the page
@@ -53,11 +55,11 @@ function databaseRunRestoration(key)
 
 	// Prime the request data
 	var data = {
-		'view':			'dbrestore',
-		'task':			'start',
-		'format':		'json',
-		'key':			databaseKey,
-		'dbinfo':		{}
+		'view':   'dbrestore',
+		'task':   'start',
+		'format': 'json',
+		'key':    databaseKey,
+		'dbinfo': {}
 	};
 
 	// Get the form data and add them to the dbinfo request array
@@ -119,6 +121,11 @@ function databaseRunRestoration(key)
 	// Open the restoration's modal dialog
 	$('#restoration-dialog').modal({keyboard: false, backdrop: 'static'});
 
+	// Reset the warnings status
+	databaseHasWarnings = false;
+	databaseLogFile     = '';
+	$('#restoration-warnings').hide(0);
+
 	// Start the restoration
 	akeebaAjax.callJSON(data, databaseParseRestoration, databaseErrorRestoration);
 }
@@ -133,27 +140,47 @@ function databaseParseRestoration(msg)
 	{
 		// An error occurred
 		databaseErrorRestoration(msg.error);
+
 		return;
 	}
-	else if (msg.done == 1)
+
+	if (msg.done == 1)
 	{
 		// The restoration is complete
 		$('#restoration-dialog .modal-body > div').hide(0);
 		$('#restoration-success').show(0);
+		$('#restoration-success-nowarnings').show(0);
+		$('#restoration-success-warnings').hide(0);
+
+		// Display a message if there were any warnings during the restoration
+		if (databaseHasWarnings)
+		{
+			$('#restoration-success-nowarnings').hide(0);
+			$('#restoration-success-warnings').show(0);
+			$('#restoration-sql-log').text(databaseLogFile);
+		}
+
 		return;
 	}
-	else
-	{
-		// Step through the restoration
-		$('#restoration-dialog .modal-body > div').hide(0);
-		$('#restoration-progress').show(0);
-		$('#restoration-progress-bar').css('width', msg.percent + '%');
-		$('#restoration-lbl-restored').text(msg.restored);
-		$('#restoration-lbl-total').text(msg.total);
-		$('#restoration-lbl-eta').text(msg.eta);
 
-		setTimeout(databaseStepRestoration, databaseThrottle);
+	// Step through the restoration
+	$('#restoration-dialog .modal-body > div').hide(0);
+	$('#restoration-progress').show(0);
+	$('#restoration-progress-bar').css('width', msg.percent + '%');
+	$('#restoration-lbl-restored').text(msg.restored);
+	$('#restoration-lbl-total').text(msg.total);
+	$('#restoration-lbl-eta').text(msg.eta);
+
+	// Display warning box if necessary (restoration)
+	if (!databaseHasWarnings && (msg.errorcount > 0))
+	{
+		databaseHasWarnings = true;
+		databaseLogFile     = msg.errorlog;
+		$('#restoration-warnings').show(0);
+		$('#restoration-inprogress-log').text(databaseLogFile);
 	}
+
+	setTimeout(databaseStepRestoration, databaseThrottle);
 }
 
 /**
