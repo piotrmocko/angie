@@ -18,7 +18,7 @@ fi
 __DIR__=`cd ${BASH_SOURCE%/*}; pwd`
 SOURCE_DIR=${__DIR__}/angie/installation
 
-DIRS=('angie' 'framework' 'platform' 'template' 'tmp')
+DIRS=('angie' 'framework' 'platform' 'template')
 FILES=('defines.php' 'index.php' 'version.php' )
 
 # I can simply symlink the folders

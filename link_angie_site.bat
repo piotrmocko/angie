@@ -11,7 +11,7 @@ IF NOT EXIST "%SITE%" GOTO MISSING_SITE
 
 SET SOURCE_DIR=%cd%/angie/installation
 
-SET "DIRS=angie framework platform template tmp"
+SET "DIRS=angie framework platform template"
 SET "FILES=defines.php index.php version.php"
 
 FOR %%a IN (%DIRS%) DO (

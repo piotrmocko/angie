@@ -107,6 +107,16 @@ class AngieModelDatabase extends AModel
 							$data['throttle'] = 250;
 						}
 
+						if (!array_key_exists('break_on_failed_create', $data))
+						{
+							$data['break_on_failed_create'] = true;
+						}
+
+						if (!array_key_exists('break_on_failed_insert', $data))
+						{
+							$data['break_on_failed_insert'] = true;
+						}
+
 						// If we are using SQLite, let's replace any token we found inside the dbname index
 						if ($data['dbtype'] == 'sqlite')
 						{

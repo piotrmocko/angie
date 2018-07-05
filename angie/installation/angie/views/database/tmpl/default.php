@@ -87,10 +87,27 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</tr>
 				</tbody>
 			</table>
-		</div>
+            <div class="alert alert-warning" id="restoration-warnings">
+                <h4><?php echo AText::_('DATABASE_HEADER_INPROGRESS_WARNINGS'); ?></h4>
+                <p>
+					<?php echo AText::_('DATABASE_MSG_INPROGRESS_WARNINGS'); ?>
+                    <br />
+                    <code id="restoration-inprogress-log"></code>
+                </p>
+            </div>
+
+        </div>
 		<div id="restoration-success">
-			<div class="alert alert-success">
-				<?php echo AText::_('DATABASE_HEADER_SUCCESS'); ?>
+			<div class="alert alert-success" id="restoration-success-nowarnings">
+				<h4><?php echo AText::_('DATABASE_HEADER_SUCCESS'); ?></h4>
+			</div>
+			<div class="alert alert-warning" id="restoration-success-warnings">
+				<h4><?php echo AText::_('DATABASE_HEADER_WARNINGS'); ?></h4>
+                <p>
+                    <?php echo AText::_('DATABASE_MSG_WARNINGS'); ?>
+                    <br />
+                    <code id="restoration-sql-log"></code>
+                </p>
 			</div>
 			<p>
 				<?php echo AText::_('DATABASE_MSG_SUCCESS'); ?>
@@ -201,7 +218,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 						  title="<?php echo AText::_('DATABASE_LBL_EXISTING_HELP') ?>"></span>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<label class="control-label" for="prefix">
 					<?php echo AText::_('DATABASE_LBL_PREFIX') ?>
 				</label>
@@ -211,7 +229,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 						  title="<?php echo AText::_('DATABASE_LBL_PREFIX_HELP') ?>"></span>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<div class="controls">
 					<label class="checkbox help-tooltip" for="foreignkey">
 						<input type="checkbox" id="foreignkey" <?php echo $this->db->foreignkey ? 'checked="checked"' : '' ?> />
@@ -221,7 +240,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</label>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<div class="controls">
 					<label class="checkbox help-tooltip" for="noautovalue">
 						<input type="checkbox" id="noautovalue" <?php echo $this->db->noautovalue ? 'checked="checked"' : '' ?> />
@@ -231,7 +251,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</label>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<div class="controls">
 					<label class="checkbox help-tooltip" for="replace">
 						<input type="checkbox" id="replace" <?php echo $this->db->replace ? 'checked="checked"' : '' ?> />
@@ -241,7 +262,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</label>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<div class="controls">
 					<label class="checkbox help-tooltip" for="utf8db">
 						<input type="checkbox" id="utf8db" <?php echo $this->db->utf8db ? 'checked="checked"' : '' ?> />
@@ -251,7 +273,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</label>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<div class="controls">
 					<label class="checkbox help-tooltip" for="utf8tables">
 						<input type="checkbox" id="utf8tables" <?php echo $this->db->utf8db ? 'checked="checked"' : '' ?> />
@@ -261,7 +284,8 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</label>
 				</div>
 			</div>
-			<div class="control-group">
+
+            <div class="control-group">
 				<div class="controls">
 					<label class="checkbox help-tooltip" for="utf8mb4">
 						<input type="checkbox" id="utf8mb4" <?php echo $this->db->utf8mb4 ? 'checked="checked"' : '' ?> />
@@ -271,6 +295,30 @@ echo $this->loadAnyTemplate('steps/steps', array('helpurl' => 'https://www.akeeb
 					</label>
 				</div>
 			</div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox help-tooltip" for="break_on_failed_create">
+                        <input type="checkbox" id="break_on_failed_create"
+                            <?php echo $this->db->break_on_failed_create ? 'checked="checked"' : '' ?> />
+						<?php echo AText::_('DATABASE_LBL_ON_CREATE_ERROR') ?>
+                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
+                              title="<?php echo AText::_('DATABASE_LBL_ON_CREATE_ERROR_HELP') ?>"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox help-tooltip" for="break_on_failed_insert">
+                        <input type="checkbox" id="break_on_failed_insert"
+                            <?php echo $this->db->break_on_failed_insert ? 'checked="checked"' : '' ?> />
+						<?php echo AText::_('DATABASE_LBL_ON_OTHER_ERROR') ?>
+                        <span class="help-tooltip icon-question-sign" data-toggle="tooltip" data-html="true" data-placement="top"
+                              title="<?php echo AText::_('DATABASE_LBL_ON_OTHER_ERROR_HELP') ?>"></span>
+                    </label>
+                </div>
+            </div>
 
             <h3><?php echo AText::_('DATABASE_HEADER_FINETUNING') ?></h3>
 

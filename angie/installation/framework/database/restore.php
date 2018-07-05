@@ -141,8 +141,40 @@ abstract class ADatabaseRestore
 	 */
 	protected $queries = null;
 
-    /** @var  AContainer    Application container */
+	/**
+	 * Application container
+	 *
+	 * @var   AContainer
+	 */
     protected $container;
+
+	/**
+	 * The full path to a log file which contains failed queries which were ignored
+	 *
+	 * @var   string
+	 */
+    protected $logFile;
+
+	/**
+	 * Should I halt the restoration when a CREATE query fails?
+	 *
+	 * @var   bool
+	 */
+    protected $breakOnFailedCreate = true;
+
+	/**
+	 * Should I halt the restoration when an INSERT (or other non-CREATE) query fails?
+	 *
+	 * @var   bool
+	 */
+    protected $breakOnFailedInsert = true;
+
+	/**
+	 * How many SQL queries resulted in an error during the restoration
+	 *
+	 * @var   int
+	 */
+    protected $errorcount = 0;
 
 	/**
 	 * Public constructor. Initialises the database restoration engine.
@@ -153,14 +185,14 @@ abstract class ADatabaseRestore
 	 */
 	public function __construct($dbkey, $dbiniValues, AContainer $container = null)
 	{
-        if(is_null($container))
-        {
-            $container = AApplication::getInstance()->getContainer();
-        }
+		if (is_null($container))
+		{
+			$container = AApplication::getInstance()->getContainer();
+		}
 
-        $this->container = $container;
+		$this->container = $container;
 
-		$this->dbkey = $dbkey;
+		$this->dbkey       = $dbkey;
 		$this->dbiniValues = $dbiniValues;
 
 		$this->populatePartsMap();
@@ -169,12 +201,31 @@ abstract class ADatabaseRestore
 		{
 			$this->dbiniValues['maxexectime'] = 5;
 		}
+
 		if (!key_exists('runtimebias', $this->dbiniValues))
 		{
 			$this->dbiniValues['runtimebias'] = 75;
 		}
 
-		$this->timer = new ATimer(0, (int)$this->dbiniValues['maxexectime'], (int)$this->dbiniValues['runtimebias']);
+		if (!key_exists('failed_query_log', $this->dbiniValues))
+		{
+			$this->dbiniValues['failed_query_log'] = sprintf('failed_queries_%s.log', $this->sanitizeDBKey($dbkey));
+		}
+
+		if (!key_exists('break_on_failed_create', $this->dbiniValues))
+		{
+			$this->dbiniValues['break_on_failed_create'] = true;
+		}
+
+		if (!key_exists('break_on_failed_insert', $this->dbiniValues))
+		{
+			$this->dbiniValues['break_on_failed_insert'] = true;
+		}
+
+		$this->logFile             = APATH_TEMPINSTALL . '/' . $this->dbiniValues['failed_query_log'];
+		$this->breakOnFailedCreate = $this->dbiniValues['break_on_failed_create'];
+		$this->breakOnFailedInsert = $this->dbiniValues['break_on_failed_insert'];
+		$this->timer               = new ATimer(0, (int) $this->dbiniValues['maxexectime'], (int) $this->dbiniValues['runtimebias']);
 	}
 
 	/**
@@ -251,7 +302,7 @@ abstract class ADatabaseRestore
 	public function removeInformationFromStorage()
 	{
 		$variables = array('start', 'foffset', 'totalqueries', 'curpart',
-			'partsmap', 'totalsize', 'runsize');
+			'partsmap', 'totalsize', 'runsize', 'errorcount');
 		$session = $this->container->session;
 
 		foreach($variables as $var)
@@ -325,13 +376,14 @@ abstract class ADatabaseRestore
 		}
 
 		// First, try to fetch from the session storage
-		$this->totalSize = $this->getFromStorage('totalsize', 0);
-		$this->runSize = $this->getFromStorage('runsize', 0);
-		$this->partsMap = $this->getFromStorage('partsmap', array());
-		$this->curpart = $this->getFromStorage('curpart', 0);
-		$this->foffset = $this->getFromStorage('foffset', 0);
-		$this->start = $this->getFromStorage('start', 0);
+		$this->totalSize    = $this->getFromStorage('totalsize', 0);
+		$this->runSize      = $this->getFromStorage('runsize', 0);
+		$this->partsMap     = $this->getFromStorage('partsmap', array());
+		$this->curpart      = $this->getFromStorage('curpart', 0);
+		$this->foffset      = $this->getFromStorage('foffset', 0);
+		$this->start        = $this->getFromStorage('start', 0);
 		$this->totalqueries = $this->getFromStorage('totalqueries', 0);
+		$this->errorcount   = $this->getFromStorage('errorcount', 0);
 
 		// If that didn't work try a full initalisation
 		if (empty($this->partsMap))
@@ -340,12 +392,13 @@ abstract class ADatabaseRestore
 
 			$parts = $this->getParam('parts', 1);
 
-			$this->partsMap = array();
-			$path = APATH_INSTALLATION . '/sql';
-			$this->totalSize = 0;
-			$this->runSize = 0;
-			$this->curpart = 0;
-			$this->foffset = 0;
+			$this->partsMap   = array();
+			$path             = APATH_INSTALLATION . '/sql';
+			$this->totalSize  = 0;
+			$this->runSize    = 0;
+			$this->curpart    = 0;
+			$this->foffset    = 0;
+			$this->errorcount = 0;
 
 			for ($index = 0; $index <= $parts; $index++)
 			{
@@ -355,16 +408,16 @@ abstract class ADatabaseRestore
 				}
 				else
 				{
-					$basename = substr($sqlfile, 0, -4).'.s'.sprintf('%02u', $index);
+					$basename = substr($sqlfile, 0, -4) . '.s' . sprintf('%02u', $index);
 				}
 
-				$file = $path.'/'.$basename;
+				$file = $path . '/' . $basename;
 				if (!file_exists($file))
 				{
-					$file = 'sql/'.$basename;
+					$file = 'sql/' . $basename;
 				}
-				$filesize = @filesize($file) ;
-				$this->totalSize += intval($filesize);
+				$filesize         = @filesize($file);
+				$this->totalSize  += intval($filesize);
 				$this->partsMap[] = $file;
 			}
 
@@ -375,6 +428,7 @@ abstract class ADatabaseRestore
 			$this->setToStorage('foffset', $this->foffset);
 			$this->setToStorage('start', $this->start);
 			$this->setToStorage('totalqueries', $this->totalqueries);
+			$this->setToStorage('errorcount', $this->errorcount);
 
 			$this->container->session->saveData();
 		}
@@ -516,9 +570,11 @@ abstract class ADatabaseRestore
 	/**
 	 * Executes a SQL statement, ignoring errors in the $allowedErrorCodes list.
 	 *
-	 * @param   string  $sql  The SQL statement to execute
+	 * @param   string $sql The SQL statement to execute
 	 *
 	 * @return  mixed  A database cursor on success, false on failure
+	 *
+	 * @throws  Exception
 	 */
 	protected function execute($sql)
 	{
@@ -532,19 +588,8 @@ abstract class ADatabaseRestore
 		catch (Exception $exc)
 		{
 			$result = false;
-			if (!in_array($exc->getCode(), $this->allowedErrorCodes))
-			{
-				// Format the error message and throw it again
-				$message = '<h2>' . AText::sprintf('ANGI_RESTORE_ERROR_ERRORATLINE', $this->linenumber) . '</h2>' . "\n";
-				$message .= '<p>' . AText::_('ANGI_RESTORE_ERROR_MYSQLERROR') . '</p>' . "\n";
-				$message .= '<tt>ErrNo #' . htmlspecialchars($exc->getCode()) . '</tt>' . "\n";
-				$message .= '<pre>' . htmlspecialchars($exc->getMessage()) . '</pre>' . "\n";
-				$message .= '<p>' . AText::_('ANGI_RESTORE_ERROR_RAWQUERY') . '</p>' . "\n";
-				$message .= '<pre>' . htmlspecialchars($sql) . '</pre>' . "\n";
 
-				// Rethrow the exception if we're not supposed to handle it
-				throw new Exception($message);
-			}
+			$this->handleFailedQuery($sql, $exc);
 		}
 
 		return $result;
@@ -641,9 +686,9 @@ abstract class ADatabaseRestore
 	{
 		$parts = $this->getParam('parts', 1);
 		$this->openFile();
-		$this->linenumber = $this->start;
+		$this->linenumber    = $this->start;
 		$this->totalsizeread = 0;
-		$this->queries = 0;
+		$this->queries       = 0;
 
 		while ($this->timer->getTimeLeft() > 0)
 		{
@@ -702,7 +747,7 @@ abstract class ADatabaseRestore
 		$bytes_togo = $this->totalSize - $this->runSize;
 
 		// Check for global EOF
-		if (($this->curpart >= ($parts-1)) && feof($this->file))
+		if (($this->curpart >= ($parts - 1)) && feof($this->file))
 		{
 			$bytes_togo = 0;
 		}
@@ -712,12 +757,13 @@ abstract class ADatabaseRestore
 		$this->setToStorage('foffset', $this->foffset);
 		$this->setToStorage('totalqueries', $this->totalqueries);
 		$this->setToStorage('runsize', $this->runSize);
+		$this->setToStorage('errorcount', $this->errorcount);
 
 		if ($bytes_togo == 0)
 		{
 			// Clear stored variables if we're finished
-			$lines_togo = '0';
-			$lines_tota = $this->linenumber - 1;
+			$lines_togo   = '0';
+			$lines_tota   = $this->linenumber - 1;
 			$queries_togo = '0';
 			$queries_tota = $this->totalqueries;
 			$this->removeInformationFromStorage();
@@ -746,16 +792,18 @@ abstract class ADatabaseRestore
 
 		// Return meaningful data
 		return array(
-			'percent'			=> round(100 * ($this->runSize / $this->totalSize), 1),
-			'restored'			=> $this->sizeformat($this->runSize),
-			'total'				=> $this->sizeformat($this->totalSize),
-			'queries_restored'	=> $this->totalqueries,
-			'current_line'		=> $this->linenumber,
-			'current_part'		=> $this->curpart,
-			'total_parts'		=> $parts,
-			'eta'				=> $this->etaformat($remainingSeconds),
-			'error'				=> '',
-			'done'				=> ($bytes_togo == 0) ? '1' : '0'
+			'percent'          => round(100 * ($this->runSize / $this->totalSize), 1),
+			'restored'         => $this->sizeformat($this->runSize),
+			'total'            => $this->sizeformat($this->totalSize),
+			'queries_restored' => $this->totalqueries,
+			'errorcount'       => $this->errorcount,
+			'errorlog'         => $this->getLogPath(),
+			'current_line'     => $this->linenumber,
+			'current_part'     => $this->curpart,
+			'total_parts'      => $parts,
+			'eta'              => $this->etaformat($remainingSeconds),
+			'error'            => '',
+			'done'             => ($bytes_togo == 0) ? '1' : '0',
 		);
 	}
 
@@ -847,5 +895,134 @@ abstract class ADatabaseRestore
 	public function getTimer()
 	{
 		return $this->timer;
+	}
+
+	/**
+	 * This method processes a string and replaces non alphanumeric characters with underscores
+	 *
+	 * @param   string  $string    String to process
+	 *
+	 * @return  string  Processed string
+	 */
+	private function sanitizeDBKey($string)
+	{
+		// Sanitize non-alphanumeric to underscores
+		$str = preg_replace('/(\s|[^A-Za-z0-9\_])+/', '_', $string);
+
+		// Trim underscores at beginning and end of the string
+		$str = trim($str, '_');
+
+		return $str;
+	}
+
+	/**
+	 * Remove the failed query log. You need to call this at the beginning of the restoration.
+	 *
+	 * @return  void
+	 */
+	public function removeLog()
+	{
+		if (empty($this->logFile))
+		{
+			return;
+		}
+
+		if (@file_exists($this->logFile))
+		{
+			@unlink($this->logFile);
+		}
+	}
+
+	/**
+	 * Returns the full filesystem path of the failed query log file.
+	 *
+	 * @return  string
+	 */
+	public function getLogPath()
+	{
+		return $this->logFile;
+	}
+
+	/**
+	 * Add a failed query to the failed query log file.
+	 *
+	 * @param   string  $sql  The failed database query to log
+	 *
+	 * @return  void
+	 */
+	private function logQuery($sql, $error = null)
+	{
+		if (empty($this->logFile))
+		{
+			return;
+		}
+
+		$fp = @fopen($this->logFile, 'at');
+
+		if ($fp === false)
+		{
+			return;
+		}
+
+		if (!empty($error))
+		{
+			$error = '# Failed with error: ' . str_replace("\n\r", '', trim($error));
+			@fwrite($fp, $error);
+		}
+
+		@fwrite($fp, rtrim($sql, "\n") . "\n");
+		@fclose($fp);
+	}
+
+	/**
+	 * Handle a query which failed to execute
+	 *
+	 * @param   string     $sql  The failed query
+	 * @param   Exception  $exc  The exception generated by the database driver
+	 *
+	 * @return  void
+	 *
+	 * @throws  Exception
+	 */
+	private function handleFailedQuery($sql, $exc)
+	{
+		// If the database error code is within the list of ignored codes we do nothing
+		if (in_array($exc->getCode(), $this->allowedErrorCodes))
+		{
+			return;
+		}
+
+		// Increase the SQL error counter
+		$this->errorcount++;
+
+		// Is this a CREATE query?
+		$isCreateQuery = (substr($sql, 0, 7) == 'CREATE ');
+
+		// Should I throw an exception (halt the restoration) for this failed query?
+		$throwException = $this->breakOnFailedInsert;
+
+		if ($isCreateQuery)
+		{
+			$throwException = $this->breakOnFailedCreate;
+		}
+
+		// Log the failed query. If writing to the log fails nothing bad happens.
+		$this->logQuery($sql, $exc->getCode() . ' -- ' . $exc->getMessage());
+
+		// If I am not supposed to halt the restoration stop here.
+		if (!$throwException)
+		{
+			return;
+		}
+
+		// Format the error message in a human readable way and throw it again
+		$message = '<h2>' . AText::sprintf('ANGI_RESTORE_ERROR_ERRORATLINE', $this->linenumber) . '</h2>' . "\n";
+		$message .= '<p>' . AText::_('ANGI_RESTORE_ERROR_MYSQLERROR') . '</p>' . "\n";
+		$message .= '<tt>ErrNo #' . htmlspecialchars($exc->getCode()) . '</tt>' . "\n";
+		$message .= '<pre>' . htmlspecialchars($exc->getMessage()) . '</pre>' . "\n";
+		$message .= '<p>' . AText::_('ANGI_RESTORE_ERROR_RAWQUERY') . '</p>' . "\n";
+		$message .= '<pre>' . htmlspecialchars($sql) . '</pre>' . "\n";
+
+		throw new Exception($message);
 	}
 }
