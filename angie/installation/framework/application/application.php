@@ -245,9 +245,9 @@ abstract class AApplication
 		// For empty queue, if messages exists in the session, enqueue them.
 		if (!count($this->messageQueue))
 		{
-			$sessionQueue = $this->container->session->get('application.queue');
+			$sessionQueue = $this->container->session->get('application.queue', null);
 
-			if (count($sessionQueue))
+			if (is_array($sessionQueue) && count($sessionQueue))
 			{
 				$this->messageQueue = $sessionQueue;
 				$this->container->session->remove('application.queue');
