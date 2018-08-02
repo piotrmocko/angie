@@ -364,6 +364,11 @@ class AngieModelWordpressConfiguration extends AngieModelBaseConfiguration
 							$line               = "define('" . $key . "', " . ($isSubdomainInstall ? 'true' : 'false') . ");";
 							break;
 
+						// 3rd party extensions
+						case 'WPCACHEHOME':
+							// WP Super Cache stores the absolute path. Let's blank it out so it will auto fix on the next load
+							$line = "define('".$key."', '');";
+							break;
 						// I think users shouldn't change the WPLANG define, since they will have
 						// to add several files, it's not automatic
 						default:
