@@ -601,6 +601,10 @@ class AngieModelWordpressReplacedata extends AModel
 						$fields = array_keys($row);
 					}
 
+					// Calculate a quick hash of the row. If the hash is different after replacement we need to write it
+					// back to the database.
+					$hashBefore = crc32(serialize($row));
+
 					foreach ($fields as $field)
 					{
 						$fieldValue   = $row[$field];
@@ -610,6 +614,9 @@ class AngieModelWordpressReplacedata extends AModel
 						if ($serialisedHelper->isSerialised($fieldValue))
 						{
 							// Replace serialised data only if it's LOWER than the maximum column size
+							$fieldValue = AUtilsSerialised::replaceWithRegEx($fieldValue, $from, $to);
+
+							/**
 							if (strlen($fieldValue) <= $this->column_size)
 							{
 								try
@@ -631,6 +638,7 @@ class AngieModelWordpressReplacedata extends AModel
 								$warnings[] 	  = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
 								$this->warnings[] = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
 							}
+							/**/
 						}
 						else
 						{
@@ -639,6 +647,18 @@ class AngieModelWordpressReplacedata extends AModel
 						}
 
 						$row[$field] = $fieldValue;
+					}
+
+					// Mark the row done
+					$this->currentRow++;
+
+					// Calculate the quick row hash after the data replacement
+					$hashAfter = crc32(serialize($row));
+
+					// If no data was replaced we should not be wasting resources writing back to the database :)
+					if ($hashAfter == $hashBefore)
+					{
+						continue;
 					}
 
 					$row = array_map(array($db, 'quote'), $row);
@@ -653,10 +673,8 @@ class AngieModelWordpressReplacedata extends AModel
 					}
 					catch (Exception $e)
 					{
-						// If there's no primary key the replacement will fail. Oh, well, what the hell...
+						// If there's no primary key the replacement will fail. Oh, well, what can you do...
 					}
-
-					$this->currentRow++;
 				}
 			}
 		}
