@@ -614,18 +614,14 @@ class AngieModelWordpressReplacedata extends AModel
 						if ($serialisedHelper->isSerialised($fieldValue))
 						{
 							// Replace serialised data only if it's LOWER than the maximum column size
-							$fieldValue = AUtilsSerialised::replaceWithRegEx($fieldValue, $from, $to);
+							$fieldValue = $serialisedHelper->replaceWithRegEx($fieldValue, $from, $to);
 
 							/**
 							if (strlen($fieldValue) <= $this->column_size)
 							{
 								try
 								{
-									$decoded = $serialisedHelper->decode($fieldValue);
-
-									$serialisedHelper->replaceTextInDecoded($decoded, $from, $to);
-
-									$fieldValue = $serialisedHelper->encode($decoded);
+									$fieldValue = $serialisedHelper->replaceWithRegEx($fieldValue, $from, $to);
 								}
 								catch (Exception $e)
 								{
