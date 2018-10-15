@@ -39,10 +39,6 @@
 	<target name="documentation" description="Do not use">
 	</target>
 
-	<target name="link-installers" description="Make and symlink the generated installers">
-		<!-- TODO Create this task and update Akeeba Backup and Akeeba Solo to actually use it -->
-	</target>
-
 	<target name="make_angie" description="Packages all installers" depends="setup-properties">
 		<!-- Remove the angie/installation/platform directory (real or symlinked) -->
 		<delete dir="${dirs.root}/angie/installation/platform" includeemptydirs="true" quiet="true" />
