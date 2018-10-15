@@ -2,7 +2,12 @@
 <project name="ANGIE" description="Akeeba Next Generation Installer Engine" default="all" >
 	<import file="${phing.dir}/../../buildfiles/phing/common.xml" />
 
-	<property name="dirs.translations" value="../translations" />
+	<property name="installers" value="angie" />
+	<property name="angie_installers" value="drupal7,drupal8,generic,grav,joomla,magento,magento2,moodle,octobercms,pagekit,phpbb,prestashop,wordpress" />
+
+	<property name="dirs.translations" value="../translations"  />
+	<property name="angie.do_zip" value="0" />
+	<property name="angie.do_jpa" value="0" />
 
 	<!--
 	====================================================================================================
@@ -10,9 +15,148 @@
 	====================================================================================================
 	-->
 
-	<target name="git" description="Do not use">
+	<target name="git" description="Make all installers in JPA format" depends="git-jpa">
+	</target>
+
+	<target name="git-all" description="Make all installers in both JPA and ZIP formats">
+		<property name="angie.do_jpa" value="1" override="true" />
+		<property name="angie.do_zip" value="1" override="true" />
+		<phingcall target="make_angie" />
+	</target>
+
+	<target name="git-jpa" description="Make all installers in JPA format only">
+		<property name="angie.do_jpa" value="1" override="true" />
+		<property name="angie.do_zip" value="0" override="true" />
+		<phingcall target="make_angie" />
 	</target>
 	
+	<target name="git-zip" description="Make all installers in JPA format only">
+		<property name="angie.do_jpa" value="0" override="true" />
+		<property name="angie.do_zip" value="1" override="true" />
+		<phingcall target="make_angie" />
+	</target>
+
 	<target name="documentation" description="Do not use">
+	</target>
+
+	<target name="link-installers" description="Make and symlink the generated installers">
+		<!-- TODO Create this task and update Akeeba Backup and Akeeba Solo to actually use it -->
+	</target>
+
+	<target name="make_angie" description="Packages all installers" depends="setup-properties">
+		<!-- Remove the angie/installation/platform directory (real or symlinked) -->
+		<delete dir="${dirs.root}/angie/installation/platform" includeemptydirs="true" quiet="true" />
+		<delete file="${dirs.root}/angie/installation/platform" includeemptydirs="true" quiet="true" />
+
+		<echo message="${angie.do_jpa}"></echo>
+		<!-- Delete old releases -->
+		<if>
+			<equals arg1="${angie.do_jpa}" arg2="1" />
+			<then>
+				<delete dir="${dirs.release}/jpa" includeemptydirs="true" quiet="true" />
+				<mkdir dir="${dirs.release}/jpa" />
+
+				<foreach list="${installers}" param="subdir" target="create-installer-jpa" />
+				<foreach list="${angie_installers}" param="platform" target="create-angie-installer-jpa" />
+			</then>
+		</if>
+		<if>
+			<equals arg1="${angie.do_zip}" arg2="1" />
+			<then>
+				<delete dir="${dirs.release}/zip" includeemptydirs="true" quiet="true" />
+				<mkdir dir="${dirs.release}/zip" />
+
+				<foreach list="${installers}" param="subdir" target="create-installer-zip" />
+				<foreach list="${angie_installers}" param="platform" target="create-angie-installer-zip" />
+			</then>
+		</if>
+	</target>
+
+	<target name="create-angie-installer-jpa" description="Packages a single ANGIE installer into JPA archive files">
+		<jpa
+				basedir="${dirs.root}/angie/platforms/${platform}"
+				prefix="installation/platform/"
+				destfile="${dirs.release}/jpa/angie-${platform}.jpa"
+				includeemptydirs="true">
+			<fileset dir="${dirs.root}/angie/platforms/${platform}" expandsymboliclinks="true">
+				<include name="**" />
+			</fileset>
+		</jpa>
+
+		<copy file="${dirs.root}/angie/angie-${platform}.ini" tofile="${dirs.release}/jpa/angie-${platform}.ini" overwrite="true" />
+	</target>
+
+	<target name="create-angie-installer-zip" description="Packages a single ANGIE installer into ZIP archive files">
+		<zipme
+				basedir="${dirs.root}/angie/platforms/${platform}"
+				prefix="installation/platform/"
+				destfile="${dirs.release}/zip/angie-${platform}.zip"
+				includeemptydirs="true">
+			<fileset dir="${dirs.root}/angie/platforms/${platform}" expandsymboliclinks="true">
+				<include name="**" />
+			</fileset>
+		</zipme>
+
+		<copy file="${dirs.root}/angie/angie-${platform}.ini" tofile="${dirs.release}/jpa/angie-${platform}.ini" overwrite="true" />
+	</target>
+
+	<target name="create-installer-jpa" description="Packages a single installer into JPA files and copy to project dir">
+		<copy file="./templates/version.php" tofile="${dirs.root}/${subdir}/installation/version.php" overwrite="true">
+			<filterchain>
+				<replacetokens begintoken="##" endtoken="##">
+					<token key="DATE" value="${build.date}" />
+					<token key="VERSION" value="${version}" />
+					<token key="PRO" value="0" />
+				</replacetokens>
+			</filterchain>
+		</copy>
+		<jpa
+				basedir="${dirs.root}/${subdir}"
+				destfile="${dirs.release}/jpa/${subdir}.jpa"
+				includeemptydirs="true">
+			<fileset dir="${dirs.root}/${subdir}" expandsymboliclinks="true">
+				<include name="installation/**" />
+
+				<exclude name="installation/platform/**" />
+				<exclude name="installation/sql/*" />
+				<exclude name="installation/tmp/storagedata*" />
+				<exclude name="installation/README.html" />
+				<exclude name="installation/extrainfo.ini" />
+				<exclude name="installation/password.php" />
+				<exclude name="installation/storagedata.dat" />
+			</fileset>
+		</jpa>
+		<copy file="${dirs.root}/${subdir}/${subdir}-joomla.ini" tofile="${dirs.release}/jpa/${subdir}.ini" overwrite="true" haltonerror="false" />
+		<copy file="${dirs.root}/${subdir}/${subdir}.ini" tofile="${dirs.release}/jpa/${subdir}.ini" overwrite="true" haltonerror="false" />
+	</target>
+
+	<target name="create-installer-zip" description="Packages a single installer into ZIP files and copy to project dir">
+		<copy file="./templates/version.php" tofile="${dirs.root}/${subdir}/installation/version.php" overwrite="true">
+			<filterchain>
+				<replacetokens begintoken="##" endtoken="##">
+					<token key="DATE" value="${build.date}" />
+					<token key="VERSION" value="${version}" />
+					<token key="PRO" value="0" />
+				</replacetokens>
+			</filterchain>
+		</copy>
+		<zipme
+				basedir="${dirs.root}/${subdir}"
+				destfile="${dirs.release}/zip/${subdir}.zip"
+				includeemptydirs="true">
+			<fileset dir="${dirs.root}/${subdir}" expandsymboliclinks="true">
+				<include name="installation/**" />
+
+				<exclude name="installation/platform/**" />
+				<exclude name="installation/sql/*" />
+				<exclude name="installation/tmp/storagedata*" />
+				<exclude name="installation/README.html" />
+				<exclude name="installation/extrainfo.ini" />
+				<exclude name="installation/password.php" />
+				<exclude name="installation/storagedata.dat" />
+			</fileset>
+		</zipme>
+		<copy file="${dirs.root}/${subdir}/${subdir}-joomla.ini" tofile="${dirs.release}/jpa/${subdir}.ini" overwrite="true" haltonerror="false" />
+		<copy file="${dirs.root}/${subdir}/${subdir}.ini" tofile="${dirs.release}/jpa/${subdir}.ini" overwrite="true" haltonerror="false" />
 	</target>
 </project>
