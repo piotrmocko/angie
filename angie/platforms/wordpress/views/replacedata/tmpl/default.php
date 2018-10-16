@@ -175,11 +175,11 @@ $document->addScriptDeclaration($js);
                 </strong>
                 <br/>
                 <button class="btn btn-danger btn-small" onclick="replacements.cancelResume(); return false;">
-                    <span class="icon-cancel"></span>
+                    <span class="icon-remove icon-white"></span>
 					<?php echo AText::_('SESSION_BTN_CANCEL'); ?>
                 </button>
                 <button class="btn btn-success btn-small" onclick="replacements.resumeReplacement(); return false;">
-                    <span class="icon-redo"></span>
+                    <span class="icon-play icon-white"></span>
 					<?php echo AText::_('SETUP_REPLACE_TEXT_BTNRESUME'); ?>
                 </button>
             </p>

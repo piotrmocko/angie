@@ -18,7 +18,3 @@ information.
 ## INTERNAL PROJECT – NO SUPPORT THROUGH GITHUB
 
 This is meant to be an internal software development project for use with our software. We do not accept issues or support requests from third parties in this GitHub project. Please use the Support section of our site for generic support. If you have found a bug please use the Contact Us form on our site.
-
-## INTERNAL NOTE
-
-Remember to clone the `translations` repo in the parent folder of your working copy for the language files to be present, including the base translation (English).

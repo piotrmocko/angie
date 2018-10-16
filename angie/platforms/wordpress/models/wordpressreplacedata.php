@@ -6,48 +6,22 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
  */
 
+use Akeeba\Replace\Database\Driver;
+use Akeeba\Replace\Engine\Core\Configuration;
+use Akeeba\Replace\Engine\Core\Helper\MemoryInfo;
+use Akeeba\Replace\Engine\Core\Part\Database;
+use Akeeba\Replace\Engine\PartStatus;
+use Akeeba\Replace\Logger\NullLogger;
+
 defined('_AKEEBA') or die();
 
 class AngieModelWordpressReplacedata extends AModel
 {
+	/** @var array The replacements to conduct */
+	private $replacements = [];
+
 	/** @var ADatabaseDriver Reference to the database driver object */
 	private $db = null;
-
-	/** @var array The tables we have to work on: (table, method, fields) */
-	protected $tables = array();
-
-	/** @var string The current table being processed */
-	protected $currentTable = null;
-
-	/** @var int The current row being processed */
-	protected $currentRow = null;
-
-	/** @var int The total rows in the table being processed */
-	protected $totalRows = null;
-
-	/** @var array The replacements to conduct */
-	protected $replacements = array();
-
-	/** @var int Maximum column size allowed for data replacement */
-	protected $column_size = 1048576;
-
-	/** @var int How many rows to process at once */
-	protected $batchSize = 100;
-
-	/** @var null|ATimer The timer used to step the engine */
-	protected $timer = null;
-
-	/** @var int Minimum execution time (in seconds) */
-	protected $min_exec = 0;
-
-	/** @var int Maximum execution time (in seconds) */
-	protected $max_exec = 3;
-
-	/** @var int Runtime bias */
-	protected $bias = 75;
-
-	/** @var array Store any warning we get, so we can inform the user */
-	protected $warnings = array();
 
 	/**
 	 * Get a reference to the database driver object
@@ -56,24 +30,12 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	public function &getDbo()
 	{
-		if ( !is_object($this->db))
+		if (!is_object($this->db))
 		{
-			/** @var AngieModelDatabase $model */
-			$model      = AModel::getAnInstance('Database', 'AngieModel', array(), $this->container);
-			$keys       = $model->getDatabaseNames();
-			$firstDbKey = array_shift($keys);
+			$options = $this->getDatabaseConnectionOptions();
+			$name    = $options['driver'];
 
-			$connectionVars = $model->getDatabaseInfo($firstDbKey);
-			$name           = $connectionVars->dbtype;
-
-			$options = array(
-				'database' => $connectionVars->dbname,
-				'select'   => 1,
-				'host'     => $connectionVars->dbhost,
-				'user'     => $connectionVars->dbuser,
-				'password' => $connectionVars->dbpass,
-				'prefix'   => $connectionVars->prefix,
-			);
+			unset($options['driver']);
 
 			$this->db = ADatabaseFactory::getInstance()->getDriver($name, $options);
 			$this->db->setUTF();
@@ -83,38 +45,129 @@ class AngieModelWordpressReplacedata extends AModel
 	}
 
 	/**
+	 * Is this a multisite installation?
+	 *
+	 * @return  bool  True if this is a multisite installation
+	 */
+	public function isMultisite()
+	{
+		/** @var AngieModelWordpressConfiguration $config */
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+
+		return $config->get('multisite', false);
+	}
+
+	/**
+	 * Returns all the database tables which are not part of the WordPress core
+	 *
+	 * @return array
+	 */
+	public function getNonCoreTables()
+	{
+		// Get a list of core tables
+		$coreTables = $this->getCoreTables();
+
+		// Now get a list of non-core tables
+		$db        = $this->getDbo();
+		$allTables = $db->getTableList();
+
+		$result = [];
+
+		foreach ($allTables as $table)
+		{
+			if (in_array($table, $coreTables))
+			{
+				continue;
+			}
+
+			$result[] = $table;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get the core WordPress tables. Content in these tables is always being replaced during restoration.
+	 *
+	 * @return  array
+	 */
+	public function getCoreTables()
+	{
+		// Core WordPress tables (single site)
+		$coreTables = [
+			'#__commentmeta', '#__comments', '#__links', '#__options', '#__postmeta', '#__posts',
+			'#__term_relationships', '#__term_taxonomy', '#__terms', '#__usermeta', '#__users',
+		];
+
+		$db = $this->getDbo();
+
+		// If we have a multisite installation we need to add the per-blog tables as well
+		if ($this->isMultisite())
+		{
+			$additionalTables = ['#__blogs', '#__site', '#__sitemeta'];
+
+			/** @var AngieModelWordpressConfiguration $config */
+			$config     = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+			$mainBlogId = $config->get('blog_id_current_site', 1);
+
+			$map     = $this->getMultisiteMap($db);
+			$siteIds = array_keys($map);
+
+			foreach ($siteIds as $id)
+			{
+				if ($id == $mainBlogId)
+				{
+					continue;
+				}
+
+				foreach ($coreTables as $table)
+				{
+					$additionalTables[] = str_replace('#__', '#__' . $id . '_', $table);
+				}
+			}
+
+			$coreTables = array_merge($coreTables, $additionalTables);
+		}
+
+		// Replace the meta-prefix with the real prefix
+		return array_map(function ($v) use ($db) {
+			return $db->replacePrefix($v);
+		}, $coreTables);
+	}
+
+	/**
 	 * Get the data replacement values
 	 *
-	 * @param   bool  $fromRequest  Should I override session data with those from the request?
-	 * @param   bool  $force        True to forcibly load the default replacements.
+	 * @param   bool $fromRequest Should I override session data with those from the request?
+	 * @param   bool $force       True to forcibly load the default replacements.
 	 *
 	 * @return array
 	 */
 	public function getReplacements($fromRequest = false, $force = false)
 	{
 		$session      = $this->container->session;
-		$replacements = $session->get('dataReplacements', array());
+		$replacements = $session->get('dataReplacements', []);
 
 		if (empty($replacements))
 		{
-			$replacements = array();
+			$replacements = [];
 		}
 
 		if ($fromRequest)
 		{
-			$replacements = array();
+			$replacements = [];
 
-			$keys   = trim($this->input->get('replaceFrom', '', 'string', 2));
-			$values = trim($this->input->get('replaceTo', '', 'string', 2));
+			$keys   = trim($this->input->get('replaceFrom', '', 'string'));
+			$values = trim($this->input->get('replaceTo', '', 'string'));
 
-			if ( !empty($keys))
+			if (!empty($keys))
 			{
 				$keys   = explode("\n", $keys);
 				$values = explode("\n", $values);
 
 				foreach ($keys as $k => $v)
 				{
-					if ( !isset($values[$k]))
+					if (!isset($values[$k]))
 					{
 						continue;
 					}
@@ -148,547 +201,438 @@ class AngieModelWordpressReplacedata extends AModel
 	}
 
 	/**
-	 * Returns all the database tables which are not part of the WordPress core
-	 *
-	 * @return array
+	 * Post-processing for the #__blogs table of multisite installations
 	 */
-	public function getNonCoreTables()
+	public function updateMultisiteTables()
 	{
-		// Get a list of core tables
-		$coreTables = array(
-			'#__commentmeta', '#__comments', '#__links', '#__options', '#__postmeta', '#__posts',
-			'#__term_relationships', '#__term_taxonomy', '#__terms', '#__usermeta', '#__users',
-		);
-
-		$db = $this->getDbo();
-
-		if ($this->isMultisite())
-		{
-			$additionalTables = array('#__blogs', '#__site', '#__sitemeta');
-
-			/** @var AngieModelWordpressConfiguration $config */
-			$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-			$mainBlogId = $config->get('blog_id_current_site', 1);
-
-			$map     = $this->getMultisiteMap($db);
-			$siteIds = array_keys($map);
-
-			foreach ($siteIds as $id)
-			{
-				if ($id == $mainBlogId)
-				{
-					continue;
-				}
-
-				foreach ($coreTables as $table)
-				{
-					$additionalTables[] = str_replace('#__', '#__' . $id . '_', $table);
-				}
-			}
-
-			$coreTables = array_merge($coreTables, $additionalTables);
-		}
-
-		// Now get a list of non-core tables
-		$prefix       = $db->getPrefix();
-		$prefixLength = strlen($prefix);
-		$allTables    = $db->getTableList();
-
-		$result = array();
-
-		foreach ($allTables as $table)
-		{
-			if (substr($table, 0, $prefixLength) == $prefix)
-			{
-				$table = '#__' . substr($table, $prefixLength);
-			}
-
-			if (in_array($table, $coreTables))
-			{
-				continue;
-			}
-
-			$result[] = $table;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Loads the engine status off the session
-	 */
-	public function loadEngineStatus()
-	{
-		$session = $this->container->session;
-
-		$this->replacements = $this->getReplacements();
-		$this->tables       = $session->get('replacedata.tables', array());
-		$this->currentTable = $session->get('replacedata.currentTable', null);
-		$this->currentRow   = $session->get('replacedata.currentRow', 0);
-		$this->totalRows    = $session->get('replacedata.totalRows', null);
-		$this->column_size	= $session->get('replacedata.column_size', 1048576);
-		$this->batchSize	= $session->get('replacedata.batchSize', 100);
-		$this->min_exec		= $session->get('replacedata.min_exec', 0);
-		$this->max_exec		= $session->get('replacedata.max_exec', 3);
-		$this->bias         = $session->get('replacedata.bias', 75);
-		$this->warnings     = $session->get('replacedata.warnings', array());
-	}
-
-	/**
-	 * Saves the engine status to the session
-	 */
-	public function saveEngineStatus()
-	{
-		$session = $this->container->session;
-
-		$session->set('replacedata.tables', $this->tables);
-		$session->set('replacedata.currentTable', $this->currentTable);
-		$session->set('replacedata.currentRow', $this->currentRow);
-		$session->set('replacedata.totalRows', $this->totalRows);
-		$session->set('replacedata.column_size', $this->column_size);
-		$session->set('replacedata.batchSize', $this->batchSize);
-		$session->set('replacedata.min_exec', $this->min_exec);
-		$session->set('replacedata.max_exec', $this->max_exec);
-		$session->set('replacedata.bias', $this->bias);
-		$session->set('replacedata.warnings', $this->warnings);
-	}
-
-	/**
-	 * Initialises the replacement engine
-	 */
-	public function initEngine()
-	{
-		// Get the replacements to be made
-		$this->replacements = $this->getReplacements(true);
-
-		// Add the default core tables
-		$this->tables = array(
-			array(
-				'table'  => '#__comments',
-				'method' => 'simple', 'fields' => array('comment_author_url', 'comment_content')
-			),
-			array(
-				'table'  => '#__links',
-				'method' => 'simple', 'fields' => array('link_url', 'link_image', 'link_rss'),
-			),
-			array(
-				'table'  => '#__posts',
-				'method' => 'simple', 'fields' => array('post_content', 'post_excerpt', 'guid'),
-			),
-			array(
-				'table'  => '#__commentmeta',
-				'method' => 'serialised', 'fields' => array('meta_value'),
-			),
-			array(
-				'table'  => '#__options',
-				'method' => 'serialised', 'fields' => array('option_value'),
-			),
-			array(
-				'table'  => '#__postmeta',
-				'method' => 'serialised', 'fields' => array('meta_value'),
-			),
-			array(
-				'table'  => '#__usermeta',
-				'method' => 'serialised', 'fields' => array('meta_value'),
-			),
-		);
-
-		// Add multisite tables if this is a multisite installation
-		$db = $this->getDbo();
-
-		if ($this->isMultisite())
-		{
-			/** @var AngieModelWordpressConfiguration $config */
-			$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-			$mainBlogId = $config->get('blog_id_current_site', 1);
-
-			// First add the default core tables which are duplicated for each additional blog in the blog network
-			$tables = array_merge($this->tables);
-			$map    = $this->getMultisiteMap($db);
-
-			// Run for each site in the blog network with an ID ≠ 1
-			foreach ($map as $blogId => $blogPathInfo)
-			{
-				if ($blogId == $mainBlogId)
-				{
-					// This is the master site of the network; it doesn't have duplicated tables
-					continue;
-				}
-
-				$blogPrefix = '#__' . $blogId . '_';
-
-				foreach ($tables as $originalTable)
-				{
-					// Some tables only exist in the network master installation and must be ignored
-					if (in_array($originalTable['table'], array('#__usermeta')))
-					{
-						continue;
-					}
-
-					// Translate the table definition
-					$tableDefinition = array(
-						'table'  => str_replace('#__', $blogPrefix, $originalTable['table']),
-						'method' => $originalTable['method'],
-						'fields' => $originalTable['fields']
-					);
-
-					// Add it to the table list
-					$this->tables[] = $tableDefinition;
-				}
-			}
-
-			// Finally, add some core tables which are only present in a blog network's master site
-			$this->tables[] = array(
-				'table'  => '#__site',
-				'method' => 'simple', 'fields' => array('domain', 'path')
-			);
-
-			/**
-			 * IMPORTANT! We must NOT change #__blogs here. It needs special handling in updateMultisiteTables().
-			 *
-			 * The special handling is required because we may have to convert from a subdomain to a subdirectory
-			 * installation.
-			 */
-			/**
-			$this->tables[] = array(
-				'table'  => '#__blogs',
-				'method' => 'simple', 'fields' => array('domain', 'path')
-			);
-			/**/
-
-			$this->tables[] = array(
-				'table'  => '#__sitemeta',
-				'method' => 'serialised', 'fields' => array('meta_value'),
-			);
-
-		}
-
-		// Get any additional tables
-		$extraTables = $this->input->get('extraTables', array(), 'array');
-
-		if ( !empty($extraTables) && is_array($extraTables))
-		{
-			foreach ($extraTables as $table)
-			{
-				$this->tables[] = array('table' => $table, 'method' => 'serialised', 'fields' => null);
-			}
-		}
-
-		// Intialise the engine state
-		$this->currentTable = null;
-		$this->currentRow   = null;
-		$this->fields       = null;
-		$this->totalRows    = null;
-		$this->column_size	= $this->input->getInt('column_size', 1048576);
-		$this->batchSize	= $this->input->getInt('batchSize', 100);
-		$this->min_exec     = $this->input->getInt('min_exec', 0);
-		$this->max_exec		= $this->input->getInt('max_exec', 3);
-		$this->bias         = $this->input->getInt('runtime_bias', 75);
-
-		// Replace keys in #__options and #__usermeta which depend on the database table prefix, if the prefix has been changed
-		// reference: http://stackoverflow.com/a/13815934/485241
-		$this->timer = new ATimer($this->min_exec, $this->max_exec, $this->bias);
+		// Get the new base domain and base path
 
 		/** @var AngieModelWordpressConfiguration $config */
-		$config    = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-		$oldPrefix = $config->get('olddbprefix');
-		$newPrefix = $db->getPrefix();
+		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+		$new_url                    = $config->get('homeurl');
+		$newUri                     = new AUri($new_url);
+		$newDomain                  = $newUri->getHost();
+		$newPath                    = $newUri->getPath();
+		$old_url                    = $config->get('oldurl');
+		$oldUri                     = new AUri($old_url);
+		$oldDomain                  = $oldUri->getHost();
+		$oldPath                    = $oldUri->getPath();
+		$useSubdomains              = $config->get('subdomain_install', 0);
+		$changedDomain              = $newUri->getHost() != $oldDomain;
+		$changedPath                = $oldPath != $newPath;
+		$convertSubdomainsToSubdirs = $this->mustConvertSudomainsToSubdirs($config, $changedPath, $newDomain);
 
-		if ($oldPrefix != $newPrefix)
+		$db = $this->getDbo();
+
+		$query = $db->getQuery(true)
+			->select('*')
+			->from($db->qn('#__blogs'));
+
+		try
 		{
-			$optionsTables  = array('#__options');
-			$usermetaTables = array('#__usermeta');
-
-			if ($this->isMultisite())
-			{
-				$map     = $this->getMultisiteMap($db);
-				$blogIds = array_keys($map);
-
-				/** @var AngieModelWordpressConfiguration $config */
-				$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-				$mainBlogId = $config->get('blog_id_current_site', 1);
-
-				foreach ($blogIds as $id)
-				{
-					if ($id == $mainBlogId)
-					{
-						continue;
-					}
-
-					$optionsTables[]  = '#__' . $id . '_options';
-					$usermetaTables[] = '#__' . $id . '_usermeta';
-				}
-			}
-
-			foreach ($optionsTables as $table)
-			{
-				$query = $db->getQuery(true)
-							->update($db->qn($table))
-							->set(
-								$db->qn('option_name') . ' = REPLACE(' . $db->qn('option_name') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
-							)
-							->where(
-								$db->qn('option_name') . ' LIKE ' . $db->q($oldPrefix . '%')
-							)
-							->where(
-								$db->qn('option_name') . ' != REPLACE(' . $db->qn('option_name') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
-							);
-
-				try
-				{
-					$db->setQuery($query)->execute();
-				}
-				catch (Exception $e)
-				{
-					// Do nothing if the replacement fails
-				}
-			}
-
-			foreach ($usermetaTables as $table)
-			{
-				$query = $db->getQuery(true)
-					->update($db->qn($table))
-					->set(
-						$db->qn('meta_key') . ' = REPLACE(' . $db->qn('meta_key') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
-					)
-					->where(
-						$db->qn('meta_key') . ' LIKE ' . $db->q($oldPrefix . '%')
-					)
-					->where(
-						$db->qn('meta_key') . ' != REPLACE(' . $db->qn('meta_key') . ', ' . $db->q($oldPrefix) . ', ' . $db->q($newPrefix) . ')'
-					);
-
-				try
-				{
-					$db->setQuery($query)->execute();
-				}
-				catch (Exception $e)
-				{
-					// Do nothing if the replacement fails
-				}
-			}
+			$blogs = $db->setQuery($query)->loadObjectList();
+		}
+		catch (Exception $e)
+		{
+			return;
 		}
 
-		// The #__blogs table used by multisite installations requires a bit of post-processing.
-		if ($this->isMultisite())
+		foreach ($blogs as $blog)
 		{
-			$this->updateMultisiteTables();
-		}
-
-		// Finally, return and let the replacement engine run
-		return array(
-			'msg' 		=> AText::_('SETUP_LBL_REPLACEDATA_MSG_INITIALISED'),
-			'more' 		=> true,
-			'warnings' 	=> array()
-		);
-	}
-
-	/**
-	 * Performs a single step of the data replacement engine
-	 *
-	 * @return  array  Status of the engine (msg: error message, more: true if I need more steps)
-	 */
-	public function stepEngine()
-	{
-		if ( !is_object($this->timer) || !($this->timer instanceof ATimer))
-		{
-			$this->timer = new ATimer($this->min_exec, $this->max_exec, $this->bias);
-		}
-
-		$msg              = '';
-		$warnings		  = array();
-		$more             = true;
-		$db               = $this->getDbo();
-		$serialisedHelper = new AUtilsSerialised();
-
-		while ($this->timer->getTimeLeft() > 0)
-		{
-			// Are we done with all tables?
-			if (is_null($this->currentTable) && empty($this->tables))
+			if ($blog->blog_id == 1)
 			{
-				$msg  = AText::_('SETUP_LBL_REPLACEDATA_MSG_DONE');
-				$more = false;
-
-				break;
+				// Default site: path must match the site's installation path (e.g. /foobar/)
+				$blog->path = '/' . trim($newPath, '/') . '/';
 			}
 
-			// Last table done and ready for more?
-			if (is_null($this->currentTable))
+			/**
+			 * Converting blog1.example.com to www.example.net/myfolder/blog1 (multisite subdomain installation in the
+			 * site's root TO multisite subfolder installation in a subdirectory)
+			 */
+			if ($convertSubdomainsToSubdirs)
 			{
-				$this->currentTable = array_shift($this->tables);
-				$this->currentRow   = 0;
+				// Extract the subdomain WITHOUT the trailing dot
+				$subdomain = substr($blog->domain, 0, -strlen($oldDomain) - 1);
 
-				if (empty($this->currentTable['table']))
+				// Step 1. domain: Convert old subdomain (blog1.example.com) to new full domain (www.example.net)
+				$blog->domain = $newUri->getHost();
+
+				// Step 2. path: Replace old path (/) with new path + slug (/mysite/blog1).
+				$blogPath   = trim($newPath, '/') . '/' . trim($subdomain, '/') . '/';
+				$blog->path = '/' . ltrim($blogPath, '/') . '/';
+
+				if ($blog->path == '//')
 				{
-					$msg  = AText::_('SETUP_LBL_REPLACEDATA_MSG_DONE');
-					$more = false;
-
-					break;
+					$blog->path = '/';
+				}
+			}
+			/**
+			 * Converting blog1.example.com to blog1.example.net (keep multisite subdomain installation, change the
+			 * domain name)
+			 */
+			elseif ($useSubdomains && $changedDomain)
+			{
+				// Change domain (extract subdomain a.k.a. alias, append $newDomain to it)
+				$subdomain    = substr($blog->domain, 0, -strlen($oldDomain));
+				$blog->domain = $subdomain . $newDomain;
+			}
+			/**
+			 * Convert subdomain installations when EITHER the domain OR the path have changed. E.g.:
+			 *  www.example.com/blog1   to  www.example.net/blog1
+			 * OR
+			 *  www.example.com/foo/blog1   to  www.example.com/bar/blog1
+			 * OR
+			 *  www.example.com/foo/blog1   to  www.example.net/bar/blog1
+			 */
+			elseif ($changedDomain || $changedPath)
+			{
+				if ($changedDomain)
+				{
+					// Update the domain
+					$blog->domain = $newUri->getHost();
 				}
 
-				$query = $db->getQuery(true)
-							->select('COUNT(*)')->from($db->qn($this->currentTable['table']));
-
-				try
+				if ($changedPath)
 				{
-					$this->totalRows = $db->setQuery($query)->loadResult();
-				}
-				catch (Exception $e)
-				{
-					// If the table does not exist go to the next table
-					$this->currentTable = null;
-					continue;
+					// Change $blog->path (remove old path, keep alias, prefix it with new path)
+					$path       = (strpos($blog->path, $oldPath) === 0) ? substr($blog->path, strlen($oldPath)) : $blog->path;
+					$blog->path = '/' . trim($newPath . '/' . ltrim($path, '/'), '/');
 				}
 			}
 
-			// Is this a simple replacement (one SQL query)?
-			if ($this->currentTable['method'] == 'simple')
-			{
-				$msg = $this->currentTable['table'];
+			// For every record, make sure the path column ends in forward slash (required by WP)
+			$blog->path = rtrim($blog->path, '/') . '/';
 
-				// Perform the replacement
-				$this->performSimpleReplacement($db);
-
-				// Go to the next table
-				$this->currentTable = null;
-				continue;
-			}
-
-			// If we're done processing this table, go to the next table
-			if ($this->currentRow >= $this->totalRows)
-			{
-				$msg = $this->currentTable['table'];
-
-				$this->currentTable = null;
-				continue;
-			}
-
-			// This is a complex replacement for serialised data. Let's get a bunch of data.
-			$tableName        = $this->currentTable['table'];
-			$this->currentRow = empty($this->currentRow) ? 0 : $this->currentRow;
-
+			// Save the changed record
 			try
 			{
-				$query = $db->getQuery(true)->select('*')->from($db->qn($tableName));
-				$data  = $db->setQuery($query, $this->currentRow, $this->batchSize)->loadAssocList();
+				$db->updateObject('#__blogs', $blog, ['blog_id', 'site_id']);
 			}
 			catch (Exception $e)
 			{
-				// If the table does not exist go to the next table
-				$this->currentTable = null;
+				// If we failed to save the record just skip over to the next one.
+			}
+		}
+	}
+
+	/**
+	 * Initialize the replacement engine, tick it for the first time and return the result
+	 *
+	 * @return  PartStatus
+	 */
+	public function init()
+	{
+		/**
+		 * Get the excluded tables.
+		 *
+		 * All core WordPress tables are always included. We only let the user which of the non-core tables should also
+		 * be included in replacements. Therefore any non-core table NOT explicitly included by the user has to be
+		 * excluded from the replacement.
+		 */
+		$extraTables    = $this->input->get('extraTables', [], 'array');
+		$nonCore        = $this->getNonCoreTables();
+		$excludedTables = array_diff($nonCore, $extraTables);
+
+		// Push some useful information into the session
+		$session = $this->container->session;
+		$min     = $this->input->getInt('min_exec', 0);
+		$session->set('replacedata.min_exec', $min);
+
+		// Make a Configuration object
+		$configParams = [
+			'outputSQLFile'      => '',
+			'backupSQLFile'      => '',
+			'logFile'            => '',
+			'liveMode'           => true,
+			'allTables'          => true,
+			'maxBatchSize'       => $this->input->getInt('batchSize', 100),
+			'excludeTables'      => $excludedTables,
+			'excludeRows'        => [],
+			'regularExpressions' => false,
+			'replacements'       => $this->getReplacements(true, false),
+			'databaseCollation'  => '',
+			'tableCollation'     => '',
+			'description'        => 'ANGIE replacing data in your WordPress site',
+			// The following is currently ignored
+			'maxColumnSize'      => $this->input->getInt('column_size', 1048576),
+		];
+		$config       = new Configuration($configParams);
+
+		// Make a Timer object
+		$max   = $this->input->getInt('max_exec', 3);
+		$bias  = $this->input->getInt('runtime_bias', 75);
+		$timer = new \Akeeba\Replace\Timer\Timer($max, $bias);
+
+		// Make a Database object
+		$dbOptions = $this->getDatabaseConnectionOptions();
+		$db        = Driver::getInstance($dbOptions);
+
+		// Create dummy writer objects
+		$logger = new NullLogger();
+		$output = new \Akeeba\Replace\Writer\NullWriter('');
+		$backup = new \Akeeba\Replace\Writer\NullWriter('');
+
+		// Create a memory information object
+		$memoryInfo = new MemoryInfo();
+
+		// Create the new engine object and serialize it
+		$engine = new Database($timer, $db, $logger, $output, $backup, $config, $memoryInfo);
+		$session->set('replacedata.engine', serialize($engine));
+
+		// Now run it for the first time
+		return $this->step();
+	}
+
+	/**
+	 * Step the Akeeba Replace engine for the allowed period of time (or until we're done) and return the result to the
+	 * caller.
+	 *
+	 * @return  PartStatus
+	 */
+	public function step()
+	{
+		$session          = $this->container->session;
+		$serializedEngine = $session->get('replacedata.engine', null);
+
+		if (empty($serializedEngine))
+		{
+			throw new RuntimeException("Broken session: cannot unserialize the data replacement engine; the serialized data is missing.");
+		}
+
+		$engine = @unserialize($serializedEngine);
+
+		if (!is_object($engine) || !($engine instanceof Database))
+		{
+			throw new RuntimeException("Broken session: cannot unserialize the data replacement engine; the serialized data is corrupt.");
+		}
+
+		// Prime the status with an error -- this is used if we cannot load a cached engine
+		$status = new PartStatus([
+			'Error' => 'Trying to step the replacement engine after it has finished processing replacements.',
+		]);
+
+		$timer    = $engine->getTimer();
+		$warnings = [];
+		$error    = null;
+
+		while ($timer->getTimeLeft())
+		{
+			// Run a single step
+			$status = $engine->tick();
+
+			// Merge any warnings
+			$newWarnings = $status->getWarnings();
+			$warnings    = array_merge($warnings, $newWarnings);
+
+			// Are we done already?
+			if ($status->isDone())
+			{
+				break;
+			}
+
+			// Check for an error
+			$error = $status->getError();
+
+			if (!is_object($error) || !($error instanceof ErrorException))
+			{
+				$error = null;
+
 				continue;
 			}
 
-			if ( !empty($data))
+			// We hit an error
+			break;
+		}
+
+		// Construct a new status array with the merged warnings and the carried over error (if any)
+		$configArray             = $status->toArray();
+		$configArray['Warnings'] = $warnings;
+		$configArray['Error']    = $error;
+		$status                  = new PartStatus($configArray);
+
+		if ($status->isDone() || !is_null($error))
+		{
+			// If we are done (or died with an error) we remove the cached engine from the session (we do not need it)
+			$session->remove('replacedata.engine');
+		}
+		else
+		{
+			// Cache the new engine status
+			$session->set('replacedata.engine', serialize($engine));
+		}
+
+		// Enforce minimum execution time but only if we haven't finished already (done or error)
+		if (!is_null($engine))
+		{
+			$minExec     = $session->get('replacedata.min_exec', 0);
+			$runningTime = $timer->getRunningTime();
+
+			if ($runningTime < $minExec)
 			{
-				// Loop all rows
-				foreach ($data as $row)
-				{
-					// Make sure we have time
-					if ($this->timer->getTimeLeft() <= 0)
-					{
-						$msg = $this->currentTable['table'] . ' ' . $this->currentRow . ' / ' . $this->totalRows;
-						break;
-					}
+				$sleepForSeconds = $minExec - $runningTime;
 
-					// Which fields should I parse?
-					if ( !empty($this->currentTable['fields']))
-					{
-						$fields = $this->currentTable['fields'];
-					}
-					else
-					{
-						$fields = array_keys($row);
-					}
-
-					// Calculate a quick hash of the row. If the hash is different after replacement we need to write it
-					// back to the database.
-					$hashBefore = crc32(serialize($row));
-
-					foreach ($fields as $field)
-					{
-						$fieldValue   = $row[$field];
-						$from         = array_keys($this->replacements);
-						$to           = array_values($this->replacements);
-
-						if ($serialisedHelper->isSerialised($fieldValue))
-						{
-							// Replace serialised data only if it's LOWER than the maximum column size
-							$fieldValue = $serialisedHelper->replaceWithRegEx($fieldValue, $from, $to);
-
-							/**
-							if (strlen($fieldValue) <= $this->column_size)
-							{
-								try
-								{
-									$fieldValue = $serialisedHelper->replaceWithRegEx($fieldValue, $from, $to);
-								}
-								catch (Exception $e)
-								{
-									// Yeah, well...
-								}
-							}
-							else
-							{
-								// Otherwise skip it and report back to the user about this field
-								$warnings[] 	  = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
-								$this->warnings[] = AText::sprintf('SETUP_REPLACE_COLUM_SKIPPED', $field, $this->currentTable['table']);
-							}
-							/**/
-						}
-						else
-						{
-							// Replace text data
-							$fieldValue = str_replace($from, $to, $fieldValue);
-						}
-
-						$row[$field] = $fieldValue;
-					}
-
-					// Mark the row done
-					$this->currentRow++;
-
-					// Calculate the quick row hash after the data replacement
-					$hashAfter = crc32(serialize($row));
-
-					// If no data was replaced we should not be wasting resources writing back to the database :)
-					if ($hashAfter == $hashBefore)
-					{
-						continue;
-					}
-
-					$row = array_map(array($db, 'quote'), $row);
-
-					$query = $db->getQuery(true)->replace($db->qn($tableName))
-								->columns(array_keys($row))
-								->values(implode(',', $row));
-
-					try
-					{
-						$db->setQuery($query)->execute();
-					}
-					catch (Exception $e)
-					{
-						// If there's no primary key the replacement will fail. Oh, well, what can you do...
-					}
-				}
+				usleep($sleepForSeconds * 1000000);
 			}
 		}
 
-		// Am I done with DB replacement? If so let's update some files
-		if (!$more)
+		return $status;
+	}
+
+	/**
+	 * Updates known files that are storing absolute paths inside them
+	 */
+	public function updateFiles()
+	{
+		$files = [
+			// Do not replace anything in .htaccess; we'll do that in the finalization (next step of the installer)
+			/**
+			 * APATH_SITE.'/.htaccess',
+			 * APATH_SITE.'/htaccess.bak',
+			 * /**/
+			// I'll try to apply the changes to those files and their "backup" counterpart
+			APATH_SITE . '/.user.ini.bak',
+			APATH_SITE . '/.user.ini',
+			APATH_SITE . '/php.ini',
+			APATH_SITE . '/php.ini.bak',
+			// Wordfence is storing the absolute path inside their file. We need to replace this or the site will crash.
+			APATH_SITE . '/wordfence-waf.php',
+		];
+
+		foreach ($files as $file)
 		{
-			$this->updateFiles();
+			if (!file_exists($file))
+			{
+				continue;
+			}
+
+			$contents = file_get_contents($file);
+
+			foreach ($this->replacements as $from => $to)
+			{
+				$contents = str_replace($from, $to, $contents);
+			}
+
+			file_put_contents($file, $contents);
+		}
+	}
+
+	/**
+	 * Update the wp-config.php file. Required for multisite installations.
+	 *
+	 * @return  bool
+	 */
+	public function updateWPConfigFile()
+	{
+		/** @var AngieModelWordpressConfiguration $config */
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+
+		// Update the base directory, if present
+		$base = $config->get('base', null);
+
+		if (!is_null($base))
+		{
+			$base = '/' . trim($config->getNewBasePath(), '/');
+			$config->set('base', $base);
 		}
 
-		// Sleep if we didn't hit the minimum execution time
-		$this->timer->enforce_min_exec_time();
+		// If I have to convert subdomains to subdirs then I need to update SUBDOMAIN_INSTALL as well
+		$old_url = $config->get('oldurl');
+		$new_url = $config->get('homeurl');
 
-		return array(
-			'msg' 		=> $msg,
-			'more' 		=> $more,
-			'warnings' 	=> $warnings
-		);
+		$oldUri = new AUri($old_url);
+		$newUri = new AUri($new_url);
+
+		$newDomain = $newUri->getHost();
+
+		$newPath = $newUri->getPath();
+		$newPath = empty($newPath) ? '/' : $newPath;
+		$oldPath = $config->get('path_current_site', $oldUri->getPath());
+
+		$replacePaths = $oldPath != $newPath;
+
+		$mustConvertSubdomains = $this->mustConvertSudomainsToSubdirs($config, $replacePaths, $newDomain);
+
+		if ($mustConvertSubdomains)
+		{
+			$config->set('subdomain_install', 0);
+		}
+
+		// Get the wp-config.php file and try to save it
+		if (!$config->writeConfig(APATH_SITE . '/wp-config.php'))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get the database driver connection options
+	 *
+	 * @return  array
+	 */
+	private function getDatabaseConnectionOptions()
+	{
+		/** @var AngieModelDatabase $model */
+		$model      = AModel::getAnInstance('Database', 'AngieModel', [], $this->container);
+		$keys       = $model->getDatabaseNames();
+		$firstDbKey = array_shift($keys);
+
+		$connectionVars = $model->getDatabaseInfo($firstDbKey);
+
+		$options = [
+			'driver'   => $connectionVars->dbtype,
+			'database' => $connectionVars->dbname,
+			'select'   => 1,
+			'host'     => $connectionVars->dbhost,
+			'user'     => $connectionVars->dbuser,
+			'password' => $connectionVars->dbpass,
+			'prefix'   => $connectionVars->prefix,
+		];
+
+		return $options;
+	}
+
+	/**
+	 * Get the map of IDs to blog URLs
+	 *
+	 * @param   ADatabaseDriver $db The database connection
+	 *
+	 * @return  array  The map, or an empty array if this is not a multisite installation
+	 */
+	private function getMultisiteMap($db)
+	{
+		static $map = null;
+
+		if (is_null($map))
+		{
+			/** @var AngieModelWordpressConfiguration $config */
+			$config = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
+
+			// Which site ID should I use?
+			$site_id = $config->get('site_id_current_site', 1);
+
+			// Get all of the blogs of this site
+			$query = $db->getQuery(true)
+				->select([
+					$db->qn('blog_id'),
+					$db->qn('domain'),
+					$db->qn('path'),
+				])
+				->from($db->qn('#__blogs'))
+				->where($db->qn('site_id') . ' = ' . $db->q($site_id));
+
+			try
+			{
+				$map = $db->setQuery($query)->loadAssocList('blog_id');
+			}
+			catch (Exception $e)
+			{
+				$map = [];
+			}
+		}
+
+		return $map;
 	}
 
 	/**
@@ -696,12 +640,12 @@ class AngieModelWordpressReplacedata extends AModel
 	 *
 	 * @return array
 	 */
-	protected function getDefaultReplacements()
+	private function getDefaultReplacements()
 	{
-		$replacements = array();
+		$replacements = [];
 
 		/** @var AngieModelWordpressConfiguration $config */
-		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
+		$config = AModel::getAnInstance('Configuration', 'AngieModel', [], $this->container);
 
 		// Main site's URL
 		$newReplacements = $this->getDefaultReplacementsForMainSite($config);
@@ -740,98 +684,6 @@ class AngieModelWordpressReplacedata extends AModel
 	}
 
 	/**
-	 * Perform a simple replacement on the current table
-	 *
-	 * @param ADatabaseDriver $db
-	 *
-	 * @return void
-	 */
-	protected function performSimpleReplacement($db)
-	{
-		$tableName = $this->currentTable['table'];
-
-		// Run all replacements
-		foreach ($this->replacements as $from => $to)
-		{
-			$query = $db->getQuery(true)
-						->update($db->qn($tableName));
-
-			foreach ($this->currentTable['fields'] as $field)
-			{
-				$query->set(
-					$db->qn($field) . ' = REPLACE(' .
-					$db->qn($field) . ', ' . $db->q($from) . ', ' . $db->q($to) .
-					')');
-			}
-
-			try
-			{
-				$db->setQuery($query)->execute();
-			}
-			catch (Exception $e)
-			{
-				// Do nothing if the replacement fails
-			}
-		}
-	}
-
-	/**
-	 * Get the map of IDs to blog URLs
-	 *
-	 * @param   ADatabaseDriver $db The database connection
-	 *
-	 * @return  array  The map, or an empty array if this is not a multisite installation
-	 */
-	protected function getMultisiteMap($db)
-	{
-		static $map = null;
-
-		if (is_null($map))
-		{
-			/** @var AngieModelWordpressConfiguration $config */
-			$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-
-			// Which site ID should I use?
-			$site_id = $config->get('site_id_current_site', 1);
-
-			// Get all of the blogs of this site
-			$query = $db->getQuery(true)
-						->select(array(
-							$db->qn('blog_id'),
-							$db->qn('domain'),
-							$db->qn('path'),
-						))
-						->from($db->qn('#__blogs'))
-						->where($db->qn('site_id') . ' = ' . $db->q($site_id))
-			;
-
-			try
-			{
-				$map = $db->setQuery($query)->loadAssocList('blog_id');
-			}
-			catch (Exception $e)
-			{
-				$map = array();
-			}
-		}
-
-		return $map;
-	}
-
-	/**
-	 * Is this a multisite installation?
-	 *
-	 * @return  bool  True if this is a multisite installation
-	 */
-	public function isMultisite()
-	{
-		/** @var AngieModelWordpressConfiguration $config */
-		$config = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-
-		return $config->get('multisite', false);
-	}
-
-	/**
 	 * Internal method to get the default replacements for the main site URL
 	 *
 	 * @param   AngieModelWordpressConfiguration $config The configuration model
@@ -840,7 +692,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	private function getDefaultReplacementsForMainSite($config)
 	{
-		$replacements = array();
+		$replacements = [];
 
 		// These values are stored inside the session, after the setup step
 		$old_url = $config->get('oldurl');
@@ -853,7 +705,7 @@ class AngieModelWordpressReplacedata extends AModel
 
 		// Let's get the reference of the previous absolute path
 		/** @var AngieModelBaseMain $mainModel */
-		$mainModel  = AModel::getAnInstance('Main', 'AngieModel', array(), $this->container);
+		$mainModel  = AModel::getAnInstance('Main', 'AngieModel', [], $this->container);
 		$extra_info = $mainModel->getExtraInfo();
 
 		if (isset($extra_info['root']) && $extra_info['root'])
@@ -868,28 +720,28 @@ class AngieModelWordpressReplacedata extends AModel
 			}
 		}
 
-		$oldUri = new AUri($old_url);
-		$newUri = new AUri($new_url);
+		$oldUri       = new AUri($old_url);
+		$newUri       = new AUri($new_url);
 		$oldDirectory = $oldUri->getPath();
 		$newDirectory = $newUri->getPath();
 
 		// Replace domain site only if the protocol, the port or the domain are different
 		if (
-			($oldUri->getHost()   != $newUri->getHost()) ||
-			($oldUri->getPort()   != $newUri->getPort()) ||
+			($oldUri->getHost() != $newUri->getHost()) ||
+			($oldUri->getPort() != $newUri->getPort()) ||
 			($oldUri->getScheme() != $newUri->getScheme())
 		)
 		{
 			// Normally we need to replace both the domain and path, e.g. https://www.example.com => http://localhost/wp
 
-			$old = $oldUri->toString(array('scheme', 'host', 'port', 'path'));
-			$new = $newUri->toString(array('scheme', 'host', 'port', 'path'));
+			$old = $oldUri->toString(['scheme', 'host', 'port', 'path']);
+			$new = $newUri->toString(['scheme', 'host', 'port', 'path']);
 
 			// However, if the path is the same then we must only replace the domain.
 			if ($oldDirectory == $newDirectory)
 			{
-				$old = $oldUri->toString(array('scheme', 'host', 'port'));
-				$new = $newUri->toString(array('scheme', 'host', 'port'));
+				$old = $oldUri->toString(['scheme', 'host', 'port']);
+				$new = $newUri->toString(['scheme', 'host', 'port']);
 			}
 
 			$replacements[$old] = $new;
@@ -914,7 +766,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	private function getDefaultReplacementsForMultisite($config)
 	{
-		$replacements = array();
+		$replacements = [];
 		$db           = $this->getDbo();
 
 		if (!$this->isMultisite())
@@ -992,7 +844,7 @@ class AngieModelWordpressReplacedata extends AModel
 				$blogDomain = $info['domain'];
 
 				// Extract the subdomain
-				$subdomain  = substr($blogDomain, 0, -strlen($oldDomain));
+				$subdomain = substr($blogDomain, 0, -strlen($oldDomain));
 
 				// Add a replacement for this domain
 				$replacements[$blogDomain] = $subdomain . $newDomain;
@@ -1013,10 +865,10 @@ class AngieModelWordpressReplacedata extends AModel
 				// $replacements[$blogDomain] = $newUri->getHost();
 
 				// Convert links in post GUID, e.g. //blog1.example.com/ TO //example.net/mydir/blog1/
-				$subdomain  = substr($blogDomain, 0, -strlen($oldDomain) - 1);
-				$from = '//' . $blogDomain;
-				$to = '//' . $newUri->getHost() . $newUri->getPath() . '/' . $subdomain;
-				$to = rtrim($to, '/');
+				$subdomain           = substr($blogDomain, 0, -strlen($oldDomain) - 1);
+				$from                = '//' . $blogDomain;
+				$to                  = '//' . $newUri->getHost() . $newUri->getPath() . '/' . $subdomain;
+				$to                  = rtrim($to, '/');
 				$replacements[$from] = $to;
 
 				continue;
@@ -1049,7 +901,7 @@ class AngieModelWordpressReplacedata extends AModel
 	 */
 	private function getDefaultReplacementsForDbPrefix($config)
 	{
-		$replacements = array();
+		$replacements = [];
 
 		// Replace the table prefix if it's different
 		$db        = $this->getDbo();
@@ -1064,188 +916,6 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		return $replacements;
-	}
-
-	/**
-	 * Removes the subdomain from a full domain name. For example:
-	 * removeSubdomain('www.example.com') = 'example.com'
-	 * removeSubdomain('example.com') = 'example.com'
-	 * removeSubdomain('localhost.localdomain') = 'localhost.localdomain'
-	 * removeSubdomain('foobar.localhost.localdomain') = 'localhost.localdomain'
-	 * removeSubdomain('localhost') = 'localhost'
-	 *
-	 * @param   string  $domain  The domain to remove its subdomain
-	 *
-	 * @return  string
-	 */
-	private function removeSubdomain($domain)
-	{
-		$domain = trim($domain, '.');
-
-		$parts = explode('.', $domain);
-
-		if (count($parts) > 2)
-		{
-			array_shift($parts);
-		}
-
-		return implode('.', $parts);
-	}
-
-	/**
-	 * Updates known files that are storing absolute paths inside them
-	 */
-	private function updateFiles()
-	{
-		$files = array(
-			// Do not replace anything in .htaccess; we'll do that in the next (finalize) step of the restoration.
-			/**
-			APATH_SITE.'/.htaccess',
-			APATH_SITE.'/htaccess.bak',
-			/**/
-			// I'll try to apply the changes to those files and their "backup" counterpart
-			APATH_SITE.'/.user.ini.bak',
-			APATH_SITE.'/.user.ini',
-			APATH_SITE.'/php.ini',
-			APATH_SITE.'/php.ini.bak',
-			// Wordfence is storing the absolute path inside their file. Because __DIR__ is too mainstream..
-			APATH_SITE.'/wordfence-waf.php',
-		);
-
-		foreach ($files as $file)
-		{
-			if (!file_exists($file))
-			{
-				continue;
-			}
-
-			$contents = file_get_contents($file);
-
-			foreach ($this->replacements as $from => $to)
-			{
-				$contents = str_replace($from, $to, $contents);
-			}
-
-			file_put_contents($file, $contents);
-		}
-	}
-
-	/**
-	 * Post-processing for the #__blogs table of multisite installations
-	 */
-	public function updateMultisiteTables()
-	{
-		// Get the new base domain and base path
-
-		/** @var AngieModelWordpressConfiguration $config */
-		$config                     = AModel::getAnInstance('Configuration', 'AngieModel', array(), $this->container);
-		$new_url                    = $config->get('homeurl');
-		$newUri                     = new AUri($new_url);
-		$newDomain                  = $newUri->getHost();
-		$newPath                    = $newUri->getPath();
-		$old_url                    = $config->get('oldurl');
-		$oldUri                     = new AUri($old_url);
-		$oldDomain                  = $oldUri->getHost();
-		$oldPath                    = $oldUri->getPath();
-		$useSubdomains              = $config->get('subdomain_install', 0);
-		$changedDomain              = $newUri->getHost() != $oldDomain;
-		$changedPath                = $oldPath != $newPath;
-		$convertSubdomainsToSubdirs = $this->mustConvertSudomainsToSubdirs($config, $changedPath, $newDomain);
-
-		$db = $this->getDbo();
-
-		$query = $db->getQuery(true)
-			->select('*')
-			->from($db->qn('#__blogs'));
-
-		try
-		{
-			$blogs = $db->setQuery($query)->loadObjectList();
-		}
-		catch (Exception $e)
-		{
-			return;
-		}
-
-		foreach ($blogs as $blog)
-		{
-			if ($blog->blog_id == 1)
-			{
-				// Default site: path must match the site's installation path (e.g. /foobar/)
-				$blog->path = '/' . trim($newPath, '/') . '/';
-			}
-
-			/**
-			 * Converting blog1.example.com to www.example.net/myfolder/blog1 (multisite subdomain installation in the
-			 * site's root TO multisite subfolder installation in a subdirectory)
-			 */
-			if ($convertSubdomainsToSubdirs)
-			{
-				// Extract the subdomain WITHOUT the trailing dot
-				$subdomain = substr($blog->domain, 0, -strlen($oldDomain)-1);
-
-				// Step 1. domain: Convert old subdomain (blog1.example.com) to new full domain (www.example.net)
-				$blog->domain = $newUri->getHost();
-
-				// Step 2. path: Replace old path (/) with new path + slug (/mysite/blog1).
-				$blogPath   = trim($newPath, '/') . '/' . trim($subdomain, '/') . '/';
-				$blog->path = '/' . ltrim($blogPath, '/') . '/';
-
-				if ($blog->path == '//')
-				{
-					$blog->path = '/';
-				}
-			}
-			/**
-			 * Converting blog1.example.com to blog1.example.net (keep multisite subdomain installation, change the
-			 * domain name)
-			 */
-			elseif ($useSubdomains && $changedDomain)
-			{
-				// Change domain (extract subdomain a.k.a. alias, append $newDomain to it)
-				$subdomain    = substr($blog->domain, 0, -strlen($oldDomain));
-				$blog->domain = $subdomain . $newDomain;
-			}
-			/**
-			 * Convert subdomain installations when EITHER the domain OR the path have changed. E.g.:
-			 *  www.example.com/blog1   to  www.example.net/blog1
-			 * OR
-			 *  www.example.com/foo/blog1   to  www.example.com/bar/blog1
-			 * OR
-			 *  www.example.com/foo/blog1   to  www.example.net/bar/blog1
-			 */
-			elseif ($changedDomain || $changedPath)
-			{
-				if ($changedDomain)
-				{
-					// Update the domain
-					$blog->domain = $newUri->getHost();
-				}
-
-				if ($changedPath)
-				{
-					// Change $blog->path (remove old path, keep alias, prefix it with new path)
-					$path       = (strpos($blog->path, $oldPath) === 0) ? substr($blog->path, strlen($oldPath)) : $blog->path;
-					$blog->path = '/' . trim($newPath . '/' . ltrim($path, '/'), '/');
-				}
-			}
-
-			// For every record, make sure the path column ends in forward slash (required by WP)
-			$blog->path = rtrim($blog->path, '/') . '/';
-
-			// Save the changed record
-			try
-			{
-				$db->updateObject('#__blogs', $blog, array('blog_id', 'site_id'));
-			}
-			catch (Exception $e)
-			{
-				// If we failed to save the record just skip over to the next one.
-			}
-		}
-
-		// Finally, update the wp-config.php file
-		$this->updateWPConfigFile($config);
 	}
 
 	/**
@@ -1281,53 +951,5 @@ class AngieModelWordpressReplacedata extends AModel
 		}
 
 		return $convertSubdomainsToSubdirs;
-	}
-
-	/**
-	 * Update the wp-config.php file. Required for multisite installations. I can't add this to the
-	 * AngieModelWordpressSetup model
-	 *
-	 * @return  bool
-	 */
-	public function updateWPConfigFile(AngieModelWordpressConfiguration $config)
-	{
-		// Update the base directory, if present
-		$base = $config->get('base', null);
-
-		if (!is_null($base))
-		{
-			$base = '/' . trim($config->getNewBasePath(), '/');
-			$config->set('base', $base);
-		}
-
-		// If I have to convert subdomains to subdirs then I need to update SUBDOMAIN_INSTALL as well
-		$old_url = $config->get('oldurl');
-		$new_url = $config->get('homeurl');
-
-		$oldUri = new AUri($old_url);
-		$newUri = new AUri($new_url);
-
-		$newDomain = $newUri->getHost();
-
-		$newPath = $newUri->getPath();
-		$newPath = empty($newPath) ? '/' : $newPath;
-		$oldPath = $config->get('path_current_site', $oldUri->getPath());
-
-		$replacePaths   = $oldPath != $newPath;
-
-		$mustConvertSubdomains = $this->mustConvertSudomainsToSubdirs($config, $replacePaths, $newDomain);
-
-		if ($mustConvertSubdomains)
-		{
-			$config->set('subdomain_install', 0);
-		}
-
-		// Get the wp-config.php file and try to save it
-		if (!$config->writeConfig(APATH_SITE . '/wp-config.php'))
-		{
-			return false;
-		}
-
-		return true;
 	}
 }
