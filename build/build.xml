@@ -15,7 +15,7 @@
 	====================================================================================================
 	-->
 
-	<target name="git" description="Make all installers in JPA format" depends="git-jpa">
+	<target name="git" description="Make all installers in JPA format" depends="link,setup-properties,git-jpa">
 	</target>
 
 	<target name="git-all" description="Make all installers in both JPA and ZIP formats">
