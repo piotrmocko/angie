@@ -347,7 +347,7 @@ class AngieModelWordpressReplacedata extends AModel
 			'allTables'          => true,
 			'maxBatchSize'       => $this->input->getInt('batchSize', 100),
 			'excludeTables'      => $excludedTables,
-			'excludeRows'        => [],
+			'excludeRows'        => [$this->getDbo()->getPrefix() . 'posts' => ['guid']],
 			'regularExpressions' => false,
 			'replacements'       => $this->getReplacements(true, false),
 			'databaseCollation'  => '',
