@@ -1,9 +1,7 @@
 <?php
-$hardlink_files = array();
+$hardlink_files = [];
 
-$symlink_files = array();
-
-$symlink_folders = array(
+$symlink_files = [
 	'translations/angie/en-GB.ini'      => 'angie/installation/angie/language/en-GB.ini',
 	'translations/drupal7/en-GB.ini'    => 'angie/platforms/drupal7/language/en-GB.ini',
 	'translations/drupal8/en-GB.ini'    => 'angie/platforms/drupal8/language/en-GB.ini',
@@ -17,4 +15,8 @@ $symlink_folders = array(
 	'translations/phpbb/en-GB.ini'      => 'angie/platforms/phpbb/language/en-GB.ini',
 	'translations/prestashop/en-GB.ini' => 'angie/platforms/prestashop/language/en-GB.ini',
 	'translations/wordpress/en-GB.ini'  => 'angie/platforms/wordpress/language/en-GB.ini',
-);
+];
+
+$symlink_folders = [
+	'../wpreplace/src/lib' => 'angie/platforms/wordpress/lib',
+];

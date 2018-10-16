@@ -12,3 +12,6 @@ defined('_AKEEBA') or die();
 // Tell the installer to allow detection of utf8mb4 support by default
 define('ANGIE_ALLOW_UTF8MB4_DEFAULT', true);
 define('ANGIE_INSTALLER_NAME', 'Wordpress');
+
+// Import Akeeba Replace's autoloader
+require_once 'lib/Autoloader/Autoloader.php';
