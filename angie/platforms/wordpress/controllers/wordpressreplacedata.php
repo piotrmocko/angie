@@ -101,8 +101,6 @@ class AngieControllerWordpressReplacedata extends AController
 		}
 
 		echo json_encode($result);
-
-		exit(0);
 	}
 
     public function replaceneeded()
@@ -122,7 +120,5 @@ class AngieControllerWordpressReplacedata extends AController
         }
 
         echo json_encode($result);
-
-	    exit(0);
     }
 }
