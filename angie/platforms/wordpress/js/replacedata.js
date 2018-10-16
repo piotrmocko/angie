@@ -29,7 +29,7 @@ replacements.start = function()
 	var request = {
 		'view':			'replacedata',
 		'task':			'ajax',
-		'method':		'initEngine',
+		'method':		'init',
 		'format':		'json',
 		'replaceFrom':	$('#replaceFrom').val(),
 		'replaceTo':	$('#replaceTo').val(),
@@ -102,7 +102,7 @@ replacements.step = function()
 	akeebaAjaxWP.callJSON({
 		'view':			'replacedata',
 		'task':			'ajax',
-		'method':		'stepEngine',
+		'method':		'step',
 		'format':		'json'
 	},
         replacements.process,

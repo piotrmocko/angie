@@ -6,6 +6,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL v3 or later
  */
 
+use Akeeba\Replace\Engine\ErrorHandling\WarningException;
+
 defined('_AKEEBA') or die();
 
 class AngieControllerWordpressReplacedata extends AController
@@ -38,31 +40,69 @@ class AngieControllerWordpressReplacedata extends AController
 
 	public function ajax()
 	{
-		$method = $this->input->getCmd('method', '');
-		$result = false;
-
 		/** @var AngieModelWordpressReplacedata $model */
 		$model = $this->getThisModel();
+		$method = $this->input->getCmd('method', '');
 
-		$model->loadEngineStatus();
-
-		if (method_exists($model, $method))
+		try
 		{
-			try
+			switch ($method)
 			{
-				$result = $model->$method();
+				case 'init':
+					// First we need to update the multisite tables, if necessary.
+					if ($model->isMultisite())
+					{
+						$model->updateMultisiteTables();
+					}
+
+					$status = $model->init();
+					break;
+
+				case 'step':
+					$status = $model->step();
+					break;
 			}
-			catch(Exception $e)
+
+			$this->container->session->saveData();
+
+			$error    = $status->getError();
+			$warnings = $status->getWarnings();
+			$hasError = is_object($error) && ($error instanceof Exception);
+
+			$result            = [
+				'error' => $hasError ? $error->getMessage() : '',
+				'msg'   => $status->getDomain() . ' ' . $status->getStep() . ' ' . $status->getSubstep(),
+				'more'  => !$status->isDone() && !$hasError,
+				'warnings' => array_map(function (WarningException $w) {
+					return $w->getMessage();
+				}, $warnings)
+			];
+
+			if ($hasError)
 			{
-				$result = array('error' => $e->getMessage(), 'msg' => 'Error ' . $e->getCode() . ': ' . $e->getMessage(), 'more' => false);
+				$result['msg'] = $error->getCode() . ': ' . $error->getMessage();
+			}
+
+			// Perform finalization steps (file data replacement when we're done)
+			if ($status->isDone())
+			{
+				$model->updateFiles();
+				$model->updateWPConfigFile();
 			}
 		}
-
-		$model->saveEngineStatus();
-
-        $this->container->session->saveData();
+		catch (Exception $e)
+		{
+			$result = [
+				'error'    => $e->getMessage(),
+				'msg'      => $e->getCode() . ': ' . $e->getMessage(),
+				'more'     => false,
+				'warnings' => [],
+			];
+		}
 
 		echo json_encode($result);
+
+		exit(0);
 	}
 
     public function replaceneeded()
@@ -82,5 +122,7 @@ class AngieControllerWordpressReplacedata extends AController
         }
 
         echo json_encode($result);
+
+	    exit(0);
     }
 }
