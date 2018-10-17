@@ -27,7 +27,7 @@ class AngieModelMagento2Setup extends AngieModelBaseSetup
 		// Double check we have a valid livesite URL
 		if($ret['livesite'])
 		{
-			require_once APATH_INSTALLATION.'/angie/helpers/setup.php';
+			require_once APATH_INSTALLATION . '/angie/helpers/setup.php';
 
 			$ret['livesite'] = AngieHelperSetup::cleanLiveSite($ret['livesite']);
 		}

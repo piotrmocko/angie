@@ -54,7 +54,7 @@ class AngieModelPhpbbSetup extends AngieModelBaseSetup
 			'siteurl'		 => $this->getState('siteurl'  , $siteurl)
 		);
 
-        require_once APATH_INSTALLATION.'/angie/helpers/setup.php';
+        require_once APATH_INSTALLATION . '/angie/helpers/setup.php';
 
         $ret['siteurl'] = AngieHelperSetup::cleanLiveSite($ret['siteurl']);
 

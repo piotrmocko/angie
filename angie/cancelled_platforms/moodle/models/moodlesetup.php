@@ -34,7 +34,7 @@ class AngieModelMoodleSetup extends AngieModelBaseSetup
 			'chat_ip'   => $this->getState('chat_ip', $this->configModel->get('chat_ip', isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : ''))
 		);
 
-        require_once APATH_INSTALLATION.'/angie/helpers/setup.php';
+        require_once APATH_INSTALLATION . '/angie/helpers/setup.php';
 
         $ret['wwwroot'] = AngieHelperSetup::cleanLiveSite($ret['wwwroot']);
 
