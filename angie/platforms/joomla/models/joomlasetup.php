@@ -468,7 +468,7 @@ class AngieModelJoomlaSetup extends AngieModelBaseSetup
 		}
 
 		// Let's load the password compatibility file
-		require_once APATH_ROOT . '/installation/framework/utils/password.php';
+		require_once APATH_INSTALLATION . '/framework/utils/password.php';
 
 		// Connect to the database
 		$db = $this->getDatabase();
